@@ -11,7 +11,7 @@ const Loading = () => {
         navigate('/' + nextUrl);
       }, 8000)
     }
-  },[]) 
+  },[navigate, nextUrl]) 
 
   return (
     <div className='flex justify-center items-center h-[100vh]'>

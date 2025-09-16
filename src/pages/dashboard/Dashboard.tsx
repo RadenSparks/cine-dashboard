@@ -12,7 +12,6 @@ import Title from "../../components/UI/Title";
 import BlurCircle from "../../components/UI/BlurCircle";
 import formatDateTime from "../../lib/dateCalculate";
 import ProtectedRoute from "../../components/ProtectedRoute";
-import Layout from "../../components/Layout";
 import {
   ResponsiveContainer,
   LineChart,
@@ -295,166 +294,169 @@ const Dashboard = () => {
     },
   ];
 
-  return !loading ? (
+  return (
     <ProtectedRoute>
-      <Layout>
-        <div className="relative px-2 md:px-8 xl:px-16">
-          <Title text1="Admin" text2="Dashboard" />
-          <BlurCircle top="0" left="0" />
+      <div className="mt-10">
+        {/* Consistent spacing for both loading and loaded states */}
+        {loading ? (
+          <Loading />
+        ) : (
+          <>
+            <Title text1="Admin" text2="Dashboard" />
+            <BlurCircle top="0" left="0" />
 
-          {/* Stat Cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-            {dashboardCards.map((card, index) => (
-              <StatCard
-                key={index}
-                card={card}
-                index={index}
-                hovered={hovered}
-                setHovered={setHovered}
+            {/* Stat Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
+              {dashboardCards.map((card, index) => (
+                <StatCard
+                  key={index}
+                  card={card}
+                  index={index}
+                  hovered={hovered}
+                  setHovered={setHovered}
+                />
+              ))}
+            </div>
+
+            {/* Active Shows Reel */}
+            <div>
+              <h3 className="font-bold text-xl text-blue-700 mb-4">
+                Active Shows Reel
+              </h3>
+              <InfiniteMovingCards
+                items={MOCK_SHOWS.map((show) => ({
+                  quote: show.title,
+                  name: `${show.date} • ${show.time}`,
+                  title: show.status,
+                  image: show.image,
+                }))}
+                direction="left"
+                speed="slow"
+                pauseOnHover={true}
+                className="mb-8"
               />
-            ))}
-          </div>
+            </div>
 
-          {/* Active Shows Reel */}
-          <div className="mt-12">
-            <h3 className="font-bold text-xl text-blue-700 mb-4">
-              Active Shows Reel
-            </h3>
-            <InfiniteMovingCards
-              items={MOCK_SHOWS.map((show) => ({
-                quote: show.title,
-                name: `${show.date} • ${show.time}`,
-                title: show.status,
-                image: show.image,
-              }))}
-              direction="left"
-              speed="slow"
-              pauseOnHover={true}
-              className="mb-8"
-            />
-          </div>
+            {/* Main Dashboard Sections */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+              {/* Movie Sales Chart */}
+              <Card className="col-span-2 bg-white rounded-2xl shadow-lg p-6 border border-blue-100 dark:bg-zinc-900 dark:border-blue-900">
+                <CardHeader>
+                  <div className="flex items-center gap-2">
+                    <ChartLineIcon className="w-6 h-6 text-blue-700" />
+                    <h3 className="font-bold text-xl text-blue-700">
+                      Films Sales Overview
+                    </h3>
+                  </div>
+                </CardHeader>
+                <CardBody>
+                  <SalesChart data={salesChartData} />
+                </CardBody>
+              </Card>
 
-          {/* Main Dashboard Sections */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 mt-10">
-            {/* Movie Sales Chart */}
-            <Card className="col-span-2 bg-white rounded-2xl shadow-lg p-6 border border-blue-100 dark:bg-zinc-900 dark:border-blue-900">
-              <CardHeader>
-                <div className="flex items-center gap-2">
-                  <ChartLineIcon className="w-6 h-6 text-blue-700" />
-                  <h3 className="font-bold text-xl text-blue-700">
-                    Films Sales Overview
+              {/* Top Booked Movies - Flipping Cards */}
+              <Card className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100 dark:bg-zinc-900 dark:border-blue-900 flex flex-col items-center">
+                <CardHeader>
+                  <h3 className="font-bold text-xl text-blue-700 mb-6 text-center">
+                    Top Booked Movies
                   </h3>
-                </div>
-              </CardHeader>
-              <CardBody>
-                <SalesChart data={salesChartData} />
-              </CardBody>
-            </Card>
+                </CardHeader>
+                <CardBody>
+                  <TopBookedMoviesFlip movies={MOCK_MOVIES} />
+                </CardBody>
+              </Card>
+            </div>
 
-            {/* Top Booked Movies - Flipping Cards */}
-            <Card className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100 dark:bg-zinc-900 dark:border-blue-900 flex flex-col items-center">
+            {/* Booking Table */}
+            <Card className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100 dark:bg-zinc-900 dark:border-blue-900">
               <CardHeader>
-                <h3 className="font-bold text-xl text-blue-700 mb-6 text-center">
-                  Top Booked Movies
+                <h3 className="font-bold text-xl text-blue-700">
+                  Recent Bookings
                 </h3>
               </CardHeader>
               <CardBody>
-                <TopBookedMoviesFlip movies={MOCK_MOVIES} />
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="text-left border-b">
+                        <th className="py-2">Booking ID</th>
+                        <th className="py-2">Customer</th>
+                        <th className="py-2">Movie</th>
+                        <th className="py-2">Status</th>
+                        <th className="py-2">Total</th>
+                        <th className="py-2">Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {MOCK_BOOKINGS.map((order) => (
+                        <tr key={order.id} className="border-b">
+                          <td className="py-2">{order.id}</td>
+                          <td className="py-2">{order.user.full_name}</td>
+                          <td className="py-2">{order.movie}</td>
+                          <td className="py-2">{order.bookingStatus}</td>
+                          <td className="py-2">
+                            {order.total_price.toLocaleString("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                            })}
+                          </td>
+                          <td className="py-2">
+                            {formatDateTime(order.booking_date)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </CardBody>
             </Card>
-          </div>
 
-          {/* Booking Table */}
-          <Card className="mt-10 bg-white rounded-2xl shadow-lg p-6 border border-blue-100 dark:bg-zinc-900 dark:border-blue-900">
-            <CardHeader>
-              <h3 className="font-bold text-xl text-blue-700">
-                Recent Bookings
-              </h3>
-            </CardHeader>
-            <CardBody>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
-                  <thead>
-                    <tr className="text-left border-b">
-                      <th className="py-2">Booking ID</th>
-                      <th className="py-2">Customer</th>
-                      <th className="py-2">Movie</th>
-                      <th className="py-2">Status</th>
-                      <th className="py-2">Total</th>
-                      <th className="py-2">Date</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {MOCK_BOOKINGS.map((order) => (
-                      <tr key={order.id} className="border-b">
-                        <td className="py-2">{order.id}</td>
-                        <td className="py-2">{order.user.full_name}</td>
-                        <td className="py-2">{order.movie}</td>
-                        <td className="py-2">{order.bookingStatus}</td>
-                        <td className="py-2">
-                          {order.total_price.toLocaleString("vi-VN", {
-                            style: "currency",
-                            currency: "VND",
-                          })}
-                        </td>
-                        <td className="py-2">
-                          {formatDateTime(order.booking_date)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CardBody>
-          </Card>
-
-          {/* Recent Comment Panel */}
-          <Card className="mt-10 bg-white rounded-2xl shadow-lg p-6 border border-blue-100 dark:bg-zinc-900 dark:border-blue-900">
-            <CardHeader>
-              <h3 className="font-bold text-xl text-blue-700">
-                Recent User Comments
-              </h3>
-            </CardHeader>
-            <CardBody>
-              <div
-                className={`flex flex-col items-center transition-opacity duration-300 ease-in-out max-w-sm text-center mx-auto ${
-                  fade ? "opacity-100" : "opacity-0"
-                }`}
-                key={currentComment}
-              >
-                <span className="font-semibold text-gray-800 truncate">
-                  {MOCK_COMMENTS[currentComment].user}
-                </span>
-                <span className="text-gray-600 text-sm mb-1">
-                  about{" "}
-                  <span className="font-medium">
-                    {MOCK_COMMENTS[currentComment].movie}
+            {/* Recent Comment Panel */}
+            <Card className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100 dark:bg-zinc-900 dark:border-blue-900">
+              <CardHeader>
+                <h3 className="font-bold text-xl text-blue-700">
+                  Recent User Comments
+                </h3>
+              </CardHeader>
+              <CardBody>
+                <div
+                  className={`flex flex-col items-center transition-opacity duration-300 ease-in-out max-w-sm text-center mx-auto ${
+                    fade ? "opacity-100" : "opacity-0"
+                  }`}
+                  key={currentComment}
+                >
+                  <span className="font-semibold text-gray-800 truncate">
+                    {MOCK_COMMENTS[currentComment].user}
                   </span>
-                </span>
-                <p className="text-gray-700 text-sm mb-2 max-w-xs">
-                  {MOCK_COMMENTS[currentComment].comment}
-                </p>
-                <span className="text-xs text-gray-400">
-                  {MOCK_COMMENTS[currentComment].date}
-                </span>
-                <div className="flex gap-1 mt-3 justify-center">
-                  {MOCK_COMMENTS.map((_, idx) => (
-                    <span
-                      key={idx}
-                      className={`inline-block w-2 h-2 rounded-full ${
-                        idx === currentComment ? "bg-blue-500" : "bg-gray-300"
-                      }`}
-                    />
-                  ))}
+                  <span className="text-gray-600 text-sm mb-1">
+                    about{" "}
+                    <span className="font-medium">
+                      {MOCK_COMMENTS[currentComment].movie}
+                    </span>
+                  </span>
+                  <p className="text-gray-700 text-sm mb-2 max-w-xs">
+                    {MOCK_COMMENTS[currentComment].comment}
+                  </p>
+                  <span className="text-xs text-gray-400">
+                    {MOCK_COMMENTS[currentComment].date}
+                  </span>
+                  <div className="flex gap-1 mt-3 justify-center">
+                    {MOCK_COMMENTS.map((_, idx) => (
+                      <span
+                        key={idx}
+                        className={`inline-block w-2 h-2 rounded-full ${
+                          idx === currentComment ? "bg-blue-500" : "bg-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
-              </div>
-            </CardBody>
-          </Card>
-        </div>
-      </Layout>
+              </CardBody>
+            </Card>
+          </>
+        )}
+      </div>
     </ProtectedRoute>
-  ) : (
-    <Loading />
   );
 };
 

@@ -10,6 +10,8 @@ import PromotionPage from './pages/promotions/PromotionPage'
 import Setting from './pages/Setting'
 import LoginPage from './pages/authentication/LoginPage'
 import ProtectedRoute from './components/ProtectedRoute'
+import GenresPage from './pages/genres/GenresPage'
+import Layout from './components/Layout'
 
 function App() {
   return (
@@ -20,7 +22,9 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Layout>
+                <Dashboard />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -28,7 +32,9 @@ function App() {
           path="/movies"
           element={
             <ProtectedRoute>
-              <MoviesPage />
+              <Layout>
+                <MoviesPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -36,7 +42,9 @@ function App() {
           path="/bookings"
           element={
             <ProtectedRoute>
-              <BookingPage />
+              <Layout>
+                <BookingPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -44,7 +52,9 @@ function App() {
           path="/showtimes"
           element={
             <ProtectedRoute>
-              <ShowtimePage />
+              <Layout>
+                <ShowtimePage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -52,7 +62,9 @@ function App() {
           path="/users"
           element={
             <ProtectedRoute>
-              <UserPage />
+              <Layout>
+                <UserPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -60,7 +72,9 @@ function App() {
           path="/transactions"
           element={
             <ProtectedRoute>
-              <TransactionPage />
+              <Layout>
+                <TransactionPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -68,7 +82,9 @@ function App() {
           path="/promotions"
           element={
             <ProtectedRoute>
-              <PromotionPage />
+              <Layout>
+                <PromotionPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -76,7 +92,19 @@ function App() {
           path="/settings"
           element={
             <ProtectedRoute>
-              <Setting />
+              <Layout>
+                <Setting />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/genres"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <GenresPage />
+              </Layout>
             </ProtectedRoute>
           }
         />

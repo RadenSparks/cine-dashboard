@@ -1,8 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
+import moviesReducer from './moviesSlice';
+import genresReducer from './genresSlice';
 
 export const store = configureStore({
   reducer: {
-    // add your reducers here
+    movies: moviesReducer,
+    genres: genresReducer,
   },
 });
 

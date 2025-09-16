@@ -2,19 +2,21 @@ import React, { useState, useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
 import { HomeIcon, FilmIcon, TicketIcon, UserIcon, Cog6ToothIcon, CalendarDaysIcon, CurrencyDollarIcon, SparklesIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { IconMenu2, IconX, IconDashboard } from "@tabler/icons-react";
+import { IconMenu2, IconCategory, IconDashboard } from "@tabler/icons-react";
 import { cn } from "../../lib/utils";
 import { TextGenerateEffect } from "../UI/TextGeneratedEffect";
 
 const navItems = [
   { name: "Dashboard", icon: <HomeIcon className="h-5 w-5" />, path: "/" },
   { name: "Movies", icon: <FilmIcon className="h-5 w-5" />, path: "/movies" },
+  { name: "Genres", icon: <IconCategory className="h-5 w-5" />, path: "/genres" },
   { name: "Bookings", icon: <TicketIcon className="h-5 w-5" />, path: "/bookings" },
   { name: "Showtimes", icon: <CalendarDaysIcon className="h-5 w-5" />, path: "/showtimes" },
   { name: "Users", icon: <UserIcon className="h-5 w-5" />, path: "/users" },
   { name: "Transactions", icon: <CurrencyDollarIcon className="h-5 w-5" />, path: "/transactions" },
   { name: "Promotions", icon: <SparklesIcon className="h-5 w-5" />, path: "/promotions" },
   { name: "Settings", icon: <Cog6ToothIcon className="h-5 w-5" />, path: "/settings" },
+
 ];
 
 const admin = {
@@ -249,7 +251,7 @@ export default function Sidebar({ onWidthChange }: { onWidthChange?: (w: number)
             className="fixed inset-0 z-50 bg-white dark:bg-neutral-900 flex flex-col p-8"
           >
             <div className="flex justify-end mb-8">
-              <IconX
+              <IconCategory
                 className="h-6 w-6 text-neutral-800 dark:text-neutral-200 cursor-pointer"
                 onClick={() => setMobileOpen(false)}
               />

@@ -19,7 +19,7 @@ export default function Layout({ children }: LayoutProps) {
       <div className="flex min-h-screen w-full bg-transparent overflow-x-hidden">
         <Sidebar onWidthChange={setSidebarWidth} />
         <div
-          className="flex-1 flex flex-col transition-all"
+          className="flex-1 flex flex-col min-h-screen transition-all"
           style={{
             marginLeft: sidebarWidth,
             transition: `margin-left ${SIDEBAR_TRANSITION}s cubic-bezier(0.4,0,0.2,1)`,
@@ -27,7 +27,7 @@ export default function Layout({ children }: LayoutProps) {
           }}
         >
           <Header />
-          <main className="flex-0 px-0 md:px-0 w-full max-w-screen-2xl mx-auto min-w-0">
+          <main className="flex-1 px-4 md:px-8 xl:px-16 w-full max-w-screen-2xl mx-auto min-w-0">
             {children}
           </main>
           <Footer />

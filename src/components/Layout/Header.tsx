@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
-import { IconMenu2, IconX, IconBell, IconCalendar, IconMoon, IconSun } from "@tabler/icons-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { IconMenu2, IconX, IconBell, IconCalendar, IconMoon, IconSun, IconLogout } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../../lib/utils";
+import { isAuthenticated } from "../../lib/auth";
 
 const navLinks = [
   { name: "Dashboard", link: "/" },
@@ -24,6 +25,7 @@ export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     if (darkMode) {
@@ -33,9 +35,15 @@ export default function Header() {
     }
   }, [darkMode]);
 
+  // Logout function
+  const handleLogout = () => {
+    localStorage.removeItem("cine-admin-remember");
+    navigate("/login");
+  };
+
   return (
-    <header className="w-full px-2 md:px-4 bg-white dark:bg-neutral-900 border-b h-16 flex items-center min-w-0">
-      <div className="flex w-full h-full items-center max-w-screen-2xl mx-auto min-w-0">
+    <header className="bg-white dark:bg-zinc-900 border-b">
+      <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-16 flex items-center justify-between h-16">
         {/* Left: Logo and Dashboard Title */}
         <div className="flex items-center gap-4 flex-shrink-0 min-w-0">
           <a
@@ -80,47 +88,53 @@ export default function Header() {
               <IconMoon className="h-5 w-5 text-zinc-600 dark:text-zinc-300" />
             )}
           </button>
-          <div className="relative">
-            <button
-              className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 transition"
-              onClick={() => setUserMenuOpen((v) => !v)}
-              aria-label="Open user menu"
-            >
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="h-8 w-8 rounded-full border-2 border-blue-500 object-cover"
-              />
-              <span className="font-medium text-sm text-zinc-700 dark:text-zinc-200 hidden md:inline whitespace-nowrap">{user.name}</span>
-            </button>
-            <AnimatePresence>
-              {userMenuOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  className="absolute right-0 mt-2 w-48 rounded-lg bg-white dark:bg-neutral-900 shadow-lg border border-gray-100 dark:border-neutral-800 z-50"
-                >
-                  <div className="flex flex-col py-2">
-                    <span className="px-4 py-2 text-sm text-zinc-700 dark:text-zinc-200 font-semibold">
-                      {user.name}
-                    </span>
-                    <hr className="my-1 border-gray-200 dark:border-neutral-800" />
-                    <a href="#" className="px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-neutral-800 transition text-zinc-700 dark:text-zinc-200">
-                      Profile
-                    </a>
-                    <a href="#" className="px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-neutral-800 transition text-zinc-700 dark:text-zinc-200">
-                      Settings
-                    </a>
-                    <a href="#" className="px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-neutral-800 transition text-zinc-700 dark:text-zinc-200">
-                      Logout
-                    </a>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          {isAuthenticated() && (
+            <div className="relative">
+              <button
+                className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 transition"
+                onClick={() => setUserMenuOpen((v) => !v)}
+                aria-label="Open user menu"
+              >
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="h-8 w-8 rounded-full border-2 border-blue-500 object-cover"
+                />
+                <span className="font-medium text-sm text-zinc-700 dark:text-zinc-200 hidden md:inline whitespace-nowrap">{user.name}</span>
+              </button>
+              <AnimatePresence>
+                {userMenuOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    className="absolute right-0 mt-2 w-48 rounded-lg bg-white dark:bg-neutral-900 shadow-lg border border-gray-100 dark:border-neutral-800 z-50"
+                  >
+                    <div className="flex flex-col py-2">
+                      <span className="px-4 py-2 text-sm text-zinc-700 dark:text-zinc-200 font-semibold">
+                        {user.name}
+                      </span>
+                      <hr className="my-1 border-gray-200 dark:border-neutral-800" />
+                      <a href="#" className="px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-neutral-800 transition text-zinc-700 dark:text-zinc-200">
+                        Profile
+                      </a>
+                      <a href="#" className="px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-neutral-800 transition text-zinc-700 dark:text-zinc-200">
+                        Settings
+                      </a>
+                      <button
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-neutral-800 transition font-semibold"
+                        onClick={handleLogout}
+                      >
+                        <IconLogout className="h-4 w-4" />
+                        Logout
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )}
           {/* Mobile Nav Toggle */}
           <div className="lg:hidden flex items-center">
             <IconMenu2
@@ -194,17 +208,15 @@ export default function Header() {
                   <IconMoon className="h-5 w-5 text-zinc-600 dark:text-zinc-300" />
                 )}
               </button>
-              <button
-                className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 transition"
-                onClick={() => setUserMenuOpen((v) => !v)}
-                aria-label="Open user menu"
-              >
-                <img
-                  src={user.avatar}
-                  alt={user.name}
-                  className="h-8 w-8 rounded-full border-2 border-blue-500 object-cover"
-                />
-              </button>
+              {isAuthenticated() && (
+                <button
+                  className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-gray-100 dark:hover:bg-neutral-800 transition text-red-600"
+                  onClick={handleLogout}
+                >
+                  <IconLogout className="h-5 w-5" />
+                  Logout
+                </button>
+              )}
             </div>
           </motion.div>
         )}
