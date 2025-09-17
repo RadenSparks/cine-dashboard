@@ -3,7 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 export type Genre = {
   genre_id: number;
   genre_name: string;
-  icon?: string; // <-- Add icon property
+  icon?: string;
   deleted?: boolean;
 };
 
@@ -34,8 +34,15 @@ const genresSlice = createSlice({
       const genre = state.find(g => g.genre_id === action.payload.genre_id);
       if (genre) genre.icon = action.payload.icon;
     },
+    updateGenre: (state, action: PayloadAction<{ genre_id: number; genre_name: string; icon: string }>) => {
+      const genre = state.find(g => g.genre_id === action.payload.genre_id);
+      if (genre) {
+        genre.genre_name = action.payload.genre_name;
+        genre.icon = action.payload.icon;
+      }
+    },
   },
 });
 
-export const { addGenre, softDeleteGenre, restoreGenre, updateGenreIcon } = genresSlice.actions;
+export const { addGenre, softDeleteGenre, restoreGenre, updateGenreIcon, updateGenre } = genresSlice.actions;
 export default genresSlice.reducer;

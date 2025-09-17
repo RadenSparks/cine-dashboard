@@ -1,6 +1,6 @@
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../store/store";
-import { addGenre, softDeleteGenre, restoreGenre, updateGenreIcon } from "../../store/genresSlice";
+import { addGenre, softDeleteGenre, restoreGenre, updateGenre, updateGenreIcon } from "../../store/genresSlice";
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Undo2Icon, Trash2Icon } from "lucide-react";
 import { CardStack } from "../../components/UI/CardStack";
@@ -20,6 +20,9 @@ export default function GenresPage() {
   const [search, setSearch] = useState("");
   const [selectedIcon, setSelectedIcon] = useState(availableIcons[0].name);
   const [loading, setLoading] = useState(true);
+  const [editingGenreId, setEditingGenreId] = useState<number | null>(null);
+  const [editingGenreName, setEditingGenreName] = useState("");
+  const [editingGenreIcon, setEditingGenreIcon] = useState(availableIcons[0].name);
 
   // Satellite toast ref
   const toastRef = useRef<{ showNotification: (options: Omit<unknown, "id">) => void }>(null);
@@ -41,7 +44,7 @@ export default function GenresPage() {
         title: "Genre Added",
         content: `Genre "${newGenreName}" was added successfully.`,
         accentColor: "#22c55e",
-        position: "top-right",
+        position: "bottom-right",
         longevity: 3000,
       });
     } else {
@@ -49,7 +52,7 @@ export default function GenresPage() {
         title: "Genre Exists",
         content: `Genre "${newGenreName}" already exists.`,
         accentColor: "#f59e42",
-        position: "top-right",
+        position: "bottom-right",
         longevity: 3000,
       });
     }
@@ -62,7 +65,7 @@ export default function GenresPage() {
       title: "Genre Deleted",
       content: `Genre "${genre?.genre_name}" was deleted.`,
       accentColor: "#ef4444",
-      position: "top-right",
+      position: "bottom-right",
       longevity: 3000,
     });
   }, [dispatch, genres]);
@@ -74,7 +77,7 @@ export default function GenresPage() {
       title: "Genre Restored",
       content: `Genre "${genre?.genre_name}" was restored.`,
       accentColor: "#22c55e",
-      position: "top-right",
+      position: "bottom-right",
       longevity: 3000,
     });
   }, [dispatch, genres]);
@@ -87,9 +90,58 @@ export default function GenresPage() {
       title: "Icon Updated",
       content: `Icon for "${genre?.genre_name}" updated.`,
       accentColor: "#2563eb",
-      position: "top-right",
+      position: "bottom-right",
       longevity: 2000,
     });
+  };
+
+  // Edit genre - populate fields for editing
+  const handleEditGenre = (genre_id: number) => {
+    const genre = genres.find(g => g.genre_id === genre_id);
+    if (genre) {
+      setEditingGenreId(genre.genre_id);
+      setEditingGenreName(genre.genre_name);
+      setEditingGenreIcon(genre.icon || availableIcons[0].name);
+    }
+  };
+
+  // Update genre (name and icon)
+  const handleUpdateGenre = () => {
+    if (
+      editingGenreId !== null &&
+      editingGenreName.trim() &&
+      !genres.some(
+        g =>
+          g.genre_name === editingGenreName.trim() &&
+          g.genre_id !== editingGenreId
+      )
+    ) {
+      dispatch(
+        updateGenre({
+          genre_id: editingGenreId,
+          genre_name: editingGenreName.trim(),
+          icon: editingGenreIcon,
+        })
+      );
+      toastRef.current?.showNotification({
+        title: "Genre Updated",
+        content: `Genre "${editingGenreName}" was updated.`,
+        accentColor: "#2563eb",
+        position: "bottom-right",
+        longevity: 3000,
+      });
+      setEditingGenreId(null);
+      setEditingGenreName("");
+      setEditingGenreIcon(availableIcons[0].name);
+    } else {
+      toastRef.current?.showNotification({
+        title: "Update Failed",
+        content: "Genre name must be unique and not empty.",
+        accentColor: "#ef4444",
+        position: "bottom-right",
+        longevity: 3000,
+      });
+    }
   };
 
   // Memoize the stack cards for performance
@@ -218,46 +270,84 @@ export default function GenresPage() {
                   <div className="mb-3 flex flex-col items-center">
                     {getGenreIcon(genre.icon)}
                   </div>
-                  <span className="font-bold text-lg mb-2 text-blue-700 dark:text-blue-200">{genre.genre_name}</span>
-                  {/* Dropdown for icon selection */}
-                  <div className="flex items-center gap-2 mb-2 w-full justify-center">
-                    <select
-                      className="border rounded-lg px-2 py-1 text-base bg-white dark:bg-zinc-800 text-blue-700 dark:text-blue-200"
-                      value={genre.icon || availableIcons[0].name}
-                      onChange={e => handleUpdateGenreIcon(genre.genre_id, e.target.value)}
-                      disabled={genre.deleted}
-                    >
-                      {availableIcons.map(iconObj => (
-                        <option key={iconObj.name} value={iconObj.name}>
-                          {iconObj.name}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="ml-2">
-                      {getGenreIcon(genre.icon)}
-                    </span>
-                  </div>
-                  <div className="flex gap-2 mt-2">
-                    {genre.deleted ? (
-                      <AppButton
-                        color="success"
-                        onClick={() => handleRestoreGenre(genre.genre_id)}
-                        icon={<Undo2Icon className="w-5 h-5" />}
+                  {editingGenreId === genre.genre_id ? (
+                    <>
+                      <input
+                        type="text"
+                        value={editingGenreName}
+                        onChange={e => setEditingGenreName(e.target.value)}
+                        className="border rounded-lg px-2 py-1 text-base mb-2 w-full text-blue-700 dark:text-blue-200"
+                      />
+                      <select
+                        className="border rounded-lg px-2 py-1 text-base bg-white dark:bg-zinc-800 text-blue-700 dark:text-blue-200 mb-2"
+                        value={editingGenreIcon}
+                        onChange={e => setEditingGenreIcon(e.target.value)}
                       >
-                        Restore
-                      </AppButton>
-                    ) : (
-                      <AppButton
-                        color="danger"
-                        disabled={genres.filter(g => !g.deleted).length === 1}
-                        title={genres.filter(g => !g.deleted).length === 1 ? "At least one active genre required" : ""}
-                        onClick={() => handleSoftDeleteGenre(genre.genre_id)}
-                        icon={<Trash2Icon className="w-5 h-5" />}
-                      >
-                        Delete
-                      </AppButton>
-                    )}
-                  </div>
+                        {availableIcons.map(iconObj => (
+                          <option key={iconObj.name} value={iconObj.name}>
+                            {iconObj.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="flex gap-2 mt-2">
+                        <AppButton color="success" onClick={handleUpdateGenre}>
+                          Update
+                        </AppButton>
+                        <AppButton color="danger" onClick={() => setEditingGenreId(null)}>
+                          Cancel
+                        </AppButton>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-bold text-lg mb-2 text-blue-700 dark:text-blue-200">
+                        {genre.genre_name}
+                      </span>
+                      <div className="flex items-center gap-2 mb-2 w-full justify-center">
+                        <select
+                          className="border rounded-lg px-2 py-1 text-base bg-white dark:bg-zinc-800 text-blue-700 dark:text-blue-200"
+                          value={genre.icon || availableIcons[0].name}
+                          onChange={e => handleUpdateGenreIcon(genre.genre_id, e.target.value)}
+                          disabled={genre.deleted}
+                        >
+                          {availableIcons.map(iconObj => (
+                            <option key={iconObj.name} value={iconObj.name}>
+                              {iconObj.name}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="ml-2">{getGenreIcon(genre.icon)}</span>
+                      </div>
+                      <div className="flex gap-2 mt-2">
+                        <AppButton
+                          color="primary"
+                          onClick={() => handleEditGenre(genre.genre_id)}
+                          disabled={genre.deleted}
+                        >
+                          Edit
+                        </AppButton>
+                        {genre.deleted ? (
+                          <AppButton
+                            color="success"
+                            onClick={() => handleRestoreGenre(genre.genre_id)}
+                            icon={<Undo2Icon className="w-5 h-5" />}
+                          >
+                            Restore
+                          </AppButton>
+                        ) : (
+                          <AppButton
+                            color="danger"
+                            disabled={genres.filter(g => !g.deleted).length === 1}
+                            title={genres.filter(g => !g.deleted).length === 1 ? "At least one active genre required" : ""}
+                            onClick={() => handleSoftDeleteGenre(genre.genre_id)}
+                            icon={<Trash2Icon className="w-5 h-5" />}
+                          >
+                            Delete
+                          </AppButton>
+                        )}
+                      </div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>

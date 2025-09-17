@@ -109,7 +109,7 @@ export default function MoviesPage() {
       title: "Movie Added",
       content: `Movie "${newMovie.title}" was added successfully.`,
       accentColor: "#2563eb",
-      position: "top-right",
+      position: "bottom-right", // <-- updated position
       longevity: 3000,
     });
   };
@@ -124,7 +124,7 @@ export default function MoviesPage() {
         title: "Movie Updated",
         content: `Movie "${editing.title}" was updated.`,
         accentColor: "#f59e42",
-        position: "top-right",
+        position: "bottom-right", // <-- updated position
         longevity: 3000,
       });
     }
@@ -138,7 +138,7 @@ export default function MoviesPage() {
         title: "Movie Deleted",
         content: `Movie "${movie.title}" was deleted.`,
         accentColor: "#ef4444",
-        position: "top-right",
+        position: "bottom-right", // <-- updated position
         longevity: 3000,
       });
     }
@@ -152,7 +152,7 @@ export default function MoviesPage() {
         title: "Movie Restored",
         content: `Movie "${movie.title}" was restored.`,
         accentColor: "#22c55e",
-        position: "top-right",
+        position: "bottom-right", // <-- updated position
         longevity: 3000,
       });
     }
