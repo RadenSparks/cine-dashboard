@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { type Movie } from "../../../store/moviesSlice";
 import { Select, SelectItem } from "@heroui/react";
 import { useMemo, useRef, useState } from "react";
+import AppButton from "../../../components/UI/AppButton"; // Adjust the import path as necessary
 
 type Genre = {
   genre_id: number;
@@ -307,20 +308,12 @@ export default function MovieFormModal({
               </div>
               {/* Actions */}
               <div className="flex justify-end gap-2 mt-6">
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-gray-200 dark:bg-zinc-700 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-zinc-600 transition"
-                  onClick={onClose}
-                >
+                <AppButton color="danger" type="button" onClick={onClose}>
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold shadow"
-                  disabled={!formValid}
-                >
+                </AppButton>
+                <AppButton color="success" type="submit" disabled={!formValid}>
                   {editing ? "Update" : "Add"}
-                </button>
+                </AppButton>
               </div>
             </form>
           </div>

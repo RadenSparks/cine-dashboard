@@ -1,20 +1,12 @@
-import React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { FilmIcon, RocketLaunchIcon, FaceSmileIcon } from "@heroicons/react/24/solid";
-import { ActivityIcon, SwordsIcon, VenetianMaskIcon } from "lucide-react";
 import { type Movie } from "../../../store/moviesSlice";
+import AppButton from "../../../components/UI/AppButton";
+import { getGenreIcon } from "../../../utils/genreIcons";
 
 type Genre = {
   genre_id: number;
   genre_name: string;
-};
-
-const genreIcons: Record<string, React.ReactElement> = {
-  "Action": <SwordsIcon className="w-4 h-4 mr-1 inline" />,
-  "Sci-Fi": <RocketLaunchIcon className="w-4 h-4 mr-1 inline" />,
-  "Comedy": <FaceSmileIcon className="w-4 h-4 mr-1 inline" />,
-  "Drama": <VenetianMaskIcon className="w-4 h-4 mr-1 inline" />,
-  "Crime": <ActivityIcon className="w-4 h-4 mr-1 inline" />,
+  icon?: string;
 };
 
 interface MovieDetailsModalProps {
@@ -123,15 +115,15 @@ export default function MovieDetailsModal({
                 <div className="font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase text-xs tracking-wider">Genres</div>
                 <div className="flex flex-wrap gap-3">
                   {movie.genre_ids
-                    .map(id => genres.find(g => g.genre_id === id)?.genre_name)
+                    .map(id => genres.find(g => g.genre_id === id))
                     .filter(Boolean)
-                    .map(name => (
+                    .map(genre => (
                       <span
-                        key={name}
-                        className="inline-flex items-center bg-blue-600/10 text-blue-800 dark:bg-blue-900/60 dark:text-blue-100 px-3 py-1 rounded-full text-sm font-semibold shadow-sm border border-blue-200 dark:border-blue-800"
+                        key={genre!.genre_id}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-blue-200 via-blue-100 to-blue-300 dark:from-blue-900 dark:via-blue-800 dark:to-blue-900 text-blue-900 dark:text-blue-100 font-semibold text-sm shadow-sm border border-blue-300 dark:border-blue-800"
                       >
-                        {typeof name === "string" && genreIcons[name] ? genreIcons[name] : <FilmIcon className="w-4 h-4 mr-1 inline" />}
-                        {name}
+                        {getGenreIcon(genre!.icon)}
+                        {genre!.genre_name}
                       </span>
                     ))}
                 </div>
@@ -152,12 +144,9 @@ export default function MovieDetailsModal({
               </div>
             </div>
             <div className="flex justify-end mt-4">
-              <button
-                onClick={onClose}
-                className="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition"
-              >
+              <AppButton color="primary" type="button" onClick={onClose}>
                 Close
-              </button>
+              </AppButton>
             </div>
           </div>
         </motion.div>
