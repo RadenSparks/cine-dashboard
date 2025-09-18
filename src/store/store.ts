@@ -3,11 +3,12 @@ import moviesReducer from './moviesSlice';
 import genresReducer from './genresSlice';
 import roomsReducer from './roomsSlice';
 
+
 export const store = configureStore({
   reducer: {
     movies: moviesReducer,
     genres: genresReducer,
-    rooms: roomsReducer, // Add this line
+    rooms: roomsReducer,
   },
 });
 

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
+import { Boxes } from "../../components/BoxesBackground";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -15,11 +16,7 @@ export default function LoginPage() {
     e.preventDefault();
     if (email === "admin@cine.com" && password === "password") {
       setError("");
-      if (remember) {
-        localStorage.setItem("cine-admin-remember", "true");
-      } else {
-        localStorage.removeItem("cine-admin-remember");
-      }
+      localStorage.setItem("cine-admin-remember", remember ? "true" : "false");
       navigate("/");
     } else {
       setError("Invalid email or password");
@@ -27,8 +24,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 via-blue-50 to-gray-200">
-      <div className="shadow-input mx-auto w-full max-w-md rounded-none bg-white p-4 md:rounded-2xl md:p-8 dark:bg-black border border-gray-100">
+    <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 via-blue-50 to-gray-200 overflow-hidden">
+      {/* Large background image */}
+      <img
+        src="https://images8.alphacoders.com/139/1391577.jpg"
+        alt="Cinema background"
+        className="absolute inset-0 w-full h-full object-cover z-0 brightness-75"
+      />
+      {/* Full screen interactive boxes background */}
+      <Boxes className="absolute inset-0 w-full h-full z-10" />
+      <div className="relative z-20 shadow-input mx-auto w-full max-w-md rounded-none bg-white/90 p-4 md:rounded-2xl md:p-8 dark:bg-black/80 border border-gray-100 backdrop-blur-lg">
         <h2 className="text-2xl font-bold text-neutral-800 dark:text-neutral-200 text-center">
           Cine Admin Login
         </h2>
@@ -44,7 +49,7 @@ export default function LoginPage() {
           <LabelInputContainer>
             <label
               htmlFor="email"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Email Address
             </label>
@@ -56,17 +61,17 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="admin@cine.com"
-              className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all w-full shadow-sm"
             />
           </LabelInputContainer>
           <LabelInputContainer className="mt-4">
             <label
               htmlFor="password"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Password
             </label>
-            <div className="relative">
+            <div className="relative w-full">
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -74,11 +79,11 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
-                className="bg-gray-50 border border-gray-200 rounded-md px-3 py-2 text-sm pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="bg-white dark:bg-neutral-900 border border-gray-300 dark:border-neutral-700 rounded-lg px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all w-full shadow-sm pr-12"
               />
               <button
                 type="button"
-                className="absolute right-2 top-2 text-gray-400 hover:text-blue-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-blue-600"
                 onClick={() => setShowPassword((v) => !v)}
                 tabIndex={-1}
               >
@@ -91,7 +96,7 @@ export default function LoginPage() {
             </div>
           </LabelInputContainer>
           <div className="flex items-center justify-between mt-4">
-            <label className="flex items-center text-sm text-gray-600">
+            <label className="flex items-center text-sm text-gray-600 dark:text-gray-400">
               <input
                 type="checkbox"
                 checked={remember}
@@ -109,7 +114,7 @@ export default function LoginPage() {
             </button>
           </div>
           <button
-            className="group/btn relative block h-10 w-full rounded-md bg-gradient-to-br from-blue-600 to-blue-400 font-medium text-white shadow-input mt-6"
+            className="group/btn relative block h-10 w-full rounded-lg bg-gradient-to-br from-blue-600 to-blue-400 font-medium text-white shadow-input mt-6 overflow-hidden"
             type="submit"
           >
             Login &rarr;
@@ -118,7 +123,7 @@ export default function LoginPage() {
           <div className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-300 to-transparent dark:via-neutral-700" />
           <div className="flex flex-col space-y-4">
             <button
-              className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626]"
+              className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-lg bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626] overflow-hidden"
               type="button"
               onClick={() => alert("Google login coming soon!")}
             >
@@ -133,7 +138,7 @@ export default function LoginPage() {
               <BottomGradient />
             </button>
             <button
-              className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-md bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626]"
+              className="group/btn shadow-input relative flex h-10 w-full items-center justify-start space-x-2 rounded-lg bg-gray-50 px-4 font-medium text-black dark:bg-zinc-900 dark:shadow-[0px_0px_1px_1px_#262626] overflow-hidden"
               type="button"
               onClick={() => alert("Facebook login coming soon!")}
             >
