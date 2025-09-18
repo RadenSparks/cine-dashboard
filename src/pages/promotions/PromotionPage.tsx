@@ -1,10 +1,7 @@
-import Layout from '../../components/Layout'
-
 export default function PromotionPage() {
   return (
-    <Layout>
+    <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-16 min-h-[400px]">
       <h2 className="text-2xl font-semibold mb-4">Promotions</h2>
-      {/* Promotions management content here */}
-    </Layout>
-  )
+    </div>
+  );
 }

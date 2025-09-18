@@ -1,4 +1,4 @@
-const formatDateTime = (isoString) => {
+const formatDateTime = (isoString: string | number | Date) => {
   const date = new Date(isoString);
 
   const day = date.toLocaleDateString('en-IN', { weekday: 'long' });

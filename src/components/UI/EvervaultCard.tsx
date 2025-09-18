@@ -3,6 +3,7 @@ import { useMotionValue } from "motion/react";
 import { useState, useEffect, type MouseEvent } from "react";
 import { useMotionTemplate, motion } from "motion/react";
 import { cn } from "../../lib/utils";
+import { generateRandomString } from "../../lib/generateRandomString";
 
 // --- Types ---
 type EvervaultCardProps = {
@@ -95,16 +96,6 @@ export function CardPattern({ mouseX, mouseY, randomString }: CardPatternProps) 
   );
 }
 
-// --- Utility ---
-const characters =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-export function generateRandomString(length: number): string {
-  let result = "";
-  for (let i = 0; i < length; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-}
 
 // --- Icon ---
 export const Icon = ({ className, ...rest }: IconProps) => {
