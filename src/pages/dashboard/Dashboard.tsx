@@ -197,7 +197,7 @@ const Dashboard = () => {
 
   return (
     <ProtectedRoute>
-      <div className="mt-10">
+      <div className="mt-10 hide-scrollbar">
         <Title text1="Admin" text2="Dashboard" />
         <BlurCircle top="0" left="0" />
 

@@ -7,7 +7,8 @@ export type Movie = {
   duration: number;
   premiere_date: string;
   poster?: string;
-  genre_ids: number[]; // <-- now an array
+  genre_ids: number[];
+  rating?: number; // <-- NEW
   deleted?: boolean;
 };
 
@@ -20,6 +21,7 @@ const initialState: Movie[] = [
     premiere_date: "2025-09-16",
     poster: "https://images-na.ssl-images-amazon.com/images/I/71uKM+LdgFL.jpg",
     genre_ids: [1, 3], // Example: Sci-Fi, Drama
+    rating: 8.8, // <-- NEW
   },
   {
     movie_id: 2,
@@ -29,6 +31,7 @@ const initialState: Movie[] = [
     premiere_date: "2025-10-01",
     poster: "https://www.lab111.nl/wp-content/uploads/2024/04/s-l1600.png",
     genre_ids: [2],
+    rating: 9.2, // <-- NEW
   },
   {
     movie_id: 3,
@@ -48,7 +51,66 @@ const initialState: Movie[] = [
     poster: "https://images-na.ssl-images-amazon.com/images/I/51Qsnm2gUkL.jpg",
     genre_ids: [1, 3],
   },
-  
+  {
+    movie_id: 5,
+    title: "The Matrix",
+    description: "A computer hacker learns about the true nature of his reality and his role in the war against its controllers.",
+    duration: 136,
+    premiere_date: "2025-11-01",
+    poster: "https://m.media-amazon.com/images/I/51EG732BV3L.jpg",
+    genre_ids: [1, 3],
+    rating: 8.7,
+  },
+  {
+    movie_id: 6,
+    title: "Parasite",
+    description: "Greed and class discrimination threaten the newly formed symbiotic relationship between the wealthy Park family and the destitute Kim clan.",
+    duration: 132,
+    premiere_date: "2025-12-01",
+    poster: "https://m.media-amazon.com/images/I/81tC5lA2Q-L._AC_SY679_.jpg",
+    genre_ids: [2, 3],
+    rating: 8.6,
+  },
+  {
+    movie_id: 7,
+    title: "Avengers: Endgame",
+    description: "After the devastating events of Infinity War, the Avengers assemble once more to reverse Thanos' actions and restore balance.",
+    duration: 181,
+    premiere_date: "2025-12-15",
+    poster: "https://m.media-amazon.com/images/I/81ExhpBEbHL._AC_SY679_.jpg",
+    genre_ids: [1, 3],
+    rating: 8.4,
+  },
+  {
+    movie_id: 8,
+    title: "Joker",
+    description: "In Gotham City, mentally troubled comedian Arthur Fleck embarks on a downward spiral that leads to the creation of the iconic Joker.",
+    duration: 122,
+    premiere_date: "2026-01-10",
+    poster: "https://m.media-amazon.com/images/I/71c05lTE03L._AC_SY679_.jpg",
+    genre_ids: [2, 3],
+    rating: 8.5,
+  },
+  {
+    movie_id: 9,
+    title: "Forrest Gump",
+    description: "The presidencies of Kennedy and Johnson, the Vietnam War, and more through the eyes of an Alabama man with a low IQ.",
+    duration: 142,
+    premiere_date: "2026-02-01",
+    poster: "https://m.media-amazon.com/images/I/61r5GZpF1lL._AC_SY679_.jpg",
+    genre_ids: [2, 3],
+    rating: 8.8,
+  },
+  {
+    movie_id: 10,
+    title: "Pulp Fiction",
+    description: "The lives of two mob hitmen, a boxer, a gangster's wife, and a pair of diner bandits intertwine in four tales of violence and redemption.",
+    duration: 154,
+    premiere_date: "2026-03-01",
+    poster: "https://m.media-amazon.com/images/I/71c05lTE03L._AC_SY679_.jpg",
+    genre_ids: [2, 3],
+    rating: 8.9,
+  },
 ];
 
 const moviesSlice = createSlice({

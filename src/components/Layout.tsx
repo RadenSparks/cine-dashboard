@@ -2,14 +2,27 @@ import Sidebar from './Layout/Sidebar'
 import Header from './Layout/Header'
 import Footer from './Layout/Footer'
 import { AuroraBackground } from "../components/AuroraBackground"
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 
 type LayoutProps = {
   children: React.ReactNode
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const [sidebarWidth, setSidebarWidth] = useState(260);
+  // Set initial sidebar width based on window size
+  const getInitialSidebarWidth = () =>
+    typeof window !== "undefined" && window.innerWidth < 768 ? 0 : 260;
+
+  const [sidebarWidth, setSidebarWidth] = useState(getInitialSidebarWidth);
+
+  useEffect(() => {
+    // Listen for window resize to update sidebar width
+    const handleResize = () => {
+      setSidebarWidth(window.innerWidth < 768 ? 0 : 260);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Match sidebar transition duration for smooth sync
   const SIDEBAR_TRANSITION = 0.6; // seconds

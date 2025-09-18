@@ -55,7 +55,7 @@ export default function MovieDetailsModal({
             stiffness: 180,
             damping: 18,
           }}
-          className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-6xl w-full p-0 relative flex flex-col md:flex-row items-stretch my-12 border border-blue-100 dark:border-zinc-800"
+          className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-6xl w-full p-0 relative flex flex-col md:flex-row items-stretch my-12 border border-blue-100 dark:border-zinc-800 hide-scrollbar"
           style={{
             margin: "auto",
             position: "relative",
@@ -93,7 +93,7 @@ export default function MovieDetailsModal({
             </div>
           </div>
           {/* Info Section */}
-          <div className="flex-1 p-12 flex flex-col justify-between bg-white dark:bg-zinc-900 overflow-y-auto">
+          <div className="flex-1 p-12 flex flex-col justify-between bg-white dark:bg-zinc-900 overflow-y-auto hide-scrollbar">
             <div>
               <h3 className="text-4xl font-extrabold mb-4 text-blue-700 dark:text-blue-200 tracking-tight drop-shadow">
                 {movie.title}
@@ -109,6 +109,45 @@ export default function MovieDetailsModal({
                 <div>
                   <div className="font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase text-xs tracking-wider">Premiere</div>
                   <div className="text-2xl font-bold text-blue-700 dark:text-blue-200">{movie.premiere_date}</div>
+                </div>
+                <div>
+                  <div className="font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase text-xs tracking-wider">Rating</div>
+                  {/* Rotten Tomatoes style */}
+                  <div className="flex items-center gap-3">
+                    {typeof movie.rating === "number" ? (
+                      <>
+                        <span
+                          className={`inline-flex items-center justify-center rounded-full shadow-lg font-bold text-3xl w-16 h-16
+                            ${movie.rating >= 6.0 ? "bg-red-500 text-white" : "bg-gray-400 text-white"}`}
+                          title={movie.rating >= 6.0 ? "Fresh" : "Rotten"}
+                        >
+                          {movie.rating.toFixed(1)}
+                        </span>
+                        <span className="text-4xl">
+                          {movie.rating >= 6.0 ? "🍅" : "💩"}
+                        </span>
+                        <span className="font-semibold text-lg text-gray-600 dark:text-gray-400 ml-2">
+                          {movie.rating >= 6.0 ? "Fresh" : "Rotten"}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-gray-400">N/A</span>
+                    )}
+                  </div>
+                  {/* IMDb style (uncomment to use) */}
+                  <div className="flex items-center gap-3 mt-2">
+                    {typeof movie.rating === "number" ? (
+                      <span
+                        className="inline-flex items-center px-4 py-2 rounded-lg bg-yellow-400 text-black font-bold text-2xl shadow"
+                        style={{ fontFamily: "Arial Black, Arial, sans-serif" }}
+                        title="IMDb Rating"
+                      >
+                        IMDb&nbsp;{movie.rating.toFixed(1)}
+                      </span>
+                    ) : (
+                      <span className="text-gray-400">N/A</span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="mb-8">

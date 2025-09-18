@@ -27,7 +27,7 @@ const MovieTable = ({ movies, genres, onEdit, onDelete, onRestore, onDetail }: M
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg shadow w-full">
+    <div className="overflow-x-auto rounded-lg shadow w-full hide-scrollbar">
       <table className="min-w-full text-sm">
         <thead>
           <tr className="bg-blue-50 dark:bg-zinc-800">
@@ -36,6 +36,7 @@ const MovieTable = ({ movies, genres, onEdit, onDelete, onRestore, onDetail }: M
             <th className="p-3 text-left font-semibold w-40">Genre</th>
             <th className="p-3 text-left font-semibold w-24">Duration</th>
             <th className="p-3 text-left font-semibold w-20">Year</th>
+            <th className="p-3 text-left font-semibold w-20">Rating</th> {/* NEW */}
             <th className="p-3 text-center font-semibold w-32">Now Showing</th>
             <th className="p-3 text-left font-semibold w-24">Status</th>
             <th className="p-3 text-left font-semibold w-32">Actions</th>
@@ -76,6 +77,12 @@ const MovieTable = ({ movies, genres, onEdit, onDelete, onRestore, onDetail }: M
               </td>
               <td className="p-3 w-24">{movie.duration} min</td>
               <td className="p-3 w-20">{movie.premiere_date.slice(0, 4)}</td>
+              <td className="p-3 w-20">
+                {typeof movie.rating === "number"
+                  ? <span className="font-bold text-blue-700 dark:text-blue-200">{movie.rating.toFixed(1)}</span>
+                  : <span className="text-gray-400">N/A</span>
+                }
+              </td>
               <td className="p-3 w-32 text-center">
                 {!movie.deleted && (
                   isNowShowing(movie.premiere_date) ? (

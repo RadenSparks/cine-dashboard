@@ -174,13 +174,16 @@ export default function MoviesPage() {
   return (
     <>
       <SatelliteToast ref={toastRef} />
-      <div className="bg-white/95 dark:bg-zinc-900/95 rounded-2xl shadow-2xl p-10 w-full max-w-[1500px] mx-auto mt-10 border border-blue-100 dark:border-zinc-800 transition-all">
+      <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-16 min-h-[400px] hide-scrollbar">
         {loading ? (
-          <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
             <Loading />
+            <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow">
+              🎬 Movies
+            </h2>
           </div>
         ) : (
-          <>
+          <div className="bg-white/95 dark:bg-zinc-900/95 rounded-2xl shadow-2xl p-10 w-full mt-10 border border-blue-100 dark:border-zinc-800 overflow-x-hidden">
             <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow">
               🎬 Movies
             </h2>
@@ -270,7 +273,7 @@ export default function MoviesPage() {
                 Next
               </button>
             </div>
-          </>
+          </div>
         )}
       </div>
       {/* Add/Edit Movie Modal */}
