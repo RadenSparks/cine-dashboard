@@ -1,8 +1,13 @@
 import { configureStore } from '@reduxjs/toolkit';
+import moviesReducer from './moviesSlice';
+import genresReducer from './genresSlice';
+import roomsReducer from './roomsSlice';
 
 export const store = configureStore({
   reducer: {
-    // add your reducers here
+    movies: moviesReducer,
+    genres: genresReducer,
+    rooms: roomsReducer, // Add this line
   },
 });
 

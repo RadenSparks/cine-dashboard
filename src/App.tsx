@@ -10,6 +10,12 @@ import PromotionPage from './pages/promotions/PromotionPage'
 import Setting from './pages/Setting'
 import LoginPage from './pages/authentication/LoginPage'
 import ProtectedRoute from './components/ProtectedRoute'
+<<<<<<< Updated upstream
+=======
+import GenresPage from './pages/genres/GenresPage'
+import Layout from './components/Layout'
+import RoomManagementPage from './pages/rooms/RoomManagementPage'
+>>>>>>> Stashed changes
 
 function App() {
   return (
@@ -20,7 +26,25 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
+<<<<<<< Updated upstream
               <Dashboard />
+=======
+              <Layout>
+                <Routes>
+                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/movies" element={<MoviesPage />} />
+                  <Route path="/bookings" element={<BookingPage />} />
+                  <Route path="/sessions" element={<ShowtimePage />} />
+                  <Route path="/users" element={<UserPage />} />
+                  <Route path="/transactions" element={<TransactionPage />} />
+                  <Route path="/promotions" element={<PromotionPage />} />
+                  <Route path="/settings" element={<Setting />} />
+                  <Route path="/genres" element={<GenresPage />} />
+                  <Route path="/rooms" element={<RoomManagementPage />} />
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </Layout>
+>>>>>>> Stashed changes
             </ProtectedRoute>
           }
         />
