@@ -3,6 +3,9 @@ import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils";
 import { Boxes } from "../../components/BoxesBackground";
+import { post } from "../../client/axiosCilent";
+import { type AuthenticationRequestDTO, type AuthenticationResponseDTO } from "../../dto/dto";
+import { type ApiResponse } from "../../entities/type";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -10,16 +13,37 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [remember, setRemember] = useState(false);
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+  async function login(email: string, password: string) {
+    const loginRequest: AuthenticationRequestDTO = { email, password };
+    const response = await post<ApiResponse<AuthenticationResponseDTO>>("/authenticate/token", loginRequest);
+    if (response.status == 200) {
+      console.log("Login successful:", response.data.data);
+      return response.data.data;
+    } else {
+      console.error("Login failed:", response.statusText);
+      throw new Error("Login failed");
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (email === "admin@cine.com" && password === "password") {
-      setError("");
+    setLoading(true);
+    setError("");
+    try {
+      const data = await login(email, password);
+      // Save token and remember flag
+      // const token = (data as { token: string }).token;
+      localStorage.setItem("cine-user-details", JSON.stringify(data));
       localStorage.setItem("cine-admin-remember", remember ? "true" : "false");
       navigate("/");
-    } else {
-      setError("Invalid email or password");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -116,8 +140,9 @@ export default function LoginPage() {
           <button
             className="group/btn relative block h-10 w-full rounded-lg bg-gradient-to-br from-blue-600 to-blue-400 font-medium text-white shadow-input mt-6 overflow-hidden"
             type="submit"
+            disabled={loading}
           >
-            Login &rarr;
+            {loading ? "Logging in..." : "Login →"}
             <BottomGradient />
           </button>
           <div className="my-8 h-[1px] w-full bg-gradient-to-r from-transparent via-neutral-300 to-transparent dark:via-neutral-700" />

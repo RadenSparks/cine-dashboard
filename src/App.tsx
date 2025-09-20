@@ -13,12 +13,13 @@ import GenresPage from './pages/genres/GenresPage'
 import Layout from './components/Layout'
 import RoomManagementPage from './pages/rooms/RoomManagementPage'
 import SessionPage from './pages/sessions/SessionPage'
+import PublicRoute from './components/PublicRoute'
 
 function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
+        <Route path="/login" element={<PublicRoute><LoginPage /></PublicRoute>} />
         <Route
           path="*"
           element={
