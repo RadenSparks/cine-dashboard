@@ -10,6 +10,7 @@ const navItems = [
   { name: "Dashboard", icon: <HomeIcon className="h-5 w-5" />, path: "/" },
   { name: "Movies", icon: <FilmIcon className="h-5 w-5" />, path: "/movies" },
   { name: "Genres", icon: <IconCategory className="h-5 w-5" />, path: "/genres" },
+  { name: "Rooms", icon: <IconMenu2 className="h-5 w-5" />, path: "/rooms" },
   { name: "Bookings", icon: <TicketIcon className="h-5 w-5" />, path: "/bookings" },
   { name: "Session", icon: <CalendarDaysIcon className="h-5 w-5" />, path: "/sessions" },
   { name: "Users", icon: <UserIcon className="h-5 w-5" />, path: "/users" },
