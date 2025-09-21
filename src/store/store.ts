@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import moviesReducer from './moviesSlice';
 import genresReducer from './genresSlice';
 import roomsReducer from './roomsSlice';
+import userReducer from "./userSlice"; 
 
 
 export const store = configureStore({
@@ -9,6 +10,7 @@ export const store = configureStore({
     movies: moviesReducer,
     genres: genresReducer,
     rooms: roomsReducer,
+    users: userReducer,
   },
 });
 
