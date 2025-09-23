@@ -1,6 +1,5 @@
 import { getGenreIcon } from "../../../utils/genreIcons";
 import AppButton from "../../../components/UI/AppButton";
-import { Undo2Icon, Trash2Icon } from "lucide-react";
 import { type Genre } from "../../../entities/type";
 
 type IconOption = { name: string; icon: React.ReactNode };
@@ -34,15 +33,23 @@ export default function GenreCard({
   onUpdate,
   onDelete,
   onRestore,
-  onUpdateIcon,
 }: GenreCardProps) {
   const isEditing = editingGenreId === genre.genre_id;
+
+  // When editing, update the genre's icon in real time for preview
+  const currentIcon = isEditing ? editingGenreIcon : genre.icon;
+
   return (
     <div
       className={`bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-blue-100 dark:border-zinc-800 p-6 flex flex-col items-center justify-between min-h-[260px] transition hover:shadow-xl ${genre.deleted ? "opacity-60 grayscale" : ""}`}
     >
       <div className="mb-3 flex flex-col items-center">
-        {getGenreIcon(genre.icon)}
+        {getGenreIcon(currentIcon)}
+        {isEditing && (
+          <span className="text-xs text-blue-500 dark:text-blue-300 mt-1">
+            Preview
+          </span>
+        )}
       </div>
       {isEditing ? (
         <>
@@ -51,11 +58,13 @@ export default function GenreCard({
             value={editingGenreName}
             onChange={e => setEditingGenreName(e.target.value)}
             className="border rounded-lg px-2 py-1 text-base mb-2 w-full text-blue-700 dark:text-blue-200"
+            disabled={genre.deleted}
           />
           <select
             className="border rounded-lg px-2 py-1 text-base bg-white dark:bg-zinc-800 text-blue-700 dark:text-blue-200 mb-2"
             value={editingGenreIcon}
             onChange={e => setEditingGenreIcon(e.target.value)}
+            disabled={genre.deleted}
           >
             {availableIcons.map((iconObj) => (
               <option key={iconObj.name} value={iconObj.name}>
@@ -64,7 +73,7 @@ export default function GenreCard({
             ))}
           </select>
           <div className="flex gap-2 mt-2">
-            <AppButton color="success" onClick={onUpdate}>
+            <AppButton color="success" onClick={onUpdate} disabled={genre.deleted}>
               Update
             </AppButton>
             <AppButton color="danger" onClick={() => setEditingGenreId(null)}>
@@ -77,21 +86,6 @@ export default function GenreCard({
           <span className="font-bold text-lg mb-2 text-blue-700 dark:text-blue-200">
             {genre.genre_name}
           </span>
-          <div className="flex items-center gap-2 mb-2 w-full justify-center">
-            <select
-              className="border rounded-lg px-2 py-1 text-base bg-white dark:bg-zinc-800 text-blue-700 dark:text-blue-200"
-              value={genre.icon || availableIcons[0].name}
-              onChange={e => onUpdateIcon(genre.genre_id, e.target.value)}
-              disabled={genre.deleted}
-            >
-              {availableIcons.map((iconObj) => (
-                <option key={iconObj.name} value={iconObj.name}>
-                  {iconObj.name}
-                </option>
-              ))}
-            </select>
-            <span className="ml-2">{getGenreIcon(genre.icon)}</span>
-          </div>
           <div className="flex gap-2 mt-2">
             <AppButton
               color="primary"
@@ -104,7 +98,7 @@ export default function GenreCard({
               <AppButton
                 color="success"
                 onClick={() => onRestore(genre.genre_id)}
-                icon={<Undo2Icon className="w-5 h-5" />}
+                disabled
               >
                 Restore
               </AppButton>
@@ -112,7 +106,6 @@ export default function GenreCard({
               <AppButton
                 color="danger"
                 onClick={() => onDelete(genre.genre_id)}
-                icon={<Trash2Icon className="w-5 h-5" />}
               >
                 Delete
               </AppButton>

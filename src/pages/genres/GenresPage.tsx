@@ -1,7 +1,12 @@
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../store/store";
-import { addGenre, softDeleteGenre, restoreGenre, updateGenre, updateGenreIcon } from "../../store/genresSlice";
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import {
+  fetchGenres,
+  addGenreAsync,
+  updateGenreAsync,
+  deleteGenreAsync,
+} from "../../store/genresSlice";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { genreIconMap } from "../../utils/genreIcons";
 import Loading from "../../components/UI/Loading";
 import { SatelliteToast } from "../../components/UI/SatelliteToast";
@@ -13,13 +18,12 @@ import GenreStack from "./components/GenreStack";
 const availableIcons = Object.entries(genreIconMap).map(([name, icon]) => ({ name, icon }));
 
 export default function GenresPage() {
-  const genres = useSelector((state: RootState) => state.genres);
+  const { items: genres, loading } = useSelector((state: RootState) => state.genres);
   const dispatch = useDispatch<AppDispatch>();
   const [newGenreName, setNewGenreName] = useState("");
   const [stackMode, setStackMode] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedIcon, setSelectedIcon] = useState(availableIcons[0].name);
-  const [loading, setLoading] = useState(true);
   const [editingGenreId, setEditingGenreId] = useState<number | null>(null);
   const [editingGenreName, setEditingGenreName] = useState("");
   const [editingGenreIcon, setEditingGenreIcon] = useState(availableIcons[0].name);
@@ -27,26 +31,35 @@ export default function GenresPage() {
   // Satellite toast ref
   const toastRef = useRef<{ showNotification: (options: Omit<unknown, "id">) => void }>(null);
 
-  // Simulate loading or wait for data fetch
+  // Fetch genres on mount
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
+    dispatch(fetchGenres());
+  }, [dispatch]);
 
   // Add genre with selected icon
-  const handleAddGenre = () => {
+  const handleAddGenre = async () => {
     if (newGenreName && !genres.some(g => g.genre_name === newGenreName)) {
       const newId = genres.length ? Math.max(...genres.map(g => g.genre_id)) + 1 : 1;
-      dispatch(addGenre({ genre_id: newId, genre_name: newGenreName, icon: selectedIcon }));
-      setNewGenreName("");
-      setSelectedIcon(availableIcons[0].name);
-      toastRef.current?.showNotification({
-        title: "Genre Added",
-        content: `Genre "${newGenreName}" was added successfully.`,
-        accentColor: "#22c55e",
-        position: "bottom-right",
-        longevity: 3000,
-      });
+      try {
+        await dispatch(addGenreAsync({ genre_id: newId, genre_name: newGenreName, icon: selectedIcon })).unwrap();
+        setNewGenreName("");
+        setSelectedIcon(availableIcons[0].name);
+        toastRef.current?.showNotification({
+          title: "Genre Added",
+          content: `Genre "${newGenreName}" was added successfully.`,
+          accentColor: "#22c55e",
+          position: "bottom-right",
+          longevity: 3000,
+        });
+      } catch {
+        toastRef.current?.showNotification({
+          title: "Error",
+          content: "Failed to add genre.",
+          accentColor: "#ef4444",
+          position: "bottom-right",
+          longevity: 3000,
+        });
+      }
     } else {
       toastRef.current?.showNotification({
         title: "Genre Exists",
@@ -58,41 +71,26 @@ export default function GenresPage() {
     }
   };
 
-  const handleSoftDeleteGenre = useCallback((genre_id: number) => {
-    dispatch(softDeleteGenre(genre_id));
-    const genre = genres.find(g => g.genre_id === genre_id);
-    toastRef.current?.showNotification({
-      title: "Genre Deleted",
-      content: `Genre "${genre?.genre_name}" was deleted.`,
-      accentColor: "#ef4444",
-      position: "bottom-right",
-      longevity: 3000,
-    });
-  }, [dispatch, genres]);
-
-  const handleRestoreGenre = useCallback((genre_id: number) => {
-    dispatch(restoreGenre(genre_id));
-    const genre = genres.find(g => g.genre_id === genre_id);
-    toastRef.current?.showNotification({
-      title: "Genre Restored",
-      content: `Genre "${genre?.genre_name}" was restored.`,
-      accentColor: "#22c55e",
-      position: "bottom-right",
-      longevity: 3000,
-    });
-  }, [dispatch, genres]);
-
-  // Update icon for existing genre (Redux)
-  const handleUpdateGenreIcon = (genre_id: number, iconName: string) => {
-    dispatch(updateGenreIcon({ genre_id, icon: iconName }));
-    const genre = genres.find(g => g.genre_id === genre_id);
-    toastRef.current?.showNotification({
-      title: "Icon Updated",
-      content: `Icon for "${genre?.genre_name}" updated.`,
-      accentColor: "#2563eb",
-      position: "bottom-right",
-      longevity: 2000,
-    });
+  const handleDeleteGenre = async (genre_id: number) => {
+    if (typeof genre_id !== "number") return;
+    try {
+      await dispatch(deleteGenreAsync(genre_id)).unwrap();
+      toastRef.current?.showNotification({
+        title: "Genre Deleted",
+        content: `Genre deleted.`,
+        accentColor: "#ef4444",
+        position: "bottom-right",
+        longevity: 3000,
+      });
+    } catch {
+      toastRef.current?.showNotification({
+        title: "Error",
+        content: "Failed to delete genre.",
+        accentColor: "#ef4444",
+        position: "bottom-right",
+        longevity: 3000,
+      });
+    }
   };
 
   // Edit genre - populate fields for editing
@@ -106,9 +104,10 @@ export default function GenresPage() {
   };
 
   // Update genre (name and icon)
-  const handleUpdateGenre = () => {
+  const handleUpdateGenre = async () => {
     if (
       editingGenreId !== null &&
+      typeof editingGenreId === "number" &&
       editingGenreName.trim() &&
       !genres.some(
         g =>
@@ -116,23 +115,33 @@ export default function GenresPage() {
           g.genre_id !== editingGenreId
       )
     ) {
-      dispatch(
-        updateGenre({
-          genre_id: editingGenreId,
-          genre_name: editingGenreName.trim(),
-          icon: editingGenreIcon,
-        })
-      );
-      toastRef.current?.showNotification({
-        title: "Genre Updated",
-        content: `Genre "${editingGenreName}" was updated.`,
-        accentColor: "#2563eb",
-        position: "bottom-right",
-        longevity: 3000,
-      });
-      setEditingGenreId(null);
-      setEditingGenreName("");
-      setEditingGenreIcon(availableIcons[0].name);
+      try {
+        await dispatch(
+          updateGenreAsync({
+            genre_id: editingGenreId,
+            genre_name: editingGenreName.trim(),
+            icon: editingGenreIcon,
+          })
+        ).unwrap();
+        toastRef.current?.showNotification({
+          title: "Genre Updated",
+          content: `Genre "${editingGenreName}" was updated.`,
+          accentColor: "#2563eb",
+          position: "bottom-right",
+          longevity: 3000,
+        });
+        setEditingGenreId(null);
+        setEditingGenreName("");
+        setEditingGenreIcon(availableIcons[0].name);
+      } catch {
+        toastRef.current?.showNotification({
+          title: "Error",
+          content: "Failed to update genre.",
+          accentColor: "#ef4444",
+          position: "bottom-right",
+          longevity: 3000,
+        });
+      }
     } else {
       toastRef.current?.showNotification({
         title: "Update Failed",
@@ -144,10 +153,14 @@ export default function GenresPage() {
     }
   };
 
-  const filteredGenres = useMemo(() =>
-    genres.filter(g =>
-      g.genre_name.toLowerCase().includes(search.toLowerCase())
-    ),
+  // Update: Use only g.genre_name for filtering, since your Genre type does not have 'name'
+  const filteredGenres = useMemo(
+    () =>
+      genres.filter(g =>
+        (g.genre_name ?? "")
+          .toLowerCase()
+          .includes(search.toLowerCase())
+      ),
     [genres, search]
   );
 
@@ -193,8 +206,8 @@ export default function GenresPage() {
           {stackMode ? (
             <GenreStack
               genres={genres}
-              onRestore={handleRestoreGenre}
-              onDelete={handleSoftDeleteGenre}
+              onRestore={() => {}} // placeholder
+              onDelete={handleDeleteGenre}
             />
           ) : (
             <GenreGrid
@@ -208,9 +221,9 @@ export default function GenresPage() {
               setEditingGenreIcon={setEditingGenreIcon}
               onEdit={handleEditGenre}
               onUpdate={handleUpdateGenre}
-              onDelete={handleSoftDeleteGenre}
-              onRestore={handleRestoreGenre}
-              onUpdateIcon={handleUpdateGenreIcon}
+              onDelete={handleDeleteGenre}
+              onRestore={() => {}} // placeholder
+              onUpdateIcon={handleUpdateGenre}
             />
           )}
         </div>

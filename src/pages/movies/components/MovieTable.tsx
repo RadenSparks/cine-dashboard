@@ -1,12 +1,7 @@
-import { type Movie } from "../../../store/moviesSlice";
+import { type Movie } from "../../../entities/type";
 import { getGenreIcon } from "../../../utils/genreIcons";
 import AppButton from "../../../components/UI/AppButton";
-
-type Genre = {
-  genre_id: number;
-  genre_name: string;
-  icon?: string;
-};
+import { type Genre } from "../../../entities/type";
 
 interface MovieTableProps {
   movies: Movie[];
@@ -17,7 +12,7 @@ interface MovieTableProps {
   onDetail: (movie: Movie) => void;
 }
 
-const MovieTable = ({ movies, genres, onEdit, onDelete, onRestore, onDetail }: MovieTableProps) => {
+const MovieTable = ({ movies, genres, onEdit, onDelete, onDetail }: MovieTableProps) => {
   function isNowShowing(premiere_date: string): boolean {
     const premiere = new Date(premiere_date);
     const now = new Date();
@@ -45,7 +40,7 @@ const MovieTable = ({ movies, genres, onEdit, onDelete, onRestore, onDetail }: M
         <tbody>
           {movies.map(movie => (
             <tr
-              key={movie.movie_id}
+              key={movie.id}
               className={`border-t transition ${movie.deleted ? "opacity-60 bg-gray-100 dark:bg-zinc-800" : "hover:bg-blue-50 dark:hover:bg-zinc-800"}`}
             >
               <td className="p-3 w-24">
@@ -58,25 +53,29 @@ const MovieTable = ({ movies, genres, onEdit, onDelete, onRestore, onDetail }: M
               <td className="p-3 w-56">{movie.title}</td>
               <td className="p-3 w-40">
                 <div className="flex flex-col gap-1">
-                  {movie.genre_ids.length > 0
+                  {(Array.isArray(movie.genre_ids) && movie.genre_ids.length > 0
                     ? movie.genre_ids
-                        .map(id => genres.find(g => g.genre_id === id))
-                        .filter(Boolean)
-                        .map(genre => (
-                          <span
-                            key={genre!.genre_id}
-                            className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-blue-200 via-blue-100 to-blue-300 dark:from-blue-900 dark:via-blue-800 dark:to-blue-900 text-blue-900 dark:text-blue-100 font-semibold text-xs shadow-sm border border-blue-300 dark:border-blue-800"
-                          >
-                            {getGenreIcon(genre!.icon)}
-                            {genre!.genre_name}
-                          </span>
-                        ))
-                    : <span className="text-gray-400">Unknown</span>
-                  }
+                    : [])
+                    .map(id => genres.find(g => g.genre_id === id))
+                    .filter(Boolean)
+                    .map(genre => (
+                      <span
+                        key={genre!.genre_id}
+                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-blue-200 via-blue-100 to-blue-300 dark:from-blue-900 dark:via-blue-800 dark:to-blue-900 text-blue-900 dark:text-blue-100 font-semibold text-xs shadow-sm border border-blue-300 dark:border-blue-800"
+                      >
+                        {getGenreIcon(genre!.icon)}
+                        {genre!.genre_name}
+                      </span>
+                    ))}
                 </div>
               </td>
               <td className="p-3 w-24">{movie.duration} min</td>
-              <td className="p-3 w-20">{movie.premiere_date.slice(0, 4)}</td>
+              <td className="p-3 w-20">
+                {typeof movie.premiere_date === "string" && movie.premiere_date.length >= 4
+                  ? movie.premiere_date.slice(0, 4)
+                  : <span className="text-gray-400">N/A</span>
+                }
+              </td>
               <td className="p-3 w-20">
                 {typeof movie.rating === "number"
                   ? <span className="font-bold text-blue-700 dark:text-blue-200">{movie.rating.toFixed(1)}</span>
@@ -112,25 +111,25 @@ const MovieTable = ({ movies, genres, onEdit, onDelete, onRestore, onDetail }: M
                   <AppButton color="primary" onClick={() => onDetail(movie)}>
                     Details
                   </AppButton>
-                  <AppButton color="success" onClick={() => onEdit(movie)}>
+                  <AppButton color="success" onClick={() => onEdit(movie)} disabled={movie.deleted}>
                     Edit
                   </AppButton>
-                  {movie.deleted ? (
-                    <AppButton color="success" onClick={() => onRestore(movie.movie_id)}>
+                  <AppButton color="danger" onClick={() => onDelete(movie.id)} disabled={movie.deleted}>
+                    Delete
+                  </AppButton>
+                  {/* If you implement restore, enable this button */}
+                  {/* {movie.deleted && (
+                    <AppButton color="success" onClick={() => onRestore(movie.id)}>
                       Restore
                     </AppButton>
-                  ) : (
-                    <AppButton color="danger" onClick={() => onDelete(movie.movie_id)}>
-                      Delete
-                    </AppButton>
-                  )}
+                  )} */}
                 </div>
               </td>
             </tr>
           ))}
           {movies.length === 0 && (
             <tr>
-              <td colSpan={8} className="p-3 text-center text-gray-400">No movies found.</td>
+              <td colSpan={9} className="p-3 text-center text-gray-400">No movies found.</td>
             </tr>
           )}
         </tbody>

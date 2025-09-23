@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
-import { useSelector } from "react-redux";
-import { type RootState } from "../../store/store";
+import { useSelector, useDispatch } from "react-redux";
+import { type RootState, type AppDispatch } from "../../store/store";
+import { fetchMovies } from "../../store/moviesSlice";
 import { Card, CardBody, CardHeader, toast } from "@heroui/react";
 import {
   ChartLineIcon,
@@ -29,7 +30,7 @@ import {
 import React from "react";
 import { EvervaultCard } from "../../components/UI/EvervaultCard";
 import { InfiniteMovingCards } from "../../components/UI/InfiniteMovingCards";
-import type { Movie } from "../../store/moviesSlice";
+import type { Movie } from "../../entities/type";
 
 // --- Aceternity Card Flip Component ---
 function FlipCard({ front, back }: { front: React.ReactNode; back: React.ReactNode }) {
@@ -75,7 +76,7 @@ function TopBookedMoviesFlip({ movies }: { movies: Movie[] }) {
               <p className="font-semibold text-lg text-blue-700 text-center">{movie.title}</p>
               <div className="flex items-center gap-1 text-yellow-500 mt-1">
                 <StarIcon className="w-4 h-4" />
-                {movie.averageRating ?? "N/A"}
+                {movie.rating ?? "N/A"}
               </div>
             </div>
           }
@@ -94,55 +95,65 @@ function TopBookedMoviesFlip({ movies }: { movies: Movie[] }) {
   );
 }
 
-// --- Mock Data for Stat Cards ---
-const dashboardCards = [
-  {
-    title: "Total Movies",
-    value: 128,
-    icon: PlayCircleIcon,
-    color: "text-success",
-  },
-  {
-    title: "Total Genres",
-    value: 8,
-    icon: StarIcon,
-    color: "text-primary",
-  },
-  {
-    title: "Total Bookings",
-    value: 542,
-    icon: ChartLineIcon,
-    color: "text-warning",
-  },
-  {
-    title: "Total Users",
-    value: 312,
-    icon: User2Icon,
-    color: "text-danger",
-  },
-];
-
 // --- Pie Chart Colors ---
 const pieColors = ["#2563eb", "#f59e42", "#a855f7", "#10b981"];
 
 const Dashboard = () => {
-  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch<AppDispatch>();
+  const { items: movies, loading } = useSelector((state: RootState) => state.movies);
+
   const [hovered, setHovered] = useState<number | null>(null);
   const [currentComment, setCurrentComment] = useState(0);
   const [fade, setFade] = useState(true);
 
-  // --- Redux selectors ---
-  const movies = useSelector((state: RootState) => state.movies);
+  // --- Stat Cards (now dynamic) ---
+  const genres = useSelector((state: RootState) => state.genres);
+  const users = useSelector((state: RootState) => state.users?.users ?? []);
+  // You may want to fetch bookings from API in the future
+  const totalBookings = movies.length * 5; // mock
+
+  const dashboardCards = [
+    {
+      title: "Total Movies",
+      value: movies.length,
+      icon: PlayCircleIcon,
+      color: "text-success",
+    },
+    {
+      title: "Total Genres",
+      value: genres.length,
+      icon: StarIcon,
+      color: "text-primary",
+    },
+    {
+      title: "Total Bookings",
+      value: totalBookings,
+      icon: ChartLineIcon,
+      color: "text-warning",
+    },
+    {
+      title: "Total Users",
+      value: users.length,
+      icon: User2Icon,
+      color: "text-danger",
+    },
+  ];
 
   useEffect(() => {
-    setTimeout(() => {
-      setLoading(false);
+    dispatch(fetchMovies());
+    // You may want to dispatch fetchGenres() and fetchUsers() if not already loaded
+    // dispatch(fetchGenres());
+    // dispatch(fetchUsers());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (!loading) {
       toast({
         color: "success",
         message: "Dashboard data loaded!",
       });
-    }, 800);
-  }, []);
+    }
+  }, [loading]);
 
   // --- Example: Generate sales chart data from movies ---
   const salesChartData = useMemo(() => {
@@ -373,19 +384,19 @@ const Dashboard = () => {
               key={currentComment}
             >
               <span className="font-semibold text-gray-800 truncate">
-                {comments[currentComment].user}
+                {comments[currentComment]?.user}
               </span>
               <span className="text-gray-600 text-sm mb-1">
                 about{" "}
                 <span className="font-medium">
-                  {comments[currentComment].movie}
+                  {comments[currentComment]?.movie}
                 </span>
               </span>
               <p className="text-gray-700 text-sm mb-2 max-w-xs">
-                {comments[currentComment].comment}
+                {comments[currentComment]?.comment}
               </p>
               <span className="text-xs text-gray-400">
-                {comments[currentComment].date}
+                {comments[currentComment]?.date}
               </span>
               <div className="flex gap-1 mt-3 justify-center">
                 {comments.map((_, idx) => (

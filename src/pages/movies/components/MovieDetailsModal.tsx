@@ -1,13 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { type Movie } from "../../../store/moviesSlice";
+import { type Movie } from "../../../entities/type";
 import AppButton from "../../../components/UI/AppButton";
 import { getGenreIcon } from "../../../utils/genreIcons";
-
-type Genre = {
-  genre_id: number;
-  genre_name: string;
-  icon?: string;
-};
+import { type Genre } from "../../../entities/type";
 
 interface MovieDetailsModalProps {
   movie: Movie | null;
@@ -108,7 +103,12 @@ export default function MovieDetailsModal({
                 </div>
                 <div>
                   <div className="font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase text-xs tracking-wider">Premiere</div>
-                  <div className="text-2xl font-bold text-blue-700 dark:text-blue-200">{movie.premiere_date}</div>
+                  <div className="text-2xl font-bold text-blue-700 dark:text-blue-200">
+                    {typeof movie.premiere_date === "string" && movie.premiere_date.length >= 4
+                      ? movie.premiere_date.slice(0, 4)
+                      : <span className="text-gray-400">N/A</span>
+                    }
+                  </div>
                 </div>
                 <div>
                   <div className="font-semibold text-gray-600 dark:text-gray-400 mb-1 uppercase text-xs tracking-wider">Rating</div>
@@ -153,7 +153,7 @@ export default function MovieDetailsModal({
               <div className="mb-8">
                 <div className="font-semibold text-gray-600 dark:text-gray-400 mb-2 uppercase text-xs tracking-wider">Genres</div>
                 <div className="flex flex-wrap gap-3">
-                  {movie.genre_ids
+                  {(movie.genre_ids ?? [])
                     .map(id => genres.find(g => g.genre_id === id))
                     .filter(Boolean)
                     .map(genre => (
