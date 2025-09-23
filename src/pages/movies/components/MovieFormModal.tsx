@@ -1,13 +1,9 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { type Movie } from "../../../store/moviesSlice";
+import { type Movie } from "../../../entities/type";
 import { Select, SelectItem } from "@heroui/react";
 import { useMemo, useRef, useState } from "react";
 import AppButton from "../../../components/UI/AppButton"; // Adjust the import path as necessary
-
-type Genre = {
-  genre_id: number;
-  genre_name: string;
-};
+import { type Genre } from "../../../entities/type";
 
 interface MovieFormModalProps {
   show: boolean;
@@ -29,25 +25,19 @@ export default function MovieFormModal({
   onSubmit,
 }: MovieFormModalProps) {
   const current = editing ?? newMovie;
-  const formValid =
-    current.title.length >= 2 &&
-    current.genre_ids.length > 0 &&
-    current.duration >= 1 &&
-    !!current.premiere_date &&
-    (
-      !current.poster ||
-      /^https?:\/\/.+/.test(current.poster)
-    ) &&
-    (typeof current.rating === "undefined" || (current.rating >= 0 && current.rating <= 10));
+  const genreIds = useMemo(
+    () => (Array.isArray(current.genre_ids) ? current.genre_ids : []),
+    [current.genre_ids]
+  );
 
   // For displaying selected genres as comma-separated names
   const selectedGenreNames = useMemo(
     () =>
       genres
-        .filter(g => current.genre_ids.includes(g.genre_id))
+        .filter(g => genreIds.includes(g.genre_id))
         .map(g => g.genre_name)
         .join(", ") || "Select genres",
-    [current.genre_ids, genres]
+    [genreIds, genres]
   );
 
   // Local state for the date input (to allow manual typing)
@@ -69,6 +59,18 @@ export default function MovieFormModal({
 
   // Ref for DatePicker popover container
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Validation logic for the form
+  const formValid =
+    current.title.length >= 2 &&
+    genreIds.length > 0 &&
+    current.duration >= 1 &&
+    !!current.premiere_date &&
+    (
+      !current.poster ||
+      /^https?:\/\/.+/.test(current.poster)
+    ) &&
+    (typeof current.rating === "undefined" || (current.rating >= 0 && current.rating <= 10));
 
   return show && (
     <AnimatePresence>
@@ -171,7 +173,7 @@ export default function MovieFormModal({
                   </label>
                   <Select
                     selectionMode="multiple"
-                    selectedKeys={current.genre_ids.map(String)}
+                    selectedKeys={genreIds.map(String)}
                     onSelectionChange={keys => {
                       const selected = Array.from(keys as Set<string>).map(Number);
                       onChange({ ...current, genre_ids: selected });
@@ -193,9 +195,9 @@ export default function MovieFormModal({
                     selectorIcon={<></>} // <-- Fix: use empty fragment
                   >
                     {genres.map(genre => {
-                      const isSelected = current.genre_ids.includes(genre.genre_id);
+                      const isSelected = genreIds.includes(genre.genre_id);
                       return (
-                        <SelectItem key={genre.genre_id.toString()}>
+                        <SelectItem key={genre.genre_id.toString()} textValue={genre.genre_name}>
                           <span className="flex items-center">
                             <span
                               className={`inline-block w-2.5 h-2.5 rounded-full mr-2 border border-blue-400 ${
@@ -210,7 +212,7 @@ export default function MovieFormModal({
                       );
                     })}
                   </Select>
-                  {current.genre_ids.length === 0 && (
+                  {genreIds.length === 0 && (
                     <p className="text-xs text-red-500 mt-1">Select at least one genre.</p>
                   )}
                 </div>
@@ -267,6 +269,7 @@ export default function MovieFormModal({
                             premiere_date: e.target.value,
                           });
                         }}
+                        required
                         className="border border-blue-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-800/80 pl-10 pr-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-400 focus:outline-none text-blue-700 dark:text-blue-200 font-semibold transition-all shadow-sm"
                         style={{
                           minWidth: 0,

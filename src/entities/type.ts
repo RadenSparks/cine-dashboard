@@ -1,17 +1,17 @@
 export type Movie = {
-  movie_id: number;
+  id: number;
   title: string;
   description?: string;
   duration: number;
   premiere_date: string;
   poster?: string;
   genre_ids: number[];
-  rating?: number; // <-- NEW
+  rating?: number;
   deleted?: boolean;
 };
 
 export type Genre = {
-  genre_id: number;
+  genre_id: number; // Use genre_id to match backend
   genre_name: string;
   icon?: string;
   deleted?: boolean;
@@ -20,7 +20,7 @@ export type Genre = {
 export type Room = {
   room_id: number;
   room_name: string;
-  premium_seats: string; // comma-separated seat IDs, e.g. "A1,A2,B1"
+  premium_seats: string;
 };
 
 export type User = {
@@ -31,8 +31,8 @@ export type User = {
   phoneNumber: string;
   role: 'ADMIN' | 'USER';
   active: boolean;
-  tier?: number;      // <-- Add this
-  points?: number;    // <-- Add this
+  tier?: number;
+  points?: number;
 };
 
 export type ApiResponse<T> = {

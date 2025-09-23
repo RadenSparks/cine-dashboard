@@ -1,134 +1,169 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
+import { type Movie, type ApiResponse } from '../entities/type';
+import { type MovieApiDTO } from '../dto/dto';
+import { get, post, put, remove } from '../client/axiosCilent';
 
-export type Movie = {
-  movie_id: number;
+const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
+const API_URL = `${BASE_API.replace(/\/$/, "")}/movies`;
+
+// Utility to get access token from localStorage
+function getAuthHeaders(): Record<string, string> {
+  const userDetails = localStorage.getItem("cine-user-details");
+  const accessToken = userDetails ? JSON.parse(userDetails).accessToken : null;
+  return accessToken
+    ? { Authorization: `Bearer ${accessToken}` }
+    : {};
+}
+
+// Define the shape of the movie object as returned by the API
+type MovieApiResponse = {
+  id: number;
   title: string;
   description?: string;
   duration: number;
-  premiere_date: string;
+  premiereDate: string;
   poster?: string;
-  genre_ids: number[];
-  rating?: number; // <-- NEW
+  genres: { id: number; name: string; icon?: string }[]; // <-- array of objects
+  rating?: number;
   deleted?: boolean;
 };
 
-const initialState: Movie[] = [
-  {
-    movie_id: 1,
-    title: "Inception",
-    description: "A thief who steals corporate secrets through the use of dream-sharing technology is given the inverse task of planting an idea into the mind of a CEO.",
-    duration: 148,
-    premiere_date: "2025-09-16",
-    poster: "https://images-na.ssl-images-amazon.com/images/I/71uKM+LdgFL.jpg",
-    genre_ids: [1, 3], // Example: Sci-Fi, Drama
-    rating: 8.8, // <-- NEW
-  },
-  {
-    movie_id: 2,
-    title: "The Godfather",
-    description: "The Godfather is a 1972 American crime drama following the powerful Corleone mafia family, particularly the patriarch, Vito, and his youngest son, Michael. The story chronicles Michael's transformation from a reluctant outsider to a ruthless Mafia boss, as he becomes entangled in the family's violent underworld and eventually succeeds his father. The film explores themes of family, power, loyalty, and the moral corruption of the American dream within the context of a Shakespearean-style tragedy.  ",
-    duration: 175,
-    premiere_date: "2025-10-01",
-    poster: "https://www.lab111.nl/wp-content/uploads/2024/04/s-l1600.png",
-    genre_ids: [2],
-    rating: 9.2, // <-- NEW
-  },
-  {
-    movie_id: 3,
-    title: "Interstellar",
-    description: "A team of explorers travel through a wormhole in space in an attempt to ensure humanity's survival.",
-    duration: 169,
-    premiere_date: "2024-08-01",
-    poster: "https://m.media-amazon.com/images/I/91kFYg4fX3L._AC_SY679_.jpg",
-    genre_ids: [1, 3],
-  },
-  {
-    movie_id: 4,
-    title: "Pacific Rim",
-    description: "As a war between humankind and monstrous sea creatures wages on, a former pilot and a trainee are paired up to drive a seemingly obsolete giant robot.",
-    duration: 131,
-    premiere_date: "2024-07-10",
-    poster: "https://images-na.ssl-images-amazon.com/images/I/51Qsnm2gUkL.jpg",
-    genre_ids: [1, 3],
-  },
-  {
-    movie_id: 5,
-    title: "The Matrix",
-    description: "A computer hacker learns about the true nature of his reality and his role in the war against its controllers.",
-    duration: 136,
-    premiere_date: "2025-11-01",
-    poster: "https://m.media-amazon.com/images/I/51EG732BV3L.jpg",
-    genre_ids: [1, 3],
-    rating: 8.7,
-  },
-  {
-    movie_id: 6,
-    title: "Parasite",
-    description: "Greed and class discrimination threaten the newly formed symbiotic relationship between the wealthy Park family and the destitute Kim clan.",
-    duration: 132,
-    premiere_date: "2025-12-01",
-    poster: "https://image.tmdb.org/t/p/original/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
-    genre_ids: [2, 3],
-    rating: 8.6,
-  },
-  {
-    movie_id: 7,
-    title: "Avengers: Endgame",
-    description: "After the devastating events of Infinity War, the Avengers assemble once more to reverse Thanos' actions and restore balance.",
-    duration: 181,
-    premiere_date: "2025-12-15",
-    poster: "https://m.media-amazon.com/images/I/81ExhpBEbHL._AC_SY679_.jpg",
-    genre_ids: [1, 3],
-    rating: 8.4,
-  },
-  {
-    movie_id: 8,
-    title: "Joker",
-    description: "In Gotham City, mentally troubled comedian Arthur Fleck embarks on a downward spiral that leads to the creation of the iconic Joker.",
-    duration: 122,
-    premiere_date: "2026-01-10",
-    poster: "https://m.media-amazon.com/images/I/71c05lTE03L._AC_SY679_.jpg",
-    genre_ids: [2, 3],
-    rating: 8.5,
-  },
-  {
-    movie_id: 9,
-    title: "Forrest Gump",
-    description: "The presidencies of Kennedy and Johnson, the Vietnam War, and more through the eyes of an Alabama man with a low IQ.",
-    duration: 142,
-    premiere_date: "2026-02-01",
-    poster: "https://i.ebayimg.com/images/g/y9gAAOSwUQhi-9Nq/s-l1600.webp",
-    genre_ids: [2, 3],
-    rating: 8.8,
-  },
-  {
-    movie_id: 10,
-    title: "Pulp Fiction",
-    description: "The lives of two mob hitmen, a boxer, a gangster's wife, and a pair of diner bandits intertwine in four tales of violence and redemption.",
-    duration: 154,
-    premiere_date: "2026-03-01",
-    poster: "https://m.media-amazon.com/images/I/71c05lTE03L._AC_SY679_.jpg",
-    genre_ids: [2, 3],
-    rating: 8.9,
-  },
-];
+export const fetchMovies = createAsyncThunk<Movie[]>(
+  'movies/fetchMovies',
+  async () => {
+    const headers = getAuthHeaders();
+    const res = await get<ApiResponse<MovieApiResponse[]>>(API_URL, { headers });
+    const data = res.data;
+    return Array.isArray(data.data)
+      ? data.data.map((m): Movie => ({
+          id: m.id,
+          title: m.title,
+          description: m.description,
+          duration: m.duration,
+          premiere_date: m.premiereDate,
+          poster: m.poster,
+          genre_ids: Array.isArray(m.genres) ? m.genres.map(g => g.id) : [],
+          rating: m.rating,
+          deleted: m.deleted,
+        }))
+      : [];
+  }
+);
+
+export const addMovieAsync = createAsyncThunk<Movie, MovieApiDTO>(
+  'movies/addMovie',
+  async (movieDto) => {
+    const headers = getAuthHeaders();
+    const res = await post<ApiResponse<MovieApiResponse>>(API_URL, movieDto, { headers });
+    const m = res.data.data;
+    return {
+      id: m.id,
+      title: m.title,
+      description: m.description,
+      duration: m.duration,
+      premiere_date: m.premiereDate,
+      poster: m.poster,
+      genre_ids: Array.isArray(m.genres) ? m.genres.map(g => g.id) : [],
+      rating: m.rating,
+      deleted: m.deleted,
+    };
+  }
+);
+
+export const updateMovieAsync = createAsyncThunk<Movie, MovieApiDTO>(
+  'movies/updateMovie',
+  async (movieDto) => {
+    if (!movieDto.id) throw new Error("Movie ID is required for update");
+    const headers = getAuthHeaders();
+    const res = await put<ApiResponse<MovieApiResponse>>(`${API_URL}/${movieDto.id}`, movieDto, { headers });
+    const m = res.data.data;
+    return {
+      id: m.id,
+      title: m.title,
+      description: m.description,
+      duration: m.duration,
+      premiere_date: m.premiereDate,
+      poster: m.poster,
+      genre_ids: Array.isArray(m.genres) ? m.genres.map(g => g.id) : [],
+      rating: m.rating,
+      deleted: m.deleted,
+    };
+  }
+);
+
+// SOFT DELETE: backend marks as deleted, returns updated movie object
+export const deleteMovieAsync = createAsyncThunk<Movie, number>(
+  'movies/deleteMovie',
+  async (id, { getState }) => {
+    const headers = getAuthHeaders();
+    const res = await remove<ApiResponse<MovieApiResponse>>(`${API_URL}/${id}`, { headers });
+    const m = res.data.data;
+    if (m) {
+      return {
+        id: m.id,
+        title: m.title,
+        description: m.description,
+        duration: m.duration,
+        premiere_date: m.premiereDate,
+        poster: m.poster,
+        genre_ids: Array.isArray(m.genres) ? m.genres.map(g => g.id) : [],
+        rating: m.rating,
+        deleted: true,
+      };
+    }
+    // fallback: find movie in state and mark as deleted
+    const state = getState() as { movies: { items: Movie[] } };
+    const movie = state.movies.items.find(m => m.id === id);
+    if (movie) {
+      return { ...movie, deleted: true };
+    }
+    throw new Error("Movie not found or backend did not return movie object");
+  }
+);
+
+interface MoviesState {
+  items: Movie[];
+  loading: boolean;
+  error: string | null;
+}
+
+const initialState: MoviesState = {
+  items: [],
+  loading: false,
+  error: null,
+};
 
 const moviesSlice = createSlice({
   name: 'movies',
   initialState,
-  reducers: {
-    addMovie: (state, action: PayloadAction<Movie>) => {
-      state.push(action.payload);
-    },
-    updateMovie: (state, action: PayloadAction<Movie>) => {
-      const idx = state.findIndex(m => m.movie_id === action.payload.movie_id);
-      if (idx !== -1) state[idx] = action.payload;
-    },
-    deleteMovie: (state, action: PayloadAction<number>) => {
-      return state.filter(m => m.movie_id !== action.payload);
-    },
+  reducers: {},
+  extraReducers: builder => {
+    builder
+      .addCase(fetchMovies.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchMovies.fulfilled, (state, action: PayloadAction<Movie[]>) => {
+        state.items = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchMovies.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || "Failed to fetch movies";
+      })
+      .addCase(addMovieAsync.fulfilled, (state, action: PayloadAction<Movie>) => {
+        state.items.push(action.payload);
+      })
+      .addCase(updateMovieAsync.fulfilled, (state, action: PayloadAction<Movie>) => {
+        const idx = state.items.findIndex(m => m.id === action.payload.id);
+        if (idx !== -1) state.items[idx] = action.payload;
+      })
+      // SOFT DELETE: mark as deleted, don't remove from list
+      .addCase(deleteMovieAsync.fulfilled, (state, action: PayloadAction<Movie>) => {
+        const idx = state.items.findIndex(m => m.id === action.payload.id);
+        if (idx !== -1) state.items[idx] = action.payload;
+      });
   },
 });
 
-export const { addMovie, updateMovie, deleteMovie } = moviesSlice.actions;
 export default moviesSlice.reducer;

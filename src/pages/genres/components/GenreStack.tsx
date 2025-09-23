@@ -23,6 +23,7 @@ export default function GenreStack({ genres, onRestore, onDelete }: GenreStackPr
             <button
               className="inline-flex items-center gap-1 px-4 py-2 rounded-lg bg-green-600/80 text-white font-semibold text-sm shadow hover:bg-green-500 transition"
               onClick={() => onRestore(genre.genre_id)}
+              disabled
             >
               <Undo2Icon className="w-4 h-4" />
               Restore
