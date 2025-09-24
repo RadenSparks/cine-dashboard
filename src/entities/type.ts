@@ -40,3 +40,13 @@ export type ApiResponse<T> = {
   message: string;
   success: 'SUCCESS' | 'ERROR' | 'FAILURE';
 };
+
+export type Session = {
+  session_id: number;
+  movie_id: number;
+  room_id: number;
+  session_date: string; // "YYYY-MM-DD"
+  created_at?: string;
+  updated_at?: string;
+  deleted?: boolean;
+};
