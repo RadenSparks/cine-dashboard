@@ -1,41 +1,123 @@
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import type { Room } from "../entities/type";
 
-export type Room = {
-  room_id: number;
-  room_name: string;
-  premium_seats: string; // comma-separated seat IDs, e.g. "A1,A2,B1"
-};
+const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
+const API_URL = `${BASE_API.replace(/\/$/, "")}/rooms`;
+
+export const fetchRooms = createAsyncThunk<Room[]>(
+  "rooms/fetchRooms",
+  async () => {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    return Array.isArray(data.data) ? data.data : [];
+  }
+);
+
+export const updateRoom = createAsyncThunk<Room, Room>(
+  "rooms/updateRoom",
+  async (room) => {
+    const res = await fetch(`${API_URL}/${room.room_id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(room),
+    });
+    const data = await res.json();
+    return data.data;
+  }
+);
+
+export const addRoom = createAsyncThunk<Room, Omit<Room, "room_id">>(
+  "rooms/addRoom",
+  async (room) => {
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(room),
+    });
+    const data = await res.json();
+    return data.data;
+  }
+);
+
+export const deleteRoom = createAsyncThunk<number, number>(
+  "rooms/deleteRoom",
+  async (room_id) => {
+    await fetch(`${API_URL}/${room_id}`, { method: "DELETE" });
+    return room_id;
+  }
+);
 
 interface RoomsState {
   rooms: Room[];
   selectedRoomId: number | null;
+  loading: boolean;
+  error: string | null;
 }
 
 const initialState: RoomsState = {
-  rooms: [
-    { room_id: 1, room_name: "Room 1", premium_seats: "A1,A2,B1" },
-    { room_id: 2, room_name: "Room 2", premium_seats: "E1,E2,E10,E11" },
-  ],
-  selectedRoomId: 1,
+  rooms: [],
+  selectedRoomId: null,
+  loading: false,
+  error: null,
 };
 
 const roomsSlice = createSlice({
   name: "rooms",
   initialState,
   reducers: {
-    addRoom(state, action: PayloadAction<Omit<Room, "room_id">>) {
-      const nextId = Math.max(0, ...state.rooms.map(r => r.room_id)) + 1;
-      state.rooms.push({ room_id: nextId, ...action.payload });
-    },
-    updateRoom(state, action: PayloadAction<Room>) {
-      const idx = state.rooms.findIndex(r => r.room_id === action.payload.room_id);
-      if (idx !== -1) state.rooms[idx] = action.payload;
-    },
-    selectRoom(state, action: PayloadAction<number>) {
+    selectRoom(state, action) {
       state.selectedRoomId = action.payload;
     },
+    savePreset(state, action) {
+      const { room_id, preset } = action.payload;
+      const room = state.rooms.find(r => r.room_id === room_id);
+      if (room) {
+        room.presets = room.presets || [];
+        room.presets.push(preset);
+      }
+    },
+    selectPreset(state, action) {
+      const { room_id, presetName } = action.payload;
+      const room = state.rooms.find(r => r.room_id === room_id);
+      if (room && room.presets) {
+        const preset = room.presets.find(p => p.name === presetName);
+        if (preset) {
+          room.premium_seats = preset.premium_seats;
+          room.room_layout = preset.room_layout;
+        }
+      }
+    },
+    deletePreset(state, action) {
+      const { room_id, presetName } = action.payload;
+      const room = state.rooms.find(r => r.room_id === room_id);
+      if (room && room.presets) {
+        room.presets = room.presets.filter(p => p.name !== presetName);
+      }
+    }
   },
+  extraReducers: builder => {
+    builder
+      .addCase(fetchRooms.pending, state => { state.loading = true; })
+      .addCase(fetchRooms.fulfilled, (state, action) => {
+        state.loading = false;
+        state.rooms = action.payload;
+      })
+      .addCase(fetchRooms.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || null;
+      })
+      .addCase(updateRoom.fulfilled, (state, action) => {
+        const idx = state.rooms.findIndex(r => r.room_id === action.payload.room_id);
+        if (idx !== -1) state.rooms[idx] = action.payload;
+      })
+      .addCase(addRoom.fulfilled, (state, action) => {
+        state.rooms.push(action.payload);
+      })
+      .addCase(deleteRoom.fulfilled, (state, action) => {
+        state.rooms = state.rooms.filter(r => r.room_id !== action.payload);
+      });
+  }
 });
 
-export const { addRoom, updateRoom, selectRoom } = roomsSlice.actions;
+export const { selectRoom, savePreset, selectPreset, deletePreset } = roomsSlice.actions;
 export default roomsSlice.reducer;

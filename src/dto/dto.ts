@@ -25,3 +25,23 @@ export type GenreApiDTO = {
   name: string;
   icon?: string;
 };
+
+export type RoomApiDTO = {
+  room_id?: number;
+  room_name: string;
+  room_capacity: number;
+  room_layout?: string;
+  premium_seats: string;
+  deleted?: boolean;
+};
+
+export type SeatApiDTO = {
+  seat_id?: number;
+  room_id: number;
+  seat_code: string;
+  seat_row: string;
+  seat_column: string;
+  seat_type: string;
+  status?: string;
+  deleted?: boolean;
+};
