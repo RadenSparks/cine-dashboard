@@ -3,6 +3,8 @@ import moviesReducer from './moviesSlice';
 import genresReducer from './genresSlice';
 import roomsReducer from './roomsSlice';
 import userReducer from "./userSlice"; 
+import sessionsReducer from './sessionsSlice';
+import seatsReducer from './seatsSlice';
 
 
 export const store = configureStore({
@@ -11,6 +13,8 @@ export const store = configureStore({
     genres: genresReducer,
     rooms: roomsReducer,
     users: userReducer,
+    sessions: sessionsReducer,
+    seats: seatsReducer,
   },
 });
 

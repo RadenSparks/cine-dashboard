@@ -17,10 +17,27 @@ export type Genre = {
   deleted?: boolean;
 };
 
+export type RoomPreset = {
+  name: string;
+  premium_seats: string; // Comma-separated seat IDs
+  empty_seats: string[]; // Array of seat IDs that are empty
+  room_layout?: string;
+  room_rows: number;
+  room_cols: number;
+};
+
 export type Room = {
   room_id: number;
   room_name: string;
+  room_rows: number;
+  room_cols: number;
+  room_layout?: string;
   premium_seats: string;
+  empty_seats?: string[]; // <-- Add this
+  presets?: RoomPreset[];
+  created_at?: string;
+  updated_at?: string;
+  deleted?: boolean;
 };
 
 export type User = {
@@ -39,4 +56,27 @@ export type ApiResponse<T> = {
   data: T;
   message: string;
   success: 'SUCCESS' | 'ERROR' | 'FAILURE';
+};
+
+export type Session = {
+  session_id: number;
+  movie_id: number;
+  room_id: number;
+  session_date: string; // "YYYY-MM-DD"
+  created_at?: string;
+  updated_at?: string;
+  deleted?: boolean;
+};
+
+export type Seat = {
+  seat_id: number;
+  room_id: number;
+  // seat_code: string;
+  seat_row: string;
+  seat_column: string;
+  seat_type: string; // e.g. "VIP", "Regular"
+  // status: string; // e.g. "Available", "Booked"
+  created_at?: string;
+  updated_at?: string;
+  deleted?: boolean;
 };
