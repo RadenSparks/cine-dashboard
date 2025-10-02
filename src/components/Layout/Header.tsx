@@ -33,6 +33,7 @@ export default function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [showLogoutLoader, setShowLogoutLoader] = useState(false);
+  const [pendingLogout, setPendingLogout] = useState(false);
   const navigate = useNavigate();
 
   React.useEffect(() => {
@@ -47,18 +48,26 @@ export default function Header() {
   const handleLogout = () => {
     setUserMenuOpen(false);
     setShowLogoutLoader(true);
-    setTimeout(() => {
-      localStorage.removeItem("cine-user-details");
-    }, 1200); // After step 2
-    setTimeout(() => {
-      setShowLogoutLoader(false);
-      navigate("/login");
-    }, logoutSteps.length * 1000); // After all steps
+    setPendingLogout(true);
   };
+
+  const handleLogoutComplete = React.useCallback(() => {
+    if (pendingLogout) {
+      localStorage.removeItem("cine-user-details");
+      setPendingLogout(false);
+      navigate("/login");
+      // Don't setShowLogoutLoader(false) here, let navigation happen first
+    }
+  }, [pendingLogout, navigate]);
 
   return (
     <>
-      <LogoutLoader show={showLogoutLoader} steps={logoutSteps} duration={1000} />
+      <LogoutLoader
+        show={showLogoutLoader}
+        steps={logoutSteps}
+        duration={1000}
+        onComplete={handleLogoutComplete}
+      />
       <header className="sticky top-0 z-40 bg-white dark:bg-zinc-900 border-b">
         <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-16 flex items-center justify-between h-16">
           {/* Left: Logo and Dashboard Title */}
@@ -142,6 +151,7 @@ export default function Header() {
                         <button
                           className="flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-neutral-800 transition font-semibold"
                           onClick={handleLogout}
+                          disabled={showLogoutLoader}
                         >
                           <IconLogout className="h-4 w-4" />
                           Logout

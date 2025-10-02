@@ -1,6 +1,6 @@
 import { AnimatePresence, motion } from "framer-motion";
 import AppButton from "../../../components/UI/AppButton";
-import { roleStyles} from "../userHelper";
+import { roleStyles } from "../userHelper";
 import TierSelector from "./TierSelector";
 import { type User } from "../../../entities/type";
 import { useState, useEffect } from "react";
@@ -12,12 +12,51 @@ interface UserModalProps {
   onSave: (user: User) => void;
 }
 
+function isValidPassword(password: string) {
+  // At least 8 characters, one uppercase, one number, one special character
+  return /^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=[\]{};':"\\|,.<>/?]).{8,}$/.test(password);
+}
+
+function isValidPhone(phone: string) {
+  // Accepts numbers, spaces, dashes, parentheses, and must be 8-15 digits
+  return /^(\+?\d{1,3}[- ]?)?\d{8,15}$/.test(phone.replace(/[^\d]/g, ""));
+}
+
 export default function UserModal({ open, user, onClose, onSave }: UserModalProps) {
   const [editingUser, setEditingUser] = useState<User | null>(user);
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
     setEditingUser(user);
+    setNewPassword("");
+    setPasswordError(null);
   }, [user]);
+
+  const validateAndSave = () => {
+    if (!editingUser) return;
+    // Password validation
+    if ((!editingUser.id && !isValidPassword(newPassword)) || (editingUser.id && newPassword && !isValidPassword(newPassword))) {
+      setPasswordError(
+        "Password must be at least 8 characters, include an uppercase letter, a number, and a special character."
+      );
+      return;
+    }
+    setPasswordError(null);
+
+    // Phone validation (if not empty)
+    if (editingUser.phoneNumber && !isValidPhone(editingUser.phoneNumber)) {
+      setPhoneError("Please enter a valid phone number.");
+      return;
+    }
+    setPhoneError(null);
+
+    const userToSave = newPassword
+      ? { ...editingUser, password: newPassword }
+      : { ...editingUser, password: undefined };
+    onSave(userToSave as User);
+  };
 
   if (!editingUser) return null;
 
@@ -36,7 +75,7 @@ export default function UserModal({ open, user, onClose, onSave }: UserModalProp
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 40 }}
             transition={{ type: "spring", stiffness: 220, damping: 18 }}
-            className="relative bg-white/90 dark:bg-zinc-900/90 border border-blue-100 dark:border-zinc-800 rounded-2xl shadow-2xl w-full max-w-lg p-0 overflow-hidden"
+            className="relative bg-white/90 dark:bg-zinc-900/90 border border-blue-100 dark:border-zinc-800 rounded-2xl shadow-2xl w-full max-w-lg p-0 overflow-hidden hide-scrollbar"
             style={{ maxHeight: "90vh", overflowY: "auto" }}
           >
             {/* Modal Header */}
@@ -59,7 +98,7 @@ export default function UserModal({ open, user, onClose, onSave }: UserModalProp
               className="flex flex-col gap-5 px-8 py-8"
               onSubmit={e => {
                 e.preventDefault();
-                if (editingUser) onSave(editingUser);
+                validateAndSave();
               }}
             >
               {/* Name */}
@@ -94,6 +133,28 @@ export default function UserModal({ open, user, onClose, onSave }: UserModalProp
                   required
                 />
               </div>
+              {/* Password (Add or Reset) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                  {editingUser.id ? "Set New Password" : "Password"}{!editingUser.id && <span className="text-red-500">*</span>}
+                </label>
+                <input
+                  className="border border-blue-200 dark:border-zinc-700 bg-white/70 dark:bg-zinc-800/70 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                  placeholder={editingUser.id ? "Leave blank to keep current password" : "Password"}
+                  type="password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  required={!editingUser.id}
+                  minLength={8}
+                  autoComplete="new-password"
+                />
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  Password must be at least 8 characters, include an uppercase letter, a number, and a special character.
+                </span>
+                {passwordError && (
+                  <div className="text-xs text-red-500 mt-1">{passwordError}</div>
+                )}
+              </div>
               {/* Phone Number */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
@@ -110,6 +171,9 @@ export default function UserModal({ open, user, onClose, onSave }: UserModalProp
                     })
                   }
                 />
+                {phoneError && (
+                  <div className="text-xs text-red-500 mt-1">{phoneError}</div>
+                )}
               </div>
               {/* Role */}
               <div>

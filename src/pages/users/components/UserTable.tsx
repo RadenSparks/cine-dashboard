@@ -15,6 +15,8 @@ interface UserTableProps {
   getTierName: (tierId?: number) => string;
   roleStyles: Record<string, string>;
   tierStyles: Record<number, string>;
+  loading?: boolean; // <-- Add this
+  error?: string | null; // <-- Add this
 }
 
 export default function UserTable({
@@ -29,7 +31,10 @@ export default function UserTable({
   getTierName,
   roleStyles,
   tierStyles,
+  loading, // <-- Add this
+  error, // <-- Add this
 }: UserTableProps) {
+
   return (
     <>
       {/* Search & Add */}
@@ -67,81 +72,82 @@ export default function UserTable({
         </AppButton>
       </div>
       {/* Table */}
-      <div className="rounded-2xl overflow-x-auto border border-blue-100 dark:border-zinc-800 shadow-lg bg-white/80 dark:bg-zinc-900/80">
-        <table className="min-w-full table-auto rounded-lg overflow-hidden">
-          <thead>
-            <tr className="bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-200">
-              <th className="p-3 font-semibold text-left">Name</th>
-              <th className="p-3 font-semibold text-left">Email</th>
-              <th className="p-3 font-semibold text-left">Role</th>
-              <th className="p-3 font-semibold text-left">Tier</th>
-              <th className="p-3 font-semibold text-left">Points</th>
-              <th className="p-3 font-semibold text-left">Active</th>
-              <th className="p-3 font-semibold text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="text-center py-8 text-gray-500">
-                  No users found.
-                </td>
+      <div className="rounded-2xl overflow-x-auto border border-blue-100 dark:border-zinc-800 shadow-lg bg-white/80 dark:bg-zinc-900/80 hide-scrollbar">
+        {loading ? (
+          <div className="py-10 text-center text-blue-600 font-bold">Loading users...</div>
+        ) : error ? (
+          <div className="py-10 text-center text-red-600 font-bold">{error}</div>
+        ) : (
+          <table className="min-w-full table-auto rounded-lg overflow-hidden">
+            <thead>
+              <tr className="bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-200">
+                <th className="p-3 font-semibold text-left">Name</th>
+                <th className="p-3 font-semibold text-left">Email</th>
+                {/* Remove Password column */}
+                <th className="p-3 font-semibold text-left">Role</th>
+                <th className="p-3 font-semibold text-left">Tier</th>
+                <th className="p-3 font-semibold text-left">Points</th>
+                <th className="p-3 font-semibold text-left">Active</th>
+                <th className="p-3 font-semibold text-left">Actions</th>
               </tr>
-            ) : (
-              users.map((user, idx) => (
-                <tr
-                  key={user.id}
-                  className={`border-t border-gray-100 dark:border-neutral-800 ${
-                    idx % 2 === 0
-                      ? "bg-white dark:bg-neutral-900"
-                      : "bg-gray-50 dark:bg-neutral-950"
-                  } hover:bg-blue-50 dark:hover:bg-blue-900/30 transition`}
-                >
-                  <td className="p-3">{user.name}</td>
-                  <td className="p-3">{user.email}</td>
-                  <td className="p-3">
-                    <span className={roleStyles[user.role]}>
-                      {user.role === "ADMIN" ? "Admin" : "User"}
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    <span className={tierStyles[user.tier ?? 1]}>
-                      {getTierName(user.tier)}
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    <span className="inline-block px-2 py-1 rounded bg-indigo-100 text-indigo-700 text-xs font-semibold dark:bg-indigo-900 dark:text-indigo-200">
-                      {user.points ?? 0}
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    {user.active ? (
-                      <span className="inline-block px-2 py-1 rounded bg-lime-100 text-lime-700 text-xs font-semibold dark:bg-lime-900 dark:text-lime-300">
-                        Active
-                      </span>
-                    ) : (
-                      <span className="inline-block px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-semibold dark:bg-red-900 dark:text-red-300">
-                        Deactivated
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3 flex gap-2">
-                    <AppButton className="!px-3 !py-1.5 !text-sm" onClick={() => setEditingUser(user)}>
-                      Edit
-                    </AppButton>
-                    <AppButton
-                      className="!px-3 !py-1.5 !text-sm"
-                      color={user.active ? "danger" : "success"}
-                      onClick={() => handleToggleActive(user)}
-                    >
-                      {user.active ? "Deactivate" : "Activate"}
-                    </AppButton>
+            </thead>
+            <tbody>
+              {users.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-8 text-gray-500">
+                    No users found.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                users.map((user: User) => (
+                  <tr key={user.id} className={`border-t border-gray-100 dark:border-neutral-800`}>
+                    <td className="p-3">{user.name}</td>
+                    <td className="p-3">{user.email}</td>
+                    {/* Remove Password cell */}
+                    <td className="p-3">
+                      <span className={roleStyles[user.role ?? "USER"]}>
+                        {user.role === "ADMIN" ? "Admin" : "User"}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <span className={tierStyles[user.tier ?? 1]}>
+                        {getTierName(user.tier)}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      <span className="inline-block px-2 py-1 rounded bg-indigo-100 text-indigo-700 text-xs font-semibold dark:bg-indigo-900 dark:text-indigo-200">
+                        {user.points ?? 0}
+                      </span>
+                    </td>
+                    <td className="p-3">
+                      {user.active ? (
+                        <span className="inline-block px-2 py-1 rounded bg-lime-100 text-lime-700 text-xs font-semibold dark:bg-lime-900 dark:text-lime-300">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-block px-2 py-1 rounded bg-red-100 text-red-700 text-xs font-semibold dark:bg-red-900 dark:text-red-300">
+                          Deactivated
+                        </span>
+                      )}
+                    </td>
+                    <td className="p-3 flex gap-2">
+                      <AppButton className="!px-3 !py-1.5 !text-sm" onClick={() => setEditingUser(user)}>
+                        Edit
+                      </AppButton>
+                      <AppButton
+                        className="!px-3 !py-1.5 !text-sm"
+                        color={user.active ? "danger" : "success"}
+                        onClick={() => handleToggleActive(user)}
+                      >
+                        {user.active ? "Deactivate" : "Activate"}
+                      </AppButton>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        )}
       </div>
       <Pagination
         page={page}

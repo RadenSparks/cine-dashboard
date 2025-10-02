@@ -46,8 +46,8 @@ export type User = {
   password: string;
   email: string;
   phoneNumber: string;
-  role: 'ADMIN' | 'USER';
-  active: boolean;
+  role?: 'ADMIN' | 'USER'; // Optional if not always present
+  active?: boolean;        // Optional if not always present
   tier?: number;
   points?: number;
 };
@@ -55,7 +55,7 @@ export type User = {
 export type ApiResponse<T> = {
   data: T;
   message: string;
-  success: 'SUCCESS' | 'ERROR' | 'FAILURE';
+  status: 'SUCCESS' | 'ERROR' | 'FAILURE'; // <-- change to status
 };
 
 export type Session = {

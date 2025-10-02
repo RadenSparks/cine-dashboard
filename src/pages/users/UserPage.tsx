@@ -1,7 +1,12 @@
 import { useState, useRef, useMemo, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { type RootState } from "../../store/store";
-import { addUser, updateUser } from "../../store/userSlice";
+import { type RootState, type AppDispatch } from "../../store/store";
+import {
+  fetchUsers,
+  registerUser, // <-- Use this for add
+  updateUser,   // <-- Use this for edit (if you have an update endpoint)
+  deactivateUser, // <-- Use this for deactivate/activate
+} from "../../store/userSlice";
 import { type User } from "../../entities/type";
 import { User2Icon } from "lucide-react";
 import { SatelliteToast, type ToastNotification } from "../../components/UI/SatelliteToast";
@@ -11,9 +16,16 @@ import UserTable from "./components/UserTable";
 import UserModal from "./components/UserModal";
 import { tiers, roleStyles, tierStyles } from "./userHelper";
 
+// Use typed dispatch if available
+// import { useAppDispatch } from "../../store/store";
+// const dispatch = useAppDispatch();
+
 export default function UserPage() {
-  const users = useSelector((state: RootState) => state.users.users);
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  const usersRaw = useSelector((state: RootState) => state.users.users);
+  const users = useMemo(() => Array.isArray(usersRaw) ? usersRaw : [], [usersRaw]);
+  const loading = useSelector((state: RootState) => state.users.loading);
+  const error = useSelector((state: RootState) => state.users.error);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [search, setSearch] = useState("");
   const toastRef = useRef<{ showNotification: (options: Omit<ToastNotification, "id">) => void }>(null);
@@ -22,12 +34,10 @@ export default function UserPage() {
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
-  // Loading state for page transition
-  const [loading, setLoading] = useState(true);
+  // Fetch users from API on mount
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 700);
-    return () => clearTimeout(timer);
-  }, []);
+    dispatch(fetchUsers());
+  }, [dispatch]);
 
   // Stat calculations
   const totalUsers = users.length;
@@ -37,24 +47,44 @@ export default function UserPage() {
     return users.reduce((latest, user) => (user.id > latest.id ? user : latest), users[0]);
   }, [users]);
 
-  // Add/Edit user handler
-  const handleSaveUser = (user: User) => {
-    if (user.id) {
-      dispatch(updateUser(user));
+  // Add/Edit user handler (API)
+  const handleSaveUser = async (user: User) => {
+    try {
+      if (!user.id || user.id === 0) {
+        // Add user (register)
+        await dispatch(registerUser({
+          name: user.name,
+          email: user.email,
+          password: user.password,
+          phoneNumber: user.phoneNumber,
+          role: user.role ?? "USER",
+          active: user.active ?? true,
+          tier: user.tier ?? 1,
+          points: user.points ?? 0,
+        })).unwrap();
+        toastRef.current?.showNotification({
+          title: "User Added",
+          content: `User "${user.name}" added successfully.`,
+          accentColor: "#22c55e",
+          position: "bottom-right",
+          longevity: 2500,
+        });
+      } else {
+        // Edit user (if you have an update endpoint, otherwise skip)
+        await dispatch(updateUser(user));
+        toastRef.current?.showNotification({
+          title: "User Updated",
+          content: `User "${user.name}" updated successfully.`,
+          accentColor: "#2563eb",
+          position: "bottom-right",
+          longevity: 2500,
+        });
+      }
+    } catch {
       toastRef.current?.showNotification({
-        title: "User Updated",
-        content: `User "${user.name}" updated successfully.`,
-        accentColor: "#2563eb",
-        position: "bottom-right",
-        longevity: 2500,
-      });
-    } else {
-      const newId = Math.max(0, ...users.map(u => u.id)) + 1;
-      dispatch(addUser({ ...user, id: newId }));
-      toastRef.current?.showNotification({
-        title: "User Added",
-        content: `User "${user.name}" added successfully.`,
-        accentColor: "#22c55e",
+        title: "Error",
+        content: "Failed to save user.",
+        accentColor: "#ef4444",
         position: "bottom-right",
         longevity: 2500,
       });
@@ -62,23 +92,45 @@ export default function UserPage() {
     setEditingUser(null);
   };
 
-  // Toggle active/deactivated status (soft delete)
-  const handleToggleActive = (user: User) => {
-    dispatch(updateUser({ ...user, active: !user.active }));
-    toastRef.current?.showNotification({
-      title: user.active ? "User Deactivated" : "User Activated",
-      content: `User "${user.name}" is now ${user.active ? "deactivated" : "active"}.`,
-      accentColor: user.active ? "#ef4444" : "#22c55e",
-      position: "bottom-right",
-      longevity: 2500,
-    });
+  // Toggle active/deactivated status (API soft delete)
+  const handleToggleActive = async (user: User) => {
+    try {
+      if (user.active) {
+        // Only deactivate via API
+        await dispatch(deactivateUser(user.id)).unwrap();
+        toastRef.current?.showNotification({
+          title: "User Deactivated",
+          content: `User "${user.name}" is now deactivated.`,
+          accentColor: "#ef4444",
+          position: "bottom-right",
+          longevity: 2500,
+        });
+      } else {
+        // For now, show error or info (no restore API)
+        toastRef.current?.showNotification({
+          title: "Restore Not Supported",
+          content: "Restoring users is not supported by the backend.",
+          accentColor: "#f59e42",
+          position: "bottom-right",
+          longevity: 2500,
+        });
+      }
+    } catch {
+      toastRef.current?.showNotification({
+        title: "Error",
+        content: "Failed to update user status.",
+        accentColor: "#ef4444",
+        position: "bottom-right",
+        longevity: 2500,
+      });
+    }
   };
 
   // Filtered users
   const filteredUsers = users.filter(
     u =>
-      u.name.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
+      (u.name?.toLowerCase?.() ?? "").includes(search.toLowerCase()) ||
+      (u.email?.toLowerCase?.() ?? "").includes(search.toLowerCase())
   );
 
   // Pagination logic
@@ -128,6 +180,8 @@ export default function UserPage() {
                 getTierName={getTierName}
                 roleStyles={roleStyles}
                 tierStyles={tierStyles}
+                loading={loading}      // <-- Pass loading
+                error={error}          // <-- Pass error
               />
             </div>
           </>

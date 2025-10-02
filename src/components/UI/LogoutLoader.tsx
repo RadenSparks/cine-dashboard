@@ -25,10 +25,12 @@ export function LogoutLoader({
   show,
   steps,
   duration = 2000,
+  onComplete,
 }: {
   show: boolean;
   steps: Step[];
   duration?: number;
+  onComplete: () => void;
 }) {
   const [current, setCurrent] = useState(0);
 
@@ -40,8 +42,10 @@ export function LogoutLoader({
     if (current < steps.length - 1) {
       const t = setTimeout(() => setCurrent((c) => c + 1), duration);
       return () => clearTimeout(t);
+    } else {
+      onComplete();
     }
-  }, [show, current, steps.length, duration]);
+  }, [show, current, steps.length, duration, onComplete]);
 
   return (
     <AnimatePresence>

@@ -45,3 +45,21 @@ export type SeatApiDTO = {
   status?: string;
   deleted?: boolean;
 };
+
+export type UserApiDTO = {
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+  phoneNumber: string;
+  role?: 'ADMIN' | 'USER';
+  active?: boolean;
+  tier?: number;
+  points?: number;
+};
+
+export type ApiResponse<T> = {
+  data: T;
+  message: string;
+  status: 'SUCCESS' | 'ERROR' | 'FAILURE'; // <-- change to status
+};

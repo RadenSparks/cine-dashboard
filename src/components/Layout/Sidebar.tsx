@@ -81,6 +81,7 @@ function SidebarAvatar({ open }: { open: boolean }) {
   const translateX = useSpring(useTransform(x, [-100, 100], [-50, 50]), springConfig);
 
   const handleMouseMove = (event: React.MouseEvent<HTMLImageElement>) => {
+    if (!event.currentTarget) return; // <-- Add this line
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
@@ -152,7 +153,7 @@ export default function Sidebar({ onWidthChange }: { onWidthChange?: (w: number)
   const [open, setOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const SIDEBAR_TRANSITION = 0.6; // seconds
+  const SIDEBAR_TRANSITION = 0.5; // seconds
 
   useEffect(() => {
     if (onWidthChange) {
@@ -180,7 +181,7 @@ export default function Sidebar({ onWidthChange }: { onWidthChange?: (w: number)
   const desktopSidebar = (
     <motion.aside
       className={cn(
-        "hidden md:flex flex-col fixed top-0 left-0 h-screen bg-neutral-100 dark:bg-neutral-800 shadow-xl z-30",
+        "hidden md:flex flex-col fixed top-0 left-0 h-screen max-h-screen overflow-y-auto bg-neutral-100 dark:bg-neutral-800 shadow-xl z-30 hide-scrollbar",
         open ? "min-w-[260px] w-[260px]" : "min-w-[60px] w-[60px]"
       )}
       style={{
