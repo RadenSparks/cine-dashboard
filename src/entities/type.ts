@@ -40,16 +40,23 @@ export type Room = {
   deleted?: boolean;
 };
 
+export type Tier = {
+  id: number;
+  name: string;
+  code: string; // Use string to match backend
+  requiredPoints: number;
+};
+
 export type User = {
   id: number;
   name: string;
-  password: string;
   email: string;
+  password: string;
   phoneNumber: string;
-  role?: 'ADMIN' | 'USER'; // Optional if not always present
-  active?: boolean;        // Optional if not always present
-  tier?: number;
-  points?: number;
+  role: 'ADMIN' | 'USER';
+  active: boolean;
+  tierPoint: number;
+  mileStoneTier?: Tier;
 };
 
 export type ApiResponse<T> = {

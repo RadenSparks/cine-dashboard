@@ -2,8 +2,9 @@ import { AnimatePresence, motion } from "framer-motion";
 import AppButton from "../../../components/UI/AppButton";
 import { roleStyles } from "../userHelper";
 import TierSelector from "./TierSelector";
-import { type User } from "../../../entities/type";
+import { type User, type Tier } from "../../../entities/type";
 import { useState, useEffect } from "react";
+import type { UserApiDTO } from "../../../dto/dto";
 
 interface UserModalProps {
   open: boolean;
@@ -22,7 +23,13 @@ function isValidPhone(phone: string) {
   return /^(\+?\d{1,3}[- ]?)?\d{8,15}$/.test(phone.replace(/[^\d]/g, ""));
 }
 
-export default function UserModal({ open, user, onClose, onSave }: UserModalProps) {
+export default function UserModal({
+  open,
+  user,
+  onClose,
+  onSave,
+  tiers,
+}: UserModalProps & { tiers: Tier[] }) {
   const [editingUser, setEditingUser] = useState<User | null>(user);
   const [newPassword, setNewPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -37,10 +44,17 @@ export default function UserModal({ open, user, onClose, onSave }: UserModalProp
   const validateAndSave = () => {
     if (!editingUser) return;
     // Password validation
-    if ((!editingUser.id && !isValidPassword(newPassword)) || (editingUser.id && newPassword && !isValidPassword(newPassword))) {
+    if (
+      (!editingUser.id && !isValidPassword(newPassword)) || // New user: password required
+      (editingUser.id && newPassword && !isValidPassword(newPassword)) // Editing: only validate if password is set
+    ) {
       setPasswordError(
         "Password must be at least 8 characters, include an uppercase letter, a number, and a special character."
       );
+      return;
+    }
+    if (!editingUser.id && !newPassword) {
+      setPasswordError("Password is required for new users.");
       return;
     }
     setPasswordError(null);
@@ -52,9 +66,19 @@ export default function UserModal({ open, user, onClose, onSave }: UserModalProp
     }
     setPhoneError(null);
 
-    const userToSave = newPassword
-      ? { ...editingUser, password: newPassword }
-      : { ...editingUser, password: undefined };
+    // Only include password if needed
+    const userToSave: UserApiDTO = {
+      ...editingUser,
+      id: editingUser.id ?? 0,
+      tierCode: editingUser.mileStoneTier?.code ?? "",
+      tierPoint: editingUser.tierPoint,
+    };
+    // Only add password if creating or changing
+    if (!editingUser.id && newPassword) {
+      userToSave.password = newPassword;
+    } else if (editingUser.id && newPassword) {
+      userToSave.password = newPassword;
+    }
     onSave(userToSave as User);
   };
 
@@ -212,13 +236,16 @@ export default function UserModal({ open, user, onClose, onSave }: UserModalProp
                   Tier
                 </label>
                 <TierSelector
-                  value={editingUser.tier}
-                  onChange={tier =>
+                  value={editingUser.mileStoneTier?.id}
+                  onChange={tierId => {
+                    const selectedTier = tiers.find(t => t.id === tierId);
                     setEditingUser({
                       ...editingUser,
-                      tier,
-                    })
-                  }
+                      mileStoneTier: selectedTier,
+                      tierPoint: selectedTier ? selectedTier.requiredPoints : 0,
+                    });
+                  }}
+                  tiers={tiers}
                 />
               </div>
               {/* Points */}
@@ -231,11 +258,11 @@ export default function UserModal({ open, user, onClose, onSave }: UserModalProp
                   type="number"
                   min={0}
                   placeholder="Points"
-                  value={editingUser.points ?? 0}
+                  value={editingUser.tierPoint ?? 0}
                   onChange={e =>
                     setEditingUser({
                       ...editingUser,
-                      points: Number(e.target.value),
+                      tierPoint: Number(e.target.value),
                     })
                   }
                 />

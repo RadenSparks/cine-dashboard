@@ -1,6 +1,7 @@
 import AppButton from "../../../components/UI/AppButton";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { type User } from "../../../entities/type";
+import { getTierStyle } from "../userHelper";
 
 interface UserTableProps {
   users: User[];
@@ -12,7 +13,7 @@ interface UserTableProps {
   setPage: (p: number) => void;
   totalPages: number;
   filteredUsers: User[];
-  getTierName: (tierId?: number) => string;
+  getTierName: (mileStoneTier?: User["mileStoneTier"]) => string;
   roleStyles: Record<string, string>;
   tierStyles: Record<number, string>;
   loading?: boolean; // <-- Add this
@@ -28,9 +29,7 @@ export default function UserTable({
   page,
   setPage,
   totalPages,
-  getTierName,
   roleStyles,
-  tierStyles,
   loading, // <-- Add this
   error, // <-- Add this
 }: UserTableProps) {
@@ -63,8 +62,8 @@ export default function UserTable({
               phoneNumber: "",
               role: "USER",
               active: true,
-              tier: 1,
-              points: 0,
+              tierPoint: 0,
+              mileStoneTier: undefined,
             })
           }
         >
@@ -103,21 +102,23 @@ export default function UserTable({
                   <tr key={user.id} className={`border-t border-gray-100 dark:border-neutral-800`}>
                     <td className="p-3">{user.name}</td>
                     <td className="p-3">{user.email}</td>
-                    {/* Remove Password cell */}
                     <td className="p-3">
                       <span className={roleStyles[user.role ?? "USER"]}>
                         {user.role === "ADMIN" ? "Admin" : "User"}
                       </span>
                     </td>
                     <td className="p-3">
-                      <span className={tierStyles[user.tier ?? 1]}>
-                        {getTierName(user.tier)}
+                      <span className={getTierStyle(user.mileStoneTier?.code)}>
+                        {user.mileStoneTier?.name?.replace(/ ?tier$/i, "") ?? "—"}
                       </span>
                     </td>
                     <td className="p-3">
                       <span className="inline-block px-2 py-1 rounded bg-indigo-100 text-indigo-700 text-xs font-semibold dark:bg-indigo-900 dark:text-indigo-200">
-                        {user.points ?? 0}
+                        {user.tierPoint ?? 0}
                       </span>
+                      {/* <span className="ml-2">
+                        {user.mileStoneTier?.name ?? "—"}
+                      </span> */}
                     </td>
                     <td className="p-3">
                       {user.active ? (
@@ -134,12 +135,12 @@ export default function UserTable({
                       <AppButton className="!px-3 !py-1.5 !text-sm" onClick={() => setEditingUser(user)}>
                         Edit
                       </AppButton>
-                      <AppButton
+                      <AppButton  
                         className="!px-3 !py-1.5 !text-sm"
                         color={user.active ? "danger" : "success"}
                         onClick={() => handleToggleActive(user)}
                       >
-                        {user.active ? "Deactivate" : "Activate"}
+                        {user.active ? "Deactivate" : "Restore"}
                       </AppButton>
                     </td>
                   </tr>

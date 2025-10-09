@@ -46,16 +46,24 @@ export type SeatApiDTO = {
   deleted?: boolean;
 };
 
-export type UserApiDTO = {
+export type MileStoneTierApiDTO = {
   id: number;
   name: string;
+  code: string;
+  requiredPoints: number;
+};
+
+export type UserApiDTO = {
+  id?: number;
+  name: string;
   email: string;
-  password: string;
+  password?: string;
   phoneNumber: string;
-  role?: 'ADMIN' | 'USER';
-  active?: boolean;
-  tier?: number;
-  points?: number;
+  role: 'ADMIN' | 'USER';
+  active: boolean;
+  tierPoint: number;
+  tierCode: string; 
+  mileStoneTier?: MileStoneTierApiDTO; // Used for display, not for saving
 };
 
 export type ApiResponse<T> = {

@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import { type User, type ApiResponse } from "../entities/type";
 import { get, post, remove } from "../client/axiosCilent";
+import type { UserApiDTO } from "../dto/dto";
 
 // API endpoint config
 const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
@@ -38,22 +39,68 @@ export const fetchUserByEmail = createAsyncThunk<User, string>(
   }
 );
 
-// Register user (actual add user endpoint)
-export const registerUser = createAsyncThunk<User, Omit<User, "id">>(
-  "users/registerUser",
-  async (user) => {
-    const res = await post<ApiResponse<Partial<User>>>(`${BASE_API}/accounts/register`, user, { headers: getAuthHeaders() });
-    return { ...user, ...res.data.data } as User;
-  }
-);
-
 // Soft delete: mark user as inactive
 export const deactivateUser = createAsyncThunk<{ id: number }, number>(
   "users/deactivateUser",
   async (userId) => {
     const res = await remove<ApiResponse<{ id: number }>>(`${API_URL}/${userId}`, { headers: getAuthHeaders() });
-    if (res.data.status !== "SUCCESS") throw new Error("Failed to deactivate user"); // <-- fix here
+    if (res.data.status !== "SUCCESS") throw new Error("Failed to deactivate user");
     return res.data.data; // { id }
+  }
+);
+
+// Restore user thunk
+export const restoreUser = createAsyncThunk<{ id: number }, number>(
+  "users/restoreUser",
+  async (userId) => {
+    const res = await post<ApiResponse<{ id: number }>>(
+      `${API_URL}/${userId}`,
+      {}, // No body needed
+      { headers: getAuthHeaders() }
+    );
+    if (res.data.status !== "SUCCESS") throw new Error("Failed to restore user");
+    return res.data.data; // { id }
+  }
+);
+
+// Add user (new thunk)
+export const addUser = createAsyncThunk<User, Omit<User, "id">>(
+  "users/addUser",
+  async (user) => {
+    const payload = {
+      name: user.name,
+      email: user.email,
+      password: user.password,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      active: user.active,
+      tierPoint: user.tierPoint,
+      tierCode: user.mileStoneTier?.code ?? "",
+    };
+    const res = await post<ApiResponse<User>>(`${API_URL}`, payload, { headers: getAuthHeaders() });
+    return res.data.data;
+  }
+);
+
+export const updateUser = createAsyncThunk<User, User>(
+  "users/updateUser",
+  async (user) => {
+    const payload: UserApiDTO = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      active: user.active,
+      tierPoint: user.tierPoint,
+      tierCode: user.mileStoneTier?.code ?? "",
+    };
+    // Only include password if it's a new password (not the hash, not blank)
+    if (user.password && user.password.trim() !== "" && !user.password.startsWith("$2a$")) {
+      payload.password = user.password;
+    }
+    const res = await post<ApiResponse<User>>(`${API_URL}`, payload, { headers: getAuthHeaders() });
+    return res.data.data;
   }
 );
 
@@ -78,10 +125,10 @@ const userSlice = createSlice({
     setUsers: (state, action: PayloadAction<User[]>) => {
       state.users = action.payload;
     },
-    addUser: (state, action: PayloadAction<User>) => {
+    addUserToState: (state, action: PayloadAction<User>) => { // renamed
       state.users.push(action.payload);
     },
-    updateUser: (state, action: PayloadAction<User>) => {
+    updateUserInState: (state, action: PayloadAction<User>) => { // renamed
       const index = state.users.findIndex(user => user.id === action.payload.id);
       if (index !== -1) {
         state.users[index] = action.payload;
@@ -89,14 +136,6 @@ const userSlice = createSlice({
     },
     selectUser: (state, action: PayloadAction<number | null>) => {
       state.selectedUserId = action.payload;
-    },
-    updateUserPoints: (state, action: PayloadAction<{ id: number; points: number }>) => {
-      const user = state.users.find(u => u.id === action.payload.id);
-      if (user) user.points = action.payload.points;
-    },
-    updateUserTier: (state, action: PayloadAction<{ id: number; tier: number }>) => {
-      const user = state.users.find(u => u.id === action.payload.id);
-      if (user) user.tier = action.payload.tier;
     },
   },
   extraReducers: builder => {
@@ -113,10 +152,6 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.error.message ?? "Failed to fetch users";
       })
-      .addCase(registerUser.fulfilled, (state, action: PayloadAction<User>) => {
-        // Ensure active is always true for new users
-        state.users.push({ ...action.payload, active: true });
-      })
       .addCase(fetchUserById.fulfilled, (state, action: PayloadAction<User>) => {
         const idx = state.users.findIndex(u => u.id === action.payload.id);
         if (idx !== -1) state.users[idx] = action.payload;
@@ -127,23 +162,33 @@ const userSlice = createSlice({
         if (idx !== -1) state.users[idx] = action.payload;
         else state.users.push(action.payload);
       })
-      // Soft delete: mark as inactive, don't remove from array
       .addCase(deactivateUser.fulfilled, (state, action: PayloadAction<{ id: number }>) => {
         const idx = state.users.findIndex(u => u.id === action.payload.id);
         if (idx !== -1) {
-          state.users[idx].active = false; // Only update the active field
+          state.users[idx].active = false;
         }
+      })
+      .addCase(restoreUser.fulfilled, (state, action: PayloadAction<{ id: number }>) => {
+        const idx = state.users.findIndex(u => u.id === action.payload.id);
+        if (idx !== -1) {
+          state.users[idx].active = true;
+        }
+      })
+      .addCase(addUser.fulfilled, (state, action: PayloadAction<User>) => {
+        state.users.push(action.payload);
+      })
+      .addCase(updateUser.fulfilled, (state, action: PayloadAction<User>) => {
+        const idx = state.users.findIndex(u => u.id === action.payload.id);
+        if (idx !== -1) state.users[idx] = action.payload;
       });
   }
 });
 
 export const {
   setUsers,
-  addUser,
-  updateUser,
+  addUserToState,
+  updateUserInState,
   selectUser,
-  updateUserPoints,
-  updateUserTier,
 } = userSlice.actions;
 
 export default userSlice.reducer;

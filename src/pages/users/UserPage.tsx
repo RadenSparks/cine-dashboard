@@ -3,22 +3,21 @@ import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../store/store";
 import {
   fetchUsers,
-  registerUser, // <-- Use this for add
-  updateUser,   // <-- Use this for edit (if you have an update endpoint)
-  deactivateUser, // <-- Use this for deactivate/activate
+  addUser,        // <-- use addUser instead of registerUser
+  updateUser,
+  deactivateUser,
+  restoreUser,
+
 } from "../../store/userSlice";
-import { type User } from "../../entities/type";
+import { fetchMilestoneTiers } from "../../store/milestoneTierSlice";
+import { type User, type Tier } from "../../entities/type";
 import { User2Icon } from "lucide-react";
 import { SatelliteToast, type ToastNotification } from "../../components/UI/SatelliteToast";
 import Loading from "../../components/UI/Loading";
 import UserStatCards from "./components/UserStatCards";
 import UserTable from "./components/UserTable";
 import UserModal from "./components/UserModal";
-import { tiers, roleStyles, tierStyles } from "./userHelper";
-
-// Use typed dispatch if available
-// import { useAppDispatch } from "../../store/store";
-// const dispatch = useAppDispatch();
+import { fallbackTiers, roleStyles, tierStyles } from "./userHelper";
 
 export default function UserPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -30,13 +29,26 @@ export default function UserPage() {
   const [search, setSearch] = useState("");
   const toastRef = useRef<{ showNotification: (options: Omit<ToastNotification, "id">) => void }>(null);
 
+
+  // Get tiers from slice and map to Tier type
+  const milestoneTiersRaw = useSelector((state: RootState) => state.milestoneTiers.tiers) ?? [];
+  const milestoneTiers: Tier[] = milestoneTiersRaw.map(tier => ({
+    id: tier.id,
+    name: tier.name,
+    code: tier.code,
+    requiredPoints: tier.requiredPoints,
+  }));
+
+  // Use milestoneTiers everywhere, fallback only if empty
+  const tiersToUse: Tier[] = milestoneTiers.length > 0 ? milestoneTiers : fallbackTiers;
+
   // Pagination state
   const [page, setPage] = useState(1);
   const pageSize = 8;
 
-  // Fetch users from API on mount
   useEffect(() => {
     dispatch(fetchUsers());
+    dispatch(fetchMilestoneTiers());
   }, [dispatch]);
 
   // Stat calculations
@@ -50,18 +62,23 @@ export default function UserPage() {
   // Add/Edit user handler (API)
   const handleSaveUser = async (user: User) => {
     try {
+      const assignedTier = tiersToUse.find(t => t.id === user.mileStoneTier?.id) ?? tiersToUse[0];
       if (!user.id || user.id === 0) {
-        // Add user (register)
-        await dispatch(registerUser({
+        // Add user
+        await dispatch(addUser({
           name: user.name,
           email: user.email,
           password: user.password,
           phoneNumber: user.phoneNumber,
           role: user.role ?? "USER",
           active: user.active ?? true,
-          tier: user.tier ?? 1,
-          points: user.points ?? 0,
+          tierPoint: user.tierPoint ?? assignedTier.requiredPoints,
+          mileStoneTier: assignedTier,
         })).unwrap();
+
+        // Immediately refetch users to get the latest data from backend
+        await dispatch(fetchUsers());
+
         toastRef.current?.showNotification({
           title: "User Added",
           content: `User "${user.name}" added successfully.`,
@@ -70,8 +87,19 @@ export default function UserPage() {
           longevity: 2500,
         });
       } else {
-        // Edit user (if you have an update endpoint, otherwise skip)
-        await dispatch(updateUser(user));
+        // Edit user
+        await dispatch(updateUser({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          password: user.password,
+          phoneNumber: user.phoneNumber,
+          role: user.role,
+          active: user.active,
+          tierPoint: user.tierPoint ?? assignedTier.requiredPoints,
+          mileStoneTier: assignedTier,
+        })).unwrap();
+        await dispatch(fetchUsers());
         toastRef.current?.showNotification({
           title: "User Updated",
           content: `User "${user.name}" updated successfully.`,
@@ -96,7 +124,6 @@ export default function UserPage() {
   const handleToggleActive = async (user: User) => {
     try {
       if (user.active) {
-        // Only deactivate via API
         await dispatch(deactivateUser(user.id)).unwrap();
         toastRef.current?.showNotification({
           title: "User Deactivated",
@@ -106,11 +133,12 @@ export default function UserPage() {
           longevity: 2500,
         });
       } else {
-        // For now, show error or info (no restore API)
+        // Restore user
+        await dispatch(restoreUser(user.id)).unwrap();
         toastRef.current?.showNotification({
-          title: "Restore Not Supported",
-          content: "Restoring users is not supported by the backend.",
-          accentColor: "#f59e42",
+          title: "User Restored",
+          content: `User "${user.name}" is now active.`,
+          accentColor: "#22c55e",
           position: "bottom-right",
           longevity: 2500,
         });
@@ -137,9 +165,9 @@ export default function UserPage() {
   const totalPages = Math.ceil(filteredUsers.length / pageSize);
   const pagedUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
 
-  // Get tier name by id
-  const getTierName = (tierId?: number) =>
-    tiers.find(t => t.tier_id === tierId)?.tier_name || "—";
+  // Get tier name by user's mileStoneTier object
+  const getTierName = (mileStoneTier?: Tier) =>
+    mileStoneTier?.name || "—";
 
   return (
     <>
@@ -166,6 +194,16 @@ export default function UserPage() {
               recentlyJoinedUser={recentlyJoinedUser}
               deactivatedUsers={deactivatedUsers}
             />
+            {/* Tier Manager Button */}
+            {/* <div className="flex justify-end mb-6">
+              <button
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow transition"
+                onClick={() => setTierManagerOpen(true)}
+              >
+                Manage Tiers
+              </button>
+            </div> */}
+            {/* User Table */}
             <div className="bg-white/95 dark:bg-zinc-900/95 rounded-2xl shadow-2xl p-10 w-full mt-2 border border-blue-100 dark:border-zinc-800 overflow-x-hidden">
               <UserTable
                 users={pagedUsers}
@@ -180,18 +218,22 @@ export default function UserPage() {
                 getTierName={getTierName}
                 roleStyles={roleStyles}
                 tierStyles={tierStyles}
-                loading={loading}      // <-- Pass loading
-                error={error}          // <-- Pass error
+                loading={loading}
+                error={error}
               />
             </div>
           </>
         )}
       </div>
+      {/* <TierManagerModal open={tierManagerOpen} onClose={() => setTierManagerOpen(false)}>
+        <TierManager />
+      </TierManagerModal> */}
       <UserModal
         open={!!editingUser && !loading}
         user={editingUser}
         onClose={() => setEditingUser(null)}
         onSave={handleSaveUser}
+        tiers={tiersToUse}
       />
     </>
   );
