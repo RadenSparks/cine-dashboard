@@ -1,5 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { Seat } from "../entities/type";
+import type { SeatApiDTO, ApiResponse } from "../dto/dto";
+import { getAuthHeaders } from "../lib/auth";
 
 const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
 const API_URL = `${BASE_API.replace(/\/$/, "")}/seats`;
@@ -7,45 +9,82 @@ const API_URL = `${BASE_API.replace(/\/$/, "")}/seats`;
 export const fetchSeats = createAsyncThunk<Seat[]>(
   "seats/fetchSeats",
   async () => {
-    const res = await fetch(API_URL);
-    const data = await res.json();
+    const res = await fetch(API_URL, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+    const data: ApiResponse<Seat[]> = await res.json();
     return Array.isArray(data.data) ? data.data : [];
   }
 );
 
-export const updateSeat = createAsyncThunk<Seat, Seat>(
-  "seats/updateSeat",
-  async (seat) => {
-    const res = await fetch(`${API_URL}/${seat.seat_id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(seat),
+// Fetch all seats for a room
+export const fetchSeatsByRoom = createAsyncThunk<Seat[], number>(
+  "seats/fetchSeatsByRoom",
+  async (roomId) => {
+    const res = await fetch(`${API_URL}/room/${roomId}`, {
+      method: "GET",
+      headers: getAuthHeaders(),
     });
-    const data = await res.json();
+    const data: ApiResponse<Seat[]> = await res.json();
+    return Array.isArray(data.data) ? data.data : [];
+  }
+);
+
+// Fetch a single seat by room and seat id
+export const fetchSeatById = createAsyncThunk<Seat, { roomId: number; seatId: number }>(
+  "seats/fetchSeatById",
+  async ({ roomId, seatId }) => {
+    const res = await fetch(`${API_URL}/${roomId}/seats/${seatId}`, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+    const data: ApiResponse<Seat> = await res.json();
     return data.data;
   }
 );
 
-export const addSeat = createAsyncThunk<Seat, Omit<Seat, "seat_id">>(
+// Update a seat
+export const updateSeat = createAsyncThunk<Seat, SeatApiDTO>(
+  "seats/updateSeat",
+  async (seat) => {
+    if (!seat.id) throw new Error("Seat id is required for update");
+    const res = await fetch(`${API_URL}/${seat.id}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(seat),
+    });
+    const data: ApiResponse<Seat> = await res.json();
+    return data.data;
+  }
+);
+
+// Add a seat
+export const addSeat = createAsyncThunk<Seat, SeatApiDTO>(
   "seats/addSeat",
   async (seat) => {
     const res = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(seat),
     });
-    const data = await res.json();
+    const data: ApiResponse<Seat> = await res.json();
     return data.data;
   }
 );
 
+// Delete a seat
 export const deleteSeat = createAsyncThunk<number, number>(
   "seats/deleteSeat",
-  async (seat_id) => {
-    await fetch(`${API_URL}/${seat_id}`, { method: "DELETE" });
-    return seat_id;
+  async (id) => {
+    await fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+    return id;
   }
 );
+
 
 interface SeatsState {
   seats: Seat[];
@@ -75,14 +114,14 @@ const seatsSlice = createSlice({
         state.error = action.error.message || null;
       })
       .addCase(updateSeat.fulfilled, (state, action) => {
-        const idx = state.seats.findIndex(s => s.seat_id === action.payload.seat_id);
+        const idx = state.seats.findIndex(s => s.id === action.payload.id);
         if (idx !== -1) state.seats[idx] = action.payload;
       })
       .addCase(addSeat.fulfilled, (state, action) => {
         state.seats.push(action.payload);
       })
       .addCase(deleteSeat.fulfilled, (state, action) => {
-        state.seats = state.seats.filter(s => s.seat_id !== action.payload);
+        state.seats = state.seats.filter(s => s.id !== action.payload);
       });
   }
 });

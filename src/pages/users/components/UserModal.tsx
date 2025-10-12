@@ -10,7 +10,8 @@ interface UserModalProps {
   open: boolean;
   user: User | null;
   onClose: () => void;
-  onSave: (user: User) => void;
+  onSave: (user: UserApiDTO) => void;
+  tiers: Tier[];
 }
 
 function isValidPassword(password: string) {
@@ -29,20 +30,39 @@ export default function UserModal({
   onClose,
   onSave,
   tiers,
-}: UserModalProps & { tiers: Tier[] }) {
-  const [editingUser, setEditingUser] = useState<User | null>(user);
+}: UserModalProps) {
+  const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [passwordError, setPasswordError] = useState<string | null>(null);
   const [phoneError, setPhoneError] = useState<string | null>(null);
 
   useEffect(() => {
-    setEditingUser(user);
+    if (user) {
+      // Always map to a valid Tier object from tiers array
+      let tierObj: Tier | undefined;
+      if (user.mileStoneTier?.code) {
+        tierObj = tiers.find(t => t.code === user.mileStoneTier?.code);
+      } else if (user.tierPoint !== undefined) {
+        // Fallback: find by points if code is missing
+        tierObj = tiers.find(t => t.requiredPoints === user.tierPoint);
+      }
+      setEditingUser({
+        ...user,
+        mileStoneTier: tierObj ?? tiers[0], // fallback to first tier if not found
+      });
+    } else {
+      setEditingUser(null);
+    }
     setNewPassword("");
     setPasswordError(null);
-  }, [user]);
+  }, [user, tiers]);
 
   const validateAndSave = () => {
     if (!editingUser) return;
+    if (!editingUser.mileStoneTier || !editingUser.mileStoneTier.code) {
+      alert("Please select a tier.");
+      return;
+    }
     // Password validation
     if (
       (!editingUser.id && !isValidPassword(newPassword)) || // New user: password required
@@ -66,20 +86,23 @@ export default function UserModal({
     }
     setPhoneError(null);
 
-    // Only include password if needed
+    // const tierCode = editingUser.mileStoneTier.code;
+
     const userToSave: UserApiDTO = {
-      ...editingUser,
-      id: editingUser.id ?? 0,
-      tierCode: editingUser.mileStoneTier?.code ?? "",
-      tierPoint: editingUser.tierPoint,
+      ...(editingUser.id ? { id: editingUser.id } : {}), // Only set id if editing
+      name: editingUser.name ?? "",
+      email: editingUser.email ?? "",
+      phoneNumber: editingUser.phoneNumber ?? "",
+      role: editingUser.role ?? "USER",
+      active: editingUser.active ?? true,
+      tierPoint: editingUser.tierPoint ?? editingUser.mileStoneTier.requiredPoints,
+      tierCode: editingUser.mileStoneTier.code,
+      ...(editingUser.id
+        ? (newPassword && newPassword.trim() !== "" ? { password: newPassword } : {})
+        : { password: newPassword }) // For new user, always include password
     };
-    // Only add password if creating or changing
-    if (!editingUser.id && newPassword) {
-      userToSave.password = newPassword;
-    } else if (editingUser.id && newPassword) {
-      userToSave.password = newPassword;
-    }
-    onSave(userToSave as User);
+
+    onSave(userToSave);
   };
 
   if (!editingUser) return null;

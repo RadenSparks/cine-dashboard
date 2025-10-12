@@ -27,22 +27,26 @@ export type GenreApiDTO = {
 };
 
 export type RoomApiDTO = {
-  room_id?: number;
-  room_name: string;
-  room_capacity: number;
-  room_layout?: string;
-  premium_seats: string;
+  id?: number;                // Backend: roomId
+  roomName: string;
+  roomRow: string;            // e.g. "H"
+  roomColumn: number;
+  roomLayout?: string;
+  premiumSeats?: string;      // Comma-separated
+  emptySeats?: string[];      // Array of seat codes
   deleted?: boolean;
 };
 
 export type SeatApiDTO = {
-  seat_id?: number;
-  room_id: number;
-  seat_code: string;
-  seat_row: string;
-  seat_column: string;
-  seat_type: string;
+  id?: number;                // Backend: seatId
+  roomId: number;
+  seatCode: string;
+  seatRow: string;
+  seatColumn: string;
+  seatType: string;
   status?: string;
+  premium?: boolean; // <-- add this
+  empty?: boolean;   // <-- add this
   deleted?: boolean;
 };
 
@@ -62,8 +66,7 @@ export type UserApiDTO = {
   role: 'ADMIN' | 'USER';
   active: boolean;
   tierPoint: number;
-  tierCode: string; 
-  mileStoneTier?: MileStoneTierApiDTO; // Used for display, not for saving
+  tierCode: string;
 };
 
 export type ApiResponse<T> = {

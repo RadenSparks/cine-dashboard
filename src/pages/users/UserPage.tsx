@@ -18,6 +18,7 @@ import UserStatCards from "./components/UserStatCards";
 import UserTable from "./components/UserTable";
 import UserModal from "./components/UserModal";
 import { fallbackTiers, roleStyles, tierStyles } from "./userHelper";
+import { type UserApiDTO } from "../../dto/dto";
 
 export default function UserPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -60,9 +61,20 @@ export default function UserPage() {
   }, [users]);
 
   // Add/Edit user handler (API)
-  const handleSaveUser = async (user: User) => {
+  const handleSaveUser = async (user: UserApiDTO) => {
     try {
-      const assignedTier = tiersToUse.find(t => t.id === user.mileStoneTier?.id) ?? tiersToUse[0];
+      // Find the tier by code, not by id
+      const assignedTier = tiersToUse.find(t => t.code === user.tierCode) ?? tiersToUse[0];
+      if (!user.tierCode || user.tierCode.trim() === "") {
+        toastRef.current?.showNotification({
+          title: "Error",
+          content: "Please select a tier before saving.",
+          accentColor: "#ef4444",
+          position: "bottom-right",
+          longevity: 2500,
+        });
+        return;
+      }
       if (!user.id || user.id === 0) {
         // Add user
         await dispatch(addUser({
@@ -73,7 +85,7 @@ export default function UserPage() {
           role: user.role ?? "USER",
           active: user.active ?? true,
           tierPoint: user.tierPoint ?? assignedTier.requiredPoints,
-          mileStoneTier: assignedTier,
+          tierCode: assignedTier.code,
         })).unwrap();
 
         // Immediately refetch users to get the latest data from backend
@@ -89,7 +101,7 @@ export default function UserPage() {
       } else {
         // Edit user
         await dispatch(updateUser({
-          id: user.id,
+          id: user.id ?? 0,
           name: user.name,
           email: user.email,
           password: user.password,
@@ -97,7 +109,7 @@ export default function UserPage() {
           role: user.role,
           active: user.active,
           tierPoint: user.tierPoint ?? assignedTier.requiredPoints,
-          mileStoneTier: assignedTier,
+          tierCode: assignedTier.code,
         })).unwrap();
         await dispatch(fetchUsers());
         toastRef.current?.showNotification({

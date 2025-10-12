@@ -27,16 +27,15 @@ export type RoomPreset = {
 };
 
 export type Room = {
-  room_id: number;
-  room_name: string;
-  room_rows: number;
-  room_cols: number;
-  room_layout?: string;
-  premium_seats: string;
-  empty_seats?: string[]; // <-- Add this
-  presets?: RoomPreset[];
-  created_at?: string;
-  updated_at?: string;
+  id: number;                 // Backend: roomId
+  roomName: string;
+  roomRow: string;
+  roomColumn: number;
+  roomLayout?: string;
+  premiumSeats?: string;
+  emptySeats?: string[];
+  createdAt?: string;
+  updatedAt?: string;
   deleted?: boolean;
 };
 
@@ -76,14 +75,16 @@ export type Session = {
 };
 
 export type Seat = {
-  seat_id: number;
-  room_id: number;
-  // seat_code: string;
-  seat_row: string;
-  seat_column: string;
-  seat_type: string; // e.g. "VIP", "Regular"
-  // status: string; // e.g. "Available", "Booked"
-  created_at?: string;
-  updated_at?: string;
+  id: number;                 // Backend: seatId
+  roomId: number;
+  seatCode: string;
+  seatRow: string;
+  seatColumn: string;
+  seatType: string;
+  status?: string;
+  premium?: boolean; // <-- add this
+  empty?: boolean;   // <-- add this
+  createdAt?: string;
+  updatedAt?: string;
   deleted?: boolean;
 };

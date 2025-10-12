@@ -1,49 +1,72 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { Room } from "../entities/type";
+import type { RoomApiDTO, ApiResponse } from "../dto/dto";
+import { getAuthHeaders } from "../lib/auth";
 
 const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
 const API_URL = `${BASE_API.replace(/\/$/, "")}/rooms`;
 
+// Fetch all rooms
 export const fetchRooms = createAsyncThunk<Room[]>(
   "rooms/fetchRooms",
   async () => {
-    const res = await fetch(API_URL);
-    const data = await res.json();
+    const res = await fetch(API_URL, {
+      method: "GET",
+      headers: getAuthHeaders(),
+    });
+    const data: ApiResponse<Room[]> = await res.json();
     return Array.isArray(data.data) ? data.data : [];
   }
 );
 
-export const updateRoom = createAsyncThunk<Room, Room>(
-  "rooms/updateRoom",
-  async (room) => {
-    const res = await fetch(`${API_URL}/${room.room_id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(room),
-    });
-    const data = await res.json();
+// Fetch a single room by id
+export const fetchRoomById = createAsyncThunk<Room, number>(
+  "rooms/fetchRoomById",
+  async (roomId) => {
+    const res = await fetch(`${API_URL}/${roomId}`);
+    const data: ApiResponse<Room> = await res.json();
     return data.data;
   }
 );
 
-export const addRoom = createAsyncThunk<Room, Omit<Room, "room_id">>(
+// Add a room
+export const addRoom = createAsyncThunk<Room, RoomApiDTO>(
   "rooms/addRoom",
   async (room) => {
     const res = await fetch(API_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: getAuthHeaders(),
       body: JSON.stringify(room),
     });
-    const data = await res.json();
+    const data: ApiResponse<Room> = await res.json();
     return data.data;
   }
 );
 
+// Update a room
+export const updateRoom = createAsyncThunk<Room, RoomApiDTO>(
+  "rooms/updateRoom",
+  async (room) => {
+    if (!room.id) throw new Error("Room id is required for update");
+    const res = await fetch(`${API_URL}/${room.id}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(room),
+    });
+    const data: ApiResponse<Room> = await res.json();
+    return data.data;
+  }
+);
+
+// Delete a room
 export const deleteRoom = createAsyncThunk<number, number>(
   "rooms/deleteRoom",
-  async (room_id) => {
-    await fetch(`${API_URL}/${room_id}`, { method: "DELETE" });
-    return room_id;
+  async (id) => {
+    await fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
+    });
+    return id;
   }
 );
 
@@ -68,32 +91,7 @@ const roomsSlice = createSlice({
     selectRoom(state, action) {
       state.selectedRoomId = action.payload;
     },
-    savePreset(state, action) {
-      const { room_id, preset } = action.payload;
-      const room = state.rooms.find(r => r.room_id === room_id);
-      if (room) {
-        room.presets = room.presets || [];
-        room.presets.push(preset);
-      }
-    },
-    selectPreset(state, action) {
-      const { room_id, presetName } = action.payload;
-      const room = state.rooms.find(r => r.room_id === room_id);
-      if (room && room.presets) {
-        const preset = room.presets.find(p => p.name === presetName);
-        if (preset) {
-          room.premium_seats = preset.premium_seats;
-          room.room_layout = preset.room_layout;
-        }
-      }
-    },
-    deletePreset(state, action) {
-      const { room_id, presetName } = action.payload;
-      const room = state.rooms.find(r => r.room_id === room_id);
-      if (room && room.presets) {
-        room.presets = room.presets.filter(p => p.name !== presetName);
-      }
-    }
+    // Preset logic can be updated similarly if needed
   },
   extraReducers: builder => {
     builder
@@ -107,17 +105,17 @@ const roomsSlice = createSlice({
         state.error = action.error.message || null;
       })
       .addCase(updateRoom.fulfilled, (state, action) => {
-        const idx = state.rooms.findIndex(r => r.room_id === action.payload.room_id);
+        const idx = state.rooms.findIndex(r => r.id === action.payload.id);
         if (idx !== -1) state.rooms[idx] = action.payload;
       })
       .addCase(addRoom.fulfilled, (state, action) => {
         state.rooms.push(action.payload);
       })
       .addCase(deleteRoom.fulfilled, (state, action) => {
-        state.rooms = state.rooms.filter(r => r.room_id !== action.payload);
+        state.rooms = state.rooms.filter(r => r.id !== action.payload);
       });
   }
 });
 
-export const { selectRoom, savePreset, selectPreset, deletePreset } = roomsSlice.actions;
+export const { selectRoom } = roomsSlice.actions;
 export default roomsSlice.reducer;

@@ -64,42 +64,18 @@ export const restoreUser = createAsyncThunk<{ id: number }, number>(
 );
 
 // Add user (new thunk)
-export const addUser = createAsyncThunk<User, Omit<User, "id">>(
+export const addUser = createAsyncThunk<User, UserApiDTO>(
   "users/addUser",
   async (user) => {
-    const payload = {
-      name: user.name,
-      email: user.email,
-      password: user.password,
-      phoneNumber: user.phoneNumber,
-      role: user.role,
-      active: user.active,
-      tierPoint: user.tierPoint,
-      tierCode: user.mileStoneTier?.code ?? "",
-    };
-    const res = await post<ApiResponse<User>>(`${API_URL}`, payload, { headers: getAuthHeaders() });
+    const res = await post<ApiResponse<User>>(`${API_URL}`, user, { headers: getAuthHeaders() });
     return res.data.data;
   }
 );
 
-export const updateUser = createAsyncThunk<User, User>(
+export const updateUser = createAsyncThunk<User, UserApiDTO>(
   "users/updateUser",
   async (user) => {
-    const payload: UserApiDTO = {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      role: user.role,
-      active: user.active,
-      tierPoint: user.tierPoint,
-      tierCode: user.mileStoneTier?.code ?? "",
-    };
-    // Only include password if it's a new password (not the hash, not blank)
-    if (user.password && user.password.trim() !== "" && !user.password.startsWith("$2a$")) {
-      payload.password = user.password;
-    }
-    const res = await post<ApiResponse<User>>(`${API_URL}`, payload, { headers: getAuthHeaders() });
+    const res = await post<ApiResponse<User>>(`${API_URL}`, user, { headers: getAuthHeaders() });
     return res.data.data;
   }
 );
