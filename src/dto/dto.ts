@@ -39,14 +39,14 @@ export type RoomApiDTO = {
 
 export type SeatApiDTO = {
   id?: number;                // Backend: seatId
-  roomId: number;
+  roomId: number;             // Foreign key to Room
   seatCode: string;
   seatRow: string;
-  seatColumn: string;
-  seatType: string;
+  seatColumn: number;         // <-- should be number, not string
+  premium: boolean;           // <-- required, not optional
+  empty: boolean;             // <-- required, not optional
+  seatType?: string;
   status?: string;
-  premium?: boolean; // <-- add this
-  empty?: boolean;   // <-- add this
   deleted?: boolean;
 };
 

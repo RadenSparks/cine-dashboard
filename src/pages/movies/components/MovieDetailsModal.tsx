@@ -50,7 +50,7 @@ export default function MovieDetailsModal({
             stiffness: 180,
             damping: 18,
           }}
-          className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-6xl w-full p-0 relative flex flex-col md:flex-row items-stretch my-12 border border-blue-100 dark:border-zinc-800 hide-scrollbar"
+          className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-7xl w-full p-0 relative flex flex-col md:flex-row items-stretch my-12 border border-blue-100 dark:border-zinc-800 hide-scrollbar"
           style={{
             margin: "auto",
             position: "relative",
@@ -66,25 +66,26 @@ export default function MovieDetailsModal({
             &times;
           </button>
           {/* Poster Section */}
-          <div className="flex flex-col gap-6 items-center justify-center w-full md:w-[480px] p-10 border-r bg-gradient-to-br from-blue-50 to-white dark:from-zinc-800 dark:to-zinc-900">
-            <div className="w-full flex justify-center">
-              <div className="bg-white dark:bg-zinc-900 rounded-xl shadow border border-blue-100 dark:border-zinc-800 p-4 flex flex-col items-center">
-                <div className="text-base font-semibold text-blue-700 dark:text-blue-200 mb-2 text-center tracking-wide">
-                  Movie Poster
+          <div className="flex flex-col items-center justify-center w-full md:w-[480px] p-0 bg-gradient-to-br from-blue-50 to-white dark:from-zinc-800 dark:to-zinc-900"
+               style={{ height: "96vh", minHeight: "96vh" }}>
+            <div className="w-full h-full flex justify-center items-center" style={{ height: "100%" }}>
+              {movie.poster ? (
+                <img
+                  src={movie.poster}
+                  alt={movie.title}
+                  className="w-full h-full object-cover rounded-xl shadow-xl border-2 border-blue-200 dark:border-blue-900 transition-all duration-300"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
+                    borderRadius: "1rem",
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-gray-200 rounded-xl text-gray-400">
+                  No Image
                 </div>
-                {movie.poster ? (
-                  <img
-                    src={movie.poster}
-                    alt={movie.title}
-                    className="w-[420px] h-[630px] object-cover rounded-xl shadow-xl border-2 border-blue-200 dark:border-blue-900 transition-all duration-300"
-                    style={{ maxWidth: "100%", maxHeight: "80vh" }}
-                  />
-                ) : (
-                  <div className="w-[420px] h-[630px] flex items-center justify-center bg-gray-200 rounded-xl text-gray-400">
-                    No Image
-                  </div>
-                )}
-              </div>
+              )}
             </div>
           </div>
           {/* Info Section */}

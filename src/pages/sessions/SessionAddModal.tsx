@@ -3,7 +3,7 @@ import AppButton from "../../components/UI/AppButton";
 interface SessionAddModalProps {
   show: boolean;
   onClose: () => void;
-  movies: { id: number; title: string; duration: number }[];
+  movies: { id: number; title: string; duration: number; premiere_date?: string; premiereDate?: string }[]; // <-- Add premiere_date and premiereDate
   rooms: string[];
   modalMovieId: number | null;
   setModalMovieId: (id: number | null) => void;
@@ -36,6 +36,15 @@ export default function SessionAddModal({
   onAdd,
 }: SessionAddModalProps) {
   if (!show) return null;
+
+  const now = new Date();
+  const nowShowingMovies = movies.filter(m => {
+    const premiere = new Date(m.premiere_date || m.premiereDate || "");
+    const oneMonthLater = new Date(premiere);
+    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+    return premiere <= now && now <= oneMonthLater;
+  });
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-2xl p-6 w-full max-w-md relative border border-blue-100 dark:border-zinc-800">
@@ -55,7 +64,7 @@ export default function SessionAddModal({
               onChange={e => setModalMovieId(Number(e.target.value))}
             >
               <option value="">Select a movie</option>
-              {movies.map(m => (
+              {nowShowingMovies.map(m => (
                 <option key={m.id} value={m.id}>{m.title}</option>
               ))}
             </select>
@@ -86,6 +95,7 @@ export default function SessionAddModal({
             Start Time:
             <input
               type="time"
+              step={300} // <-- 300 seconds = 5 minutes
               className="w-full border rounded px-2 py-1 mt-1 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
               value={modalStart}
               onChange={e => setModalStart(e.target.value)}

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { IconMenu2, IconX, IconBell, IconCalendar, IconMoon, IconSun, IconLogout } from "@tabler/icons-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -59,6 +59,13 @@ export default function Header() {
       // Don't setShowLogoutLoader(false) here, let navigation happen first
     }
   }, [pendingLogout, navigate]);
+
+  // Redirect to login if user is not authenticated
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate("/login");
+    }
+  }, [navigate]);
 
   return (
     <>

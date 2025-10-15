@@ -74,26 +74,25 @@ export const addSeat = createAsyncThunk<Seat, SeatApiDTO>(
 );
 
 // Delete a seat
-export const deleteSeat = createAsyncThunk<number, number>(
+export const deleteSeat = createAsyncThunk<number, { roomId: number; seatId: number }>(
   "seats/deleteSeat",
-  async (id) => {
-    await fetch(`${API_URL}/${id}`, {
+  async ({ seatId }) => {
+    await fetch(`${API_URL}/${seatId}`, {
       method: "DELETE",
       headers: getAuthHeaders(),
     });
-    return id;
+    return seatId;
   }
 );
 
-
 interface SeatsState {
-  seats: Seat[];
+  seatsByRoom: { [roomId: number]: Seat[] };
   loading: boolean;
   error: string | null;
 }
 
 const initialState: SeatsState = {
-  seats: [],
+  seatsByRoom: {},
   loading: false,
   error: null,
 };
@@ -105,23 +104,41 @@ const seatsSlice = createSlice({
   extraReducers: builder => {
     builder
       .addCase(fetchSeats.pending, state => { state.loading = true; })
-      .addCase(fetchSeats.fulfilled, (state, action) => {
+      .addCase(fetchSeats.fulfilled, state => {
         state.loading = false;
-        state.seats = action.payload;
+        // Optionally, you can populate seatsByRoom for all rooms here if needed
       })
       .addCase(fetchSeats.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || null;
       })
+      .addCase(fetchSeatsByRoom.pending, state => { state.loading = true; })
+      .addCase(fetchSeatsByRoom.fulfilled, (state, action) => {
+        state.loading = false;
+        state.seatsByRoom[action.meta.arg] = action.payload;
+      })
+      .addCase(fetchSeatsByRoom.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || null;
+      })
       .addCase(updateSeat.fulfilled, (state, action) => {
-        const idx = state.seats.findIndex(s => s.id === action.payload.id);
-        if (idx !== -1) state.seats[idx] = action.payload;
+        const seat = action.payload;
+        const roomSeats = state.seatsByRoom[seat.roomId] || [];
+        const idx = roomSeats.findIndex(s => s.id === seat.id);
+        if (idx !== -1) roomSeats[idx] = seat;
+        state.seatsByRoom[seat.roomId] = roomSeats;
       })
       .addCase(addSeat.fulfilled, (state, action) => {
-        state.seats.push(action.payload);
+        const seat = action.payload;
+        const roomSeats = state.seatsByRoom[seat.roomId] || [];
+        roomSeats.push(seat);
+        state.seatsByRoom[seat.roomId] = roomSeats;
       })
       .addCase(deleteSeat.fulfilled, (state, action) => {
-        state.seats = state.seats.filter(s => s.id !== action.payload);
+        // action.meta.arg contains { roomId, seatId }
+        const { roomId, seatId } = action.meta.arg;
+        const roomSeats = state.seatsByRoom[roomId] || [];
+        state.seatsByRoom[roomId] = roomSeats.filter(s => s.id !== seatId);
       });
   }
 });

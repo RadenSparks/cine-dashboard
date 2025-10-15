@@ -2,6 +2,7 @@ import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { Room } from "../entities/type";
 import type { RoomApiDTO, ApiResponse } from "../dto/dto";
 import { getAuthHeaders } from "../lib/auth";
+import { remove } from "../client/axiosCilent";
 
 const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
 const API_URL = `${BASE_API.replace(/\/$/, "")}/rooms`;
@@ -62,11 +63,10 @@ export const updateRoom = createAsyncThunk<Room, RoomApiDTO>(
 export const deleteRoom = createAsyncThunk<number, number>(
   "rooms/deleteRoom",
   async (id) => {
-    await fetch(`${API_URL}/${id}`, {
-      method: "DELETE",
-      headers: getAuthHeaders(),
-    });
-    return id;
+    // Call DELETE /api/v1/rooms/{roomId}
+    const res = await remove<ApiResponse<{ id: number }>>(`${API_URL}/${id}`);
+    if (res.data.status !== "SUCCESS") throw new Error("Failed to delete room");
+    return res.data.data.id;
   }
 );
 

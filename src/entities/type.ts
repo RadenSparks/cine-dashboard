@@ -79,11 +79,11 @@ export type Seat = {
   roomId: number;
   seatCode: string;
   seatRow: string;
-  seatColumn: string;
-  seatType: string;
+  seatColumn: number;         // <-- should be number, not string
+  premium: boolean;           // <-- required, not optional
+  empty: boolean;             // <-- required, not optional
+  seatType?: string;
   status?: string;
-  premium?: boolean; // <-- add this
-  empty?: boolean;   // <-- add this
   createdAt?: string;
   updatedAt?: string;
   deleted?: boolean;

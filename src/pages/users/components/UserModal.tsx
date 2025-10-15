@@ -178,6 +178,7 @@ export default function UserModal({
                     setEditingUser({ ...editingUser, email: e.target.value })
                   }
                   required
+                  disabled={!!editingUser.id} // <-- Disable if editing existing user
                 />
               </div>
               {/* Password (Add or Reset) */}
