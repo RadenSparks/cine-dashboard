@@ -3,18 +3,18 @@ import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../store/store";
 import {
   fetchMovies,
-  addMovieAsync,
-  updateMovieAsync,
-  deleteMovieAsync,
 } from "../../store/moviesSlice";
 import { fetchGenres } from "../../store/genresSlice";
-import MovieTable from "./components/MovieTable";
+import { fetchFolderListAsync } from "../../store/imagesSlice";
 import MovieFormModal from "./components/MovieFormModal";
 import MovieDetailsModal from "./components/MovieDetailsModal";
+import MoviesFiltersBar from "./components/MoviesFiltersBar";
+import MoviesTableContainer from "./components/MoviesTableContainer";
 import Loading from "../../components/UI/Loading";
 import { SatelliteToast, type ToastNotification } from "../../components/UI/SatelliteToast";
 import { type Movie } from "../../entities/type";
 import { type MovieApiDTO } from "../../dto/dto";
+import { useMovieCRUD } from "./hooks/useMovieCRUD";
 
 // --- Main Page ---
 export default function MoviesPage() {
@@ -22,6 +22,11 @@ export default function MoviesPage() {
   const { items: genres, loading: genresLoading } = useSelector((state: RootState) => state.genres);
   const dispatch = useDispatch<AppDispatch>();
   const toastRef = useRef<{ showNotification: (options: Omit<ToastNotification, "id">) => void }>(null);
+
+  // Movie CRUD hook
+  const { addMovie, updateMovie, deleteMovie } = useMovieCRUD({
+    toastRef,
+  });
 
   const [editing, setEditing] = useState<Movie | null>(null);
   const [showAdd, setShowAdd] = useState(false);
@@ -33,22 +38,24 @@ export default function MoviesPage() {
     premiere_date: new Date().toISOString().slice(0, 10),
     poster: "",
     genre_ids: [],
-    rating: 0, // Default rating
+    rating: 0,
     deleted: false,
+    images: [],
+    teaser: "",
   });
   const [detailMovie, setDetailMovie] = useState<Movie | null>(null);
 
   // --- Search & Filter State ---
   const [search, setSearch] = useState("");
-  const [genreFilter, setGenreFilter] = useState<number | "">( "");
+  const [genreFilter, setGenreFilter] = useState<number | "">("");
   const [durationFilter, setDurationFilter] = useState<number | "">("");
   const [nowShowingFilter, setNowShowingFilter] = useState<"all" | "now" | "soon" | "ended">("all");
-  const [page, setPage] = useState(1);
 
   // Fetch movies and genres on mount
   useEffect(() => {
     dispatch(fetchMovies());
     dispatch(fetchGenres());
+    dispatch(fetchFolderListAsync());
     // eslint-disable-next-line
   }, []);
 
@@ -71,7 +78,7 @@ export default function MoviesPage() {
   }
 
   const filteredMovies = useMemo(() => {
-    let result = movies; // <-- Remove the .filter(m => !m.deleted)
+    let result = movies;
     if (search.trim()) {
       result = result.filter(m =>
         m.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -94,13 +101,7 @@ export default function MoviesPage() {
     return result;
   }, [movies, search, genreFilter, durationFilter, nowShowingFilter]);
 
-  // --- Pagination (frontend only) ---
-  const pageSize = 5;
-  const totalPages = Math.ceil(filteredMovies.length / pageSize);
-  const pagedMovies = filteredMovies.slice((page - 1) * pageSize, page * pageSize);
-
   const prepareMovieForApi = (movie: Movie): MovieApiDTO => {
-    // Only include genre_ids that exist in the loaded genres
     const validGenreIds = movie.genre_ids.filter(id =>
       genres.some(g => g.genre_id === id)
     );
@@ -111,8 +112,9 @@ export default function MoviesPage() {
       duration: movie.duration,
       premiereDate: movie.premiere_date,
       poster: movie.poster,
-      genres: validGenreIds, // only valid IDs
+      genres: validGenreIds,
       rating: movie.rating,
+      teaser: movie.teaser,
     };
   };
 
@@ -128,8 +130,8 @@ export default function MoviesPage() {
       });
       return;
     }
-    try {
-      await dispatch(addMovieAsync(prepareMovieForApi(newMovie))).unwrap();
+    const result = await addMovie(prepareMovieForApi(newMovie));
+    if (result.success) {
       setShowAdd(false);
       setNewMovie({
         id: 0,
@@ -141,22 +143,8 @@ export default function MoviesPage() {
         genre_ids: [],
         rating: 0,
         deleted: false,
-      });
-      toastRef.current?.showNotification({
-        title: "Movie Added",
-        content: `Movie "${newMovie.title}" was added successfully.`,
-        accentColor: "#2563eb",
-        position: "bottom-right",
-        longevity: 3000,
-      });
-      // No need to refetch, state is already updated
-    } catch {
-      toastRef.current?.showNotification({
-        title: "Error",
-        content: "Failed to add movie.",
-        accentColor: "#ef4444",
-        position: "bottom-right",
-        longevity: 3000,
+        teaser: "",
+        images: [],
       });
     }
   };
@@ -176,67 +164,15 @@ export default function MoviesPage() {
       });
       return;
     }
-    try {
-      await dispatch(updateMovieAsync(prepareMovieForApi(editing!))).unwrap();
+    const result = await updateMovie(prepareMovieForApi(editing!));
+    if (result.success) {
       setEditing(null);
-      toastRef.current?.showNotification({
-        title: "Movie Updated",
-        content: `Movie "${editing.title}" was updated.`,
-        accentColor: "#f59e42",
-        position: "bottom-right",
-        longevity: 3000,
-      });
-      // No need to refetch, state is already updated
-    } catch {
-      toastRef.current?.showNotification({
-        title: "Error",
-        content: "Failed to update movie.",
-        accentColor: "#ef4444",
-        position: "bottom-right",
-        longevity: 3000,
-      });
     }
   };
 
   const handleDeleteMovie = async (id: number) => {
-    try {
-      await dispatch(deleteMovieAsync(id)).unwrap();
-      toastRef.current?.showNotification({
-        title: "Movie Deleted",
-        content: `Movie was deleted.`,
-        accentColor: "#ef4444",
-        position: "bottom-right",
-        longevity: 3000,
-      });
-      // No need to refetch, state is already updated
-    } catch {
-      toastRef.current?.showNotification({
-        title: "Error",
-        content: "Failed to delete movie.",
-        accentColor: "#ef4444",
-        position: "bottom-right",
-        longevity: 3000,
-      });
-    }
+    await deleteMovie(id);
   };
-
-  const handleRestoreMovie = async () => {
-    // If your API supports restore, implement here. Otherwise, just refetch.
-    dispatch(fetchMovies());
-  };
-
-  // --- Pagination Handlers ---
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 1 && newPage <= totalPages) setPage(newPage);
-  };
-
-  // Filter options
-  const nowShowingOptions = [
-    { value: "all", label: "All" },
-    { value: "now", label: "Now Showing" },
-    { value: "soon", label: "Coming Soon" },
-    { value: "ended", label: "Ended" },
-  ];
 
   if (loading || genresLoading) {
     return (
@@ -257,94 +193,45 @@ export default function MoviesPage() {
           <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow">
             🎬 Movies
           </h2>
-          {/* Search & Filters */}
-          <div className="flex flex-col md:flex-row md:items-end gap-4 mb-6">
-            <div className="flex-1 min-w-[180px]">
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Search</label>
-              <input
-                type="text"
-                placeholder="Search by title or description"
-                value={search}
-                onChange={e => { setSearch(e.target.value); setPage(1); }}
-                className="w-full px-3 py-2 rounded-lg border border-blue-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-800/80 focus:ring-2 focus:ring-blue-400 focus:outline-none text-base"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Genre</label>
-              <select
-                value={genreFilter}
-                onChange={e => { setGenreFilter(e.target.value ? Number(e.target.value) : ""); setPage(1); }}
-                className="px-3 py-2 rounded-lg border border-blue-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-800/80 text-base"
-              >
-                <option value="">All</option>
-                {genres.map(g => (
-                  <option key={g.genre_id} value={g.genre_id}>{g.genre_name}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Min Duration</label>
-              <input
-                type="number"
-                min={1}
-                placeholder="e.g. 90"
-                value={durationFilter}
-                onChange={e => { setDurationFilter(e.target.value ? Number(e.target.value) : ""); setPage(1); }}
-                className="px-3 py-2 rounded-lg border border-blue-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-800/80 w-24 text-base"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Show</label>
-              <select
-                value={nowShowingFilter}
-                onChange={e => { setNowShowingFilter(e.target.value as "all" | "now" | "soon" | "ended"); setPage(1); }}
-                className="px-3 py-2 rounded-lg border border-blue-200 dark:border-zinc-700 bg-white/80 dark:bg-zinc-800/80 text-base"
-              >
-                {nowShowingOptions.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
-            </div>
+
+          {/* Filters Bar */}
+          <div className="mb-6">
+            <MoviesFiltersBar
+              search={search}
+              setSearch={setSearch}
+              genreFilter={genreFilter}
+              setGenreFilter={setGenreFilter}
+              durationFilter={durationFilter}
+              setDurationFilter={setDurationFilter}
+              nowShowingFilter={nowShowingFilter}
+              setNowShowingFilter={setNowShowingFilter}
+              genres={genres}
+              loading={loading}
+            />
+          </div>
+
+          {/* Add Movie Button */}
+          <div className="mb-6 flex justify-end">
             <button
-              className="bg-gradient-to-r from-blue-600 to-blue-400 text-white px-5 py-2 rounded-lg shadow hover:from-blue-700 hover:to-blue-500 transition font-semibold text-base md:ml-2"
+              className="bg-gradient-to-r from-blue-600 to-blue-400 text-white px-6 py-2.5 rounded-lg shadow hover:from-blue-700 hover:to-blue-500 transition font-semibold"
               onClick={() => setShowAdd(true)}
             >
               + Add Movie
             </button>
           </div>
-          {/* Movie Table */}
-          <div className="rounded-2xl overflow-hidden border border-blue-100 dark:border-zinc-800 shadow-lg bg-white/80 dark:bg-zinc-900/80">
-            <MovieTable
-              movies={pagedMovies}
-              genres={genres}
-              onEdit={handleEditMovie}
-              onDelete={handleDeleteMovie}
-              onRestore={handleRestoreMovie}
-              onDetail={setDetailMovie}
-            />
-          </div>
-          {/* Pagination */}
-          <div className="flex justify-center items-center gap-4 mt-8">
-            <button
-              className="px-4 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50 font-semibold text-base transition"
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-            >
-              Prev
-            </button>
-            <span className="font-bold text-blue-700 dark:text-blue-200 text-base">
-              Page {page} of {totalPages || 1}
-            </span>
-            <button
-              className="px-4 py-2 rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50 font-semibold text-base transition"
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === totalPages || totalPages === 0}
-            >
-              Next
-            </button>
-          </div>
+
+          {/* Movies Table with Pagination */}
+          <MoviesTableContainer
+            movies={filteredMovies}
+            genres={genres}
+            loading={loading}
+            onEdit={handleEditMovie}
+            onDelete={handleDeleteMovie}
+            onViewDetails={setDetailMovie}
+          />
         </div>
       </div>
+
       {/* Add/Edit Movie Modal */}
       <MovieFormModal
         show={showAdd || !!editing}
@@ -364,6 +251,7 @@ export default function MoviesPage() {
           else handleAddMovie();
         }}
       />
+
       {/* Movie Details Modal */}
       <MovieDetailsModal
         movie={detailMovie}

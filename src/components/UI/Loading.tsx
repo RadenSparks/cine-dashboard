@@ -1,5 +1,3 @@
-import { useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const SvgLoader = () => (
@@ -20,7 +18,7 @@ const SvgLoader = () => (
       initial={{ pathLength: 0, fill: "#fefefe" }}
       animate={{ pathLength: 1, fill: "#ffe066" }}
       transition={{
-        duration: 0.8, // Faster animation
+        duration: 0.8,
         ease: "easeInOut",
         repeat: Infinity,
         repeatType: "reverse",
@@ -30,20 +28,17 @@ const SvgLoader = () => (
   </motion.svg>
 );
 
-const Loading = () => {
-  const { nextUrl } = useParams();
-  const navigate = useNavigate();
+interface LoadingProps {
+  fullscreen?: boolean;
+}
 
-  useEffect(() => {
-    if (nextUrl) {
-      setTimeout(() => {
-        navigate("/" + nextUrl);
-      }, 8000);
-    }
-  }, [navigate, nextUrl]);
+const Loading = ({ fullscreen = true }: LoadingProps) => {
+  const containerClass = fullscreen 
+    ? "flex justify-center items-center h-[100vh]"
+    : "flex justify-center items-center";
 
   return (
-    <div className="flex justify-center items-center h-[100vh]">
+    <div className={containerClass}>
       <SvgLoader />
     </div>
   );

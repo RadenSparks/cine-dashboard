@@ -8,6 +8,8 @@ export type Movie = {
   genre_ids: number[];
   rating?: number;
   deleted?: boolean;
+  images?: Image[]; // <- add this
+  teaser?: string;
 };
 
 export type Genre = {
@@ -61,7 +63,24 @@ export type User = {
 export type ApiResponse<T> = {
   data: T;
   message: string;
-  status: 'SUCCESS' | 'ERROR' | 'FAILURE'; // <-- change to status
+  status: 'SUCCESS' | 'ERROR' | 'FAILURE';
+};
+
+// Image frontend entity moved here (was exported from ./image)
+export type Image = {
+  id: number;
+  name: string;
+  size: number;
+  contentType?: string;    // MIME type (e.g. "image/png")
+  url?: string;            // RetrieveImageDTO.url -> API URL to fetch raw image
+  eTag?: string;           // Upload response eTag or RawImageResponseDTO.eTag
+  createdAt?: string;
+  updatedAt?: string;
+  movieId?: number;        // if image is associated with a movie
+  folderName?: string;     // Folder categorization from backend
+  deleted?: boolean;
+  // optional runtime-only field when raw content is loaded
+  blob?: Blob;
 };
 
 export type Session = {

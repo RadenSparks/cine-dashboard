@@ -3,7 +3,6 @@ import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
   headers: {
-    "Content-Type": "application/json",
     accept: "*/*",
   },
 });
@@ -54,6 +53,16 @@ export const post = async <T>(
   data: unknown,
   config?: AxiosRequestConfig
 ): Promise<AxiosResponse<T>> => {
+  // Only set Content-Type for non-FormData
+  if (!(data instanceof FormData)) {
+    config = {
+      ...config,
+      headers: {
+        ...config?.headers,
+        "Content-Type": "application/json",
+      },
+    };
+  }
   return apiClient.post<T>(url, data, config);
 };
 

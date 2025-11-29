@@ -44,11 +44,14 @@ const MovieTable = ({ movies, genres, onEdit, onDelete, onDetail }: MovieTablePr
               className={`border-t transition ${movie.deleted ? "opacity-60 bg-gray-100 dark:bg-zinc-800" : "hover:bg-blue-50 dark:hover:bg-zinc-800"}`}
             >
               <td className="p-3 w-24">
-                {movie.poster ? (
-                  <img src={movie.poster} alt={movie.title} className="w-12 h-16 object-cover rounded shadow" />
-                ) : (
-                  <span className="text-gray-400">No Image</span>
-                )}
+                {(() => {
+                  const posterSrc = movie.poster ?? movie.images?.[0]?.url;
+                  return posterSrc ? (
+                    <img src={posterSrc} alt={movie.title} className="w-12 h-16 object-cover rounded shadow" />
+                  ) : (
+                    <span className="text-gray-400">No Image</span>
+                  );
+                })()}
               </td>
               <td className="p-3 w-56">{movie.title}</td>
               <td className="p-3 w-40">
@@ -117,12 +120,6 @@ const MovieTable = ({ movies, genres, onEdit, onDelete, onDetail }: MovieTablePr
                   <AppButton color="danger" onClick={() => onDelete(movie.id)} disabled={movie.deleted}>
                     Delete
                   </AppButton>
-                  {/* If you implement restore, enable this button */}
-                  {/* {movie.deleted && (
-                    <AppButton color="success" onClick={() => onRestore(movie.id)}>
-                      Restore
-                    </AppButton>
-                  )} */}
                 </div>
               </td>
             </tr>

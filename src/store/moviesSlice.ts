@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import { type Movie, type ApiResponse } from '../entities/type';
-import { type MovieApiDTO } from '../dto/dto';
+import { type MovieApiDTO, type RetrieveImageDTO } from '../dto/dto';
 import { get, post, put, remove } from '../client/axiosCilent';
 
 const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
@@ -15,6 +15,16 @@ function getAuthHeaders(): Record<string, string> {
     : {};
 }
 
+type Page<T> = {
+  content : T[];
+  page :{
+    size : number;
+    number : number;
+    totalElement : number;
+    totalPages : number;
+  }
+}
+
 // Define the shape of the movie object as returned by the API
 type MovieApiResponse = {
   id: number;
@@ -26,16 +36,18 @@ type MovieApiResponse = {
   genres: { id: number; name: string; icon?: string }[]; // <-- array of objects
   rating?: number;
   deleted?: boolean;
+  image?: RetrieveImageDTO[];
+  teaser?: string;
 };
 
 export const fetchMovies = createAsyncThunk<Movie[]>(
   'movies/fetchMovies',
   async () => {
     const headers = getAuthHeaders();
-    const res = await get<ApiResponse<MovieApiResponse[]>>(API_URL, { headers });
+    const res = await get<ApiResponse<Page<MovieApiResponse>>>(API_URL, { headers });
     const data = res.data;
-    return Array.isArray(data.data)
-      ? data.data.map((m): Movie => ({
+    return Array.isArray(data.data.content)
+      ? data.data.content.map((m): Movie => ({
           id: m.id,
           title: m.title,
           description: m.description,
@@ -45,6 +57,16 @@ export const fetchMovies = createAsyncThunk<Movie[]>(
           genre_ids: Array.isArray(m.genres) ? m.genres.map(g => g.id) : [],
           rating: m.rating,
           deleted: m.deleted,
+          teaser: m.teaser,
+          images: Array.isArray(m.image)
+            ? m.image.map((img: RetrieveImageDTO) => ({
+                id: img.id,
+                name: img.name,
+                size: img.size,
+                contentType: img.contentType,
+                url: `${import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:17000/api/v1'}/images/${img.id}`,
+              }))
+            : [],
         }))
       : [];
   }
@@ -66,6 +88,15 @@ export const addMovieAsync = createAsyncThunk<Movie, MovieApiDTO>(
       genre_ids: Array.isArray(m.genres) ? m.genres.map(g => g.id) : [],
       rating: m.rating,
       deleted: m.deleted,
+      images: Array.isArray(m.image)
+        ? m.image.map((img: RetrieveImageDTO) => ({
+            id: img.id,
+            name: img.name,
+            size: img.size,
+            contentType: img.contentType,
+            url: `${import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:17000/api/v1'}/images/${img.id}`,
+          }))
+        : [],
     };
   }
 );
@@ -87,6 +118,16 @@ export const updateMovieAsync = createAsyncThunk<Movie, MovieApiDTO>(
       genre_ids: Array.isArray(m.genres) ? m.genres.map(g => g.id) : [],
       rating: m.rating,
       deleted: m.deleted,
+      teaser: m.teaser,
+      images: Array.isArray(m.image)
+        ? m.image.map((img: RetrieveImageDTO) => ({
+            id: img.id,
+            name: img.name,
+            size: img.size,
+            contentType: img.contentType,
+            url: `${import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:17000/api/v1'}/images/${img.id}`,
+          }))
+        : [],
     };
   }
 );
@@ -109,6 +150,16 @@ export const deleteMovieAsync = createAsyncThunk<Movie, number>(
         genre_ids: Array.isArray(m.genres) ? m.genres.map(g => g.id) : [],
         rating: m.rating,
         deleted: true,
+        teaser: m.teaser,
+        images: Array.isArray(m.image)
+          ? m.image.map((img: RetrieveImageDTO) => ({
+              id: img.id,
+              name: img.name,
+              size: img.size,
+              contentType: img.contentType,
+              url: `${import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:17000/api/v1'}/images/${img.id}`,
+            }))
+          : [],
       };
     }
     // fallback: find movie in state and mark as deleted

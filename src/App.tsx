@@ -14,6 +14,7 @@ import Layout from './components/Layout'
 import RoomManagementPage from './pages/rooms/RoomManagementPage'
 import SessionPage from './pages/sessions/SessionPage'
 import PublicRoute from './components/PublicRoute'
+import ImagesManager from './pages/images/ImagesManager'
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
                   <Route path="/settings" element={<Setting />} />
                   <Route path="/genres" element={<GenresPage />} />
                   <Route path="/rooms" element={<RoomManagementPage />} />
+                  <Route path="/images" element={<ImagesManager />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Layout>

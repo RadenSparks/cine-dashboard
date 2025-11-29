@@ -17,7 +17,7 @@ const colorMap = {
   default: "bg-gray-200 hover:bg-gray-300 text-gray-700 dark:bg-zinc-700 dark:text-gray-200 dark:hover:bg-zinc-600",
 };
 
-export const AppButton: React.FC<AppButtonProps> = ({
+const AppButtonComponent: React.FC<AppButtonProps> = ({
   children,
   gradient,
   color = "primary",
@@ -35,10 +35,14 @@ export const AppButton: React.FC<AppButtonProps> = ({
         ${gradient ? "" : colorMap[color]}
         text-white font-bold px-4 py-2 rounded-lg shadow transition-all duration-300
         flex items-center gap-2
-        ${disabled ? "opacity-60 cursor-not-allowed" : ""}
         ${className}
-      `}
-      style={gradient ? { background: gradient } : undefined}
+      `.trim()}
+      style={{
+        ...(gradient ? { background: gradient } : {}),
+        opacity: disabled ? 0.4 : 1.0,
+        cursor: disabled ? "not-allowed" : "pointer",
+        pointerEvents: disabled ? "none" : "auto",
+      }}
       {...props}
     >
       {icon && <span className="inline-flex items-center">{icon}</span>}
@@ -47,4 +51,7 @@ export const AppButton: React.FC<AppButtonProps> = ({
   );
 };
 
-export default AppButton;
+// Memoize the component to prevent unnecessary re-renders from parent state changes
+const MemoizedAppButton = React.memo(AppButtonComponent);
+
+export default MemoizedAppButton;

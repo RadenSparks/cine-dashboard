@@ -6,6 +6,7 @@ import userReducer from "./userSlice";
 import sessionsReducer from './sessionsSlice';
 import seatsReducer from './seatsSlice';
 import milestoneTierReducer from "./milestoneTierSlice";
+import imageReducer from './imagesSlice';
 
 
 export const store = configureStore({
@@ -17,6 +18,7 @@ export const store = configureStore({
     sessions: sessionsReducer,
     seats: seatsReducer,
     milestoneTiers: milestoneTierReducer,
+    images: imageReducer,
   },
 });
 

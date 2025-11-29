@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { HomeIcon, FilmIcon, TicketIcon, UserIcon, Cog6ToothIcon, CalendarDaysIcon, CurrencyDollarIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { HomeIcon, FilmIcon, TicketIcon, UserIcon, Cog6ToothIcon, CalendarDaysIcon, CurrencyDollarIcon, SparklesIcon, PhotoIcon } from "@heroicons/react/24/outline";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { IconMenu2, IconCategory, IconDashboard } from "@tabler/icons-react";
 import { cn } from "../../lib/utils";
@@ -17,7 +17,7 @@ const navItems = [
   { name: "Transactions", icon: <CurrencyDollarIcon className="h-5 w-5" />, path: "/transactions" },
   { name: "Promotions", icon: <SparklesIcon className="h-5 w-5" />, path: "/promotions" },
   { name: "Settings", icon: <Cog6ToothIcon className="h-5 w-5" />, path: "/settings" },
-
+  { name: "Media", icon: <PhotoIcon className="h-5 w-5" />, path: "/images" },
 ];
 
 const admin = {
@@ -81,13 +81,15 @@ function SidebarAvatar({ open }: { open: boolean }) {
   const translateX = useSpring(useTransform(x, [-100, 100], [-50, 50]), springConfig);
 
   const handleMouseMove = (event: React.MouseEvent<HTMLImageElement>) => {
-    if (!event.currentTarget) return; // <-- Add this line
+    if (!event.currentTarget) return;
     if (animationFrameRef.current) {
       cancelAnimationFrame(animationFrameRef.current);
     }
     animationFrameRef.current = requestAnimationFrame(() => {
-      const halfWidth = event.currentTarget.offsetWidth / 2;
-      x.set(event.nativeEvent.offsetX - halfWidth);
+      if (event.currentTarget && event.currentTarget.offsetWidth) {
+        const halfWidth = event.currentTarget.offsetWidth / 2;
+        x.set(event.nativeEvent.offsetX - halfWidth);
+      }
     });
   };
 
