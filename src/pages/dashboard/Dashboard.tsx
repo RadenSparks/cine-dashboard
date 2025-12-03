@@ -13,6 +13,7 @@ import Loading from "../../components/UI/Loading";
 import Title from "../../components/UI/Title";
 import BlurCircle from "../../components/UI/BlurCircle";
 import formatDateTime from "../../lib/dateCalculate";
+import { useCurrentUser } from "../../lib/useCurrentUser";
 import ProtectedRoute from "../../components/ProtectedRoute";
 import {
   ResponsiveContainer,
@@ -73,7 +74,7 @@ function TopBookedMoviesFlip({ movies }: { movies: Movie[] }) {
                 alt={movie.title}
                 className="w-24 h-36 object-cover rounded-lg border mb-2 shadow"
               />
-              <p className="font-semibold text-lg text-blue-700 text-center">{movie.title}</p>
+              <p className="font-semibold text-lg text-blue-700 text-center font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>{movie.title}</p>
               <div className="flex items-center gap-1 text-yellow-500 mt-1">
                 <StarIcon className="w-4 h-4" />
                 {movie.rating ?? "N/A"}
@@ -82,11 +83,11 @@ function TopBookedMoviesFlip({ movies }: { movies: Movie[] }) {
           }
           back={
             <div className="flex flex-col items-center justify-center h-full px-2 py-4">
-              <span className="text-gray-700 text-sm mb-2 text-center">
+              <span className="text-gray-700 text-sm mb-2 text-center font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
                 Booked <span className="font-bold">{movie.sales ?? "?"}</span> times
               </span>
-              <span className="text-blue-600 font-semibold text-base mt-2">Top Booked</span>
-              <span className="text-xs text-gray-400 mt-4">Click to flip back</span>
+              <span className="text-blue-600 font-semibold text-base mt-2 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Top Booked</span>
+              <span className="text-xs text-gray-400 mt-4 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Click to flip back</span>
             </div>
           }
         />
@@ -101,6 +102,7 @@ const pieColors = ["#2563eb", "#f59e42", "#a855f7", "#10b981"];
 const Dashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { items: movies, loading } = useSelector((state: RootState) => state.movies);
+  const currentUser = useCurrentUser();
 
   const [hovered, setHovered] = useState<number | null>(null);
   const [currentComment, setCurrentComment] = useState(0);
@@ -140,7 +142,7 @@ const Dashboard = () => {
   ];
 
   useEffect(() => {
-    dispatch(fetchMovies());
+    dispatch(fetchMovies({ page: 0, size: 100 }));
     // You may want to dispatch fetchGenres() and fetchUsers() if not already loaded
     // dispatch(fetchGenres());
     // dispatch(fetchUsers());
@@ -209,7 +211,10 @@ const Dashboard = () => {
   return (
     <ProtectedRoute>
       <div className="mt-10 hide-scrollbar">
-        <Title text1="Admin" text2="Dashboard" />
+        <Title 
+          text1={currentUser?.role === "ADMIN" ? "Admin" : "User"} 
+          text2="Dashboard" 
+        />
         <BlurCircle top="0" left="0" />
 
         {/* Stat Cards */}
@@ -333,10 +338,10 @@ const Dashboard = () => {
             </h3>
           </CardHeader>
           <CardBody>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto hide-scrollbar max-h-96">
               <table className="min-w-full text-sm">
-                <thead>
-                  <tr className="text-left border-b">
+                <thead className="sticky top-0 bg-white dark:bg-zinc-900 z-10">
+                  <tr className="text-left border-b font-asul" style={{ fontFamily: 'Asul, sans-serif' }}>
                     <th className="py-2">Booking ID</th>
                     <th className="py-2">Customer</th>
                     <th className="py-2">Movie</th>
@@ -347,7 +352,7 @@ const Dashboard = () => {
                 </thead>
                 <tbody>
                   {bookingRows.map((order) => (
-                    <tr key={order.id} className="border-b">
+                    <tr key={order.id} className="border-b font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
                       <td className="py-2">{order.id}</td>
                       <td className="py-2">{order.user}</td>
                       <td className="py-2">{order.movie}</td>
@@ -383,19 +388,19 @@ const Dashboard = () => {
               }`}
               key={currentComment}
             >
-              <span className="font-semibold text-gray-800 truncate">
+              <span className="font-semibold text-gray-800 truncate font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
                 {comments[currentComment]?.user}
               </span>
-              <span className="text-gray-600 text-sm mb-1">
+              <span className="text-gray-600 text-sm mb-1 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
                 about{" "}
                 <span className="font-medium">
                   {comments[currentComment]?.movie}
                 </span>
               </span>
-              <p className="text-gray-700 text-sm mb-2 max-w-xs">
+              <p className="text-gray-700 text-sm mb-2 max-w-xs font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
                 {comments[currentComment]?.comment}
               </p>
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-gray-400 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
                 {comments[currentComment]?.date}
               </span>
               <div className="flex gap-1 mt-3 justify-center">

@@ -24,10 +24,13 @@ export default function UserPage() {
   const dispatch = useDispatch<AppDispatch>();
   const usersRaw = useSelector((state: RootState) => state.users.users);
   const users = useMemo(() => Array.isArray(usersRaw) ? usersRaw : [], [usersRaw]);
+  const pagination = useSelector((state: RootState) => state.users.pagination);
   const loading = useSelector((state: RootState) => state.users.loading);
   const error = useSelector((state: RootState) => state.users.error);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10;
   const toastRef = useRef<{ showNotification: (options: Omit<ToastNotification, "id">) => void }>(null);
 
 
@@ -43,14 +46,10 @@ export default function UserPage() {
   // Use milestoneTiers everywhere, fallback only if empty
   const tiersToUse: Tier[] = milestoneTiers.length > 0 ? milestoneTiers : fallbackTiers;
 
-  // Pagination state
-  const [page, setPage] = useState(1);
-  const pageSize = 8;
-
   useEffect(() => {
-    dispatch(fetchUsers());
+    dispatch(fetchUsers({ page: currentPage, size: pageSize }));
     dispatch(fetchMilestoneTiers());
-  }, [dispatch]);
+  }, [currentPage, pageSize, dispatch]);
 
   // Stat calculations
   const totalUsers = users.length;
@@ -76,7 +75,17 @@ export default function UserPage() {
         return;
       }
       if (!user.id || user.id === 0) {
-        // Add user
+        // Add user - password is required for CREATE
+        if (!user.password || user.password.trim() === "") {
+          toastRef.current?.showNotification({
+            title: "Error",
+            content: "Password is required when creating a new user.",
+            accentColor: "#ef4444",
+            position: "bottom-right",
+            longevity: 2500,
+          });
+          return;
+        }
         await dispatch(addUser({
           name: user.name,
           email: user.email,
@@ -89,7 +98,7 @@ export default function UserPage() {
         })).unwrap();
 
         // Immediately refetch users to get the latest data from backend
-        await dispatch(fetchUsers());
+        await dispatch(fetchUsers({ page: currentPage, size: pageSize }));
 
         toastRef.current?.showNotification({
           title: "User Added",
@@ -99,19 +108,20 @@ export default function UserPage() {
           longevity: 2500,
         });
       } else {
-        // Edit user
-        await dispatch(updateUser({
+        // Edit user - password is optional for UPDATE
+        const updatePayload: UserApiDTO = {
           id: user.id ?? 0,
           name: user.name,
           email: user.email,
-          password: user.password,
           phoneNumber: user.phoneNumber,
           role: user.role,
           active: user.active,
           tierPoint: user.tierPoint ?? assignedTier.requiredPoints,
           tierCode: assignedTier.code,
-        })).unwrap();
-        await dispatch(fetchUsers());
+          ...(user.password && user.password.trim() !== "" && { password: user.password }),
+        };
+        await dispatch(updateUser(updatePayload)).unwrap();
+        await dispatch(fetchUsers({ page: currentPage, size: pageSize }));
         toastRef.current?.showNotification({
           title: "User Updated",
           content: `User "${user.name}" updated successfully.`,
@@ -166,16 +176,8 @@ export default function UserPage() {
     }
   };
 
-  // Filtered users
-  const filteredUsers = users.filter(
-    u =>
-      (u.name?.toLowerCase?.() ?? "").includes(search.toLowerCase()) ||
-      (u.email?.toLowerCase?.() ?? "").includes(search.toLowerCase())
-  );
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredUsers.length / pageSize);
-  const pagedUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
+  // Filtered users (using current page users from backend)
+  // Server-side pagination handles filtering, so we use users directly
 
   // Get tier name by user's mileStoneTier object
   const getTierName = (mileStoneTier?: Tier) =>
@@ -188,7 +190,7 @@ export default function UserPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center min-h-[400px]">
             <Loading />
-            <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow flex items-center justify-center gap-2 mt-8">
+            <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow flex items-center justify-center gap-2 mt-8 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
               <User2Icon className="w-8 h-8 text-blue-700 dark:text-blue-200" />
               Users
             </h2>
@@ -196,10 +198,11 @@ export default function UserPage() {
         ) : (
           <>
             {/* Page Title */}
-            <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow flex items-center justify-center gap-2 mt-8">
+            <h2 className="text-3xl font-extrabold mb-2 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow flex items-center justify-center gap-2 mt-8 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
               <User2Icon className="w-8 h-8 text-blue-700 dark:text-blue-200" />
               Users
             </h2>
+            <p className="text-gray-600 dark:text-gray-400 text-center mb-6 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Manage user accounts, roles, and tier assignments</p>
             {/* Stat Cards */}
             <UserStatCards
               totalUsers={totalUsers}
@@ -218,15 +221,15 @@ export default function UserPage() {
             {/* User Table */}
             <div className="bg-white/95 dark:bg-zinc-900/95 rounded-2xl shadow-2xl p-10 w-full mt-2 border border-blue-100 dark:border-zinc-800 overflow-x-hidden">
               <UserTable
-                users={pagedUsers}
+                users={users}
                 search={search}
                 setSearch={setSearch}
                 setEditingUser={setEditingUser}
                 handleToggleActive={handleToggleActive}
-                page={page}
-                setPage={setPage}
-                totalPages={totalPages}
-                filteredUsers={filteredUsers}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+                totalPages={pagination.totalPages}
+                totalElements={pagination.totalElements}
                 getTierName={getTierName}
                 roleStyles={roleStyles}
                 tierStyles={tierStyles}

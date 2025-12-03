@@ -40,13 +40,19 @@ type MovieApiResponse = {
   teaser?: string;
 };
 
-export const fetchMovies = createAsyncThunk<Movie[]>(
+export const fetchMovies = createAsyncThunk<
+  { movies: Movie[]; totalPages: number; currentPage: number; totalElements: number },
+  { page?: number; size?: number }
+>(
   'movies/fetchMovies',
-  async () => {
+  async ({ page = 0, size = 10 }) => {
     const headers = getAuthHeaders();
-    const res = await get<ApiResponse<Page<MovieApiResponse>>>(API_URL, { headers });
+    const res = await get<ApiResponse<Page<MovieApiResponse>>>(
+      `${API_URL}?page=${page}&size=${size}`,
+      { headers }
+    );
     const data = res.data;
-    return Array.isArray(data.data.content)
+    const movies = Array.isArray(data.data.content)
       ? data.data.content.map((m): Movie => ({
           id: m.id,
           title: m.title,
@@ -69,6 +75,12 @@ export const fetchMovies = createAsyncThunk<Movie[]>(
             : [],
         }))
       : [];
+    return {
+      movies,
+      totalPages: data.data.page.totalPages,
+      currentPage: data.data.page.number,
+      totalElements: data.data.page.totalElement,
+    };
   }
 );
 
@@ -172,16 +184,58 @@ export const deleteMovieAsync = createAsyncThunk<Movie, number>(
   }
 );
 
+export const restoreMovieAsync = createAsyncThunk<Movie, number>(
+  'movies/restoreMovie',
+  async (id) => {
+    const headers = getAuthHeaders();
+    const res = await put<ApiResponse<MovieApiResponse>>(`${API_URL}/${id}/restore`, {}, { headers });
+    const m = res.data.data;
+    return {
+      id: m.id,
+      title: m.title,
+      description: m.description,
+      duration: m.duration,
+      premiere_date: m.premiereDate,
+      poster: m.poster,
+      genre_ids: Array.isArray(m.genres) ? m.genres.map(g => g.id) : [],
+      rating: m.rating,
+      deleted: m.deleted || false,
+      teaser: m.teaser,
+      images: Array.isArray(m.image)
+        ? m.image.map((img: RetrieveImageDTO) => ({
+            id: img.id,
+            name: img.name,
+            size: img.size,
+            contentType: img.contentType,
+            url: `${import.meta.env.VITE_API_URL?.replace(/\/$/, '') || 'http://localhost:17000/api/v1'}/images/${img.id}`,
+          }))
+        : [],
+    };
+  }
+);
+
 interface MoviesState {
   items: Movie[];
   loading: boolean;
   error: string | null;
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalElements: number;
+    pageSize: number;
+  };
 }
 
 const initialState: MoviesState = {
   items: [],
   loading: false,
   error: null,
+  pagination: {
+    currentPage: 0,
+    totalPages: 0,
+    totalElements: 0,
+    pageSize: 10,
+  },
 };
 
 const moviesSlice = createSlice({
@@ -194,8 +248,11 @@ const moviesSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchMovies.fulfilled, (state, action: PayloadAction<Movie[]>) => {
-        state.items = action.payload;
+      .addCase(fetchMovies.fulfilled, (state, action: PayloadAction<{ movies: Movie[]; totalPages: number; currentPage: number; totalElements: number }>) => {
+        state.items = action.payload.movies;
+        state.pagination.currentPage = action.payload.currentPage;
+        state.pagination.totalPages = action.payload.totalPages;
+        state.pagination.totalElements = action.payload.totalElements;
         state.loading = false;
       })
       .addCase(fetchMovies.rejected, (state, action) => {
@@ -213,6 +270,16 @@ const moviesSlice = createSlice({
       .addCase(deleteMovieAsync.fulfilled, (state, action: PayloadAction<Movie>) => {
         const idx = state.items.findIndex(m => m.id === action.payload.id);
         if (idx !== -1) state.items[idx] = action.payload;
+      })
+      .addCase(restoreMovieAsync.pending, state => {
+        state.error = null;
+      })
+      .addCase(restoreMovieAsync.fulfilled, (state, action: PayloadAction<Movie>) => {
+        const idx = state.items.findIndex(m => m.id === action.payload.id);
+        if (idx !== -1) state.items[idx] = action.payload;
+      })
+      .addCase(restoreMovieAsync.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to restore movie";
       });
   },
 });

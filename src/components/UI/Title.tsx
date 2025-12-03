@@ -8,12 +8,12 @@ const Title = ({ text1, text2, badge }: TitleProps) => {
   return (
     <div className="flex items-center justify-between w-full mb-4 mt-4">
       <div className="flex items-center gap-3">
-        <h1 className="font-bold text-2xl md:text-3xl tracking-tight">
+        <h1 className="font-bold text-2xl md:text-3xl tracking-tight font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
           <span className="text-gray-900 dark:text-white">{text1}</span>
           <span className="text-primary ml-2">{text2}</span>
         </h1>
         {badge && (
-          <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold ml-2">
+          <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold ml-2 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
             {badge}
           </span>
         )}

@@ -22,7 +22,7 @@ export type MovieApiDTO = {
 };
 
 export type GenreApiDTO = {
-  id: number;
+  id?: number;
   name: string;
   icon?: string;
 };
@@ -68,6 +68,7 @@ export type UserApiDTO = {
   active: boolean;
   tierPoint: number;
   tierCode: string;
+  operation?: 'CREATE' | 'UPDATE'; // Backend requirement for SaveUserRequestDTO
 };
 
 export type ApiResponse<T> = {

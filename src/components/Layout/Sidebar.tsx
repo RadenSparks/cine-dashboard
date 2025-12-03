@@ -5,6 +5,7 @@ import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from
 import { IconMenu2, IconCategory, IconDashboard } from "@tabler/icons-react";
 import { cn } from "../../lib/utils";
 import { TextGenerateEffect } from "../UI/TextGeneratedEffect";
+import { useCurrentUser } from "../../lib/useCurrentUser";
 
 const navItems = [
   { name: "Dashboard", icon: <HomeIcon className="h-5 w-5" />, path: "/" },
@@ -19,13 +20,6 @@ const navItems = [
   { name: "Settings", icon: <Cog6ToothIcon className="h-5 w-5" />, path: "/settings" },
   { name: "Media", icon: <PhotoIcon className="h-5 w-5" />, path: "/images" },
 ];
-
-const admin = {
-  id: 1,
-  name: "Admin User",
-  designation: "Administrator",
-  image: "https://randomuser.me/api/portraits/men/32.jpg",
-};
 
 const quotes = [
   "May the Force be with you.",
@@ -71,7 +65,7 @@ function SidebarQuoteBox({ open }: { open: boolean }) {
   );
 }
 
-function SidebarAvatar({ open }: { open: boolean }) {
+function SidebarAvatar({ open, userEmail, userRole }: { open: boolean; userEmail: string; userRole: string }) {
   const [hovered, setHovered] = useState(false);
   const springConfig = { stiffness: 100, damping: 15 };
   const x = useMotionValue(0);
@@ -79,6 +73,9 @@ function SidebarAvatar({ open }: { open: boolean }) {
 
   const rotate = useSpring(useTransform(x, [-100, 100], [-45, 45]), springConfig);
   const translateX = useSpring(useTransform(x, [-100, 100], [-50, 50]), springConfig);
+
+  const userName = userEmail.split('@')[0] || "User";
+  const designation = userRole === "ADMIN" ? "Administrator" : "User";
 
   const handleMouseMove = (event: React.MouseEvent<HTMLImageElement>) => {
     if (!event.currentTarget) return;
@@ -120,17 +117,17 @@ function SidebarAvatar({ open }: { open: boolean }) {
             >
               <div className="absolute inset-x-10 -bottom-px z-30 h-px w-[20%] bg-gradient-to-r from-transparent via-emerald-500 to-transparent" />
               <div className="absolute -bottom-px left-10 z-30 h-px w-[40%] bg-gradient-to-r from-transparent via-sky-500 to-transparent" />
-              <div className="relative z-30 text-base font-bold text-white">
-                {admin.name}
+              <div className="relative z-30 text-base font-bold text-white font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
+                {userName}
               </div>
-              <div className="text-xs text-white">{admin.designation}</div>
+              <div className="text-xs text-white font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>{designation}</div>
             </motion.div>
           )}
         </AnimatePresence>
         <div className="relative">
           <motion.img
-            src={admin.image}
-            alt={admin.name}
+            src="https://randomuser.me/api/portraits/men/32.jpg"
+            alt={userName}
             height={open ? 120 : 40}
             width={open ? 120 : 40}
             className={cn(
@@ -154,6 +151,7 @@ function SidebarAvatar({ open }: { open: boolean }) {
 export default function Sidebar({ onWidthChange }: { onWidthChange?: (w: number) => void }) {
   const [open, setOpen] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const currentUser = useCurrentUser();
 
   const SIDEBAR_TRANSITION = 0.5; // seconds
 
@@ -198,7 +196,11 @@ export default function Sidebar({ onWidthChange }: { onWidthChange?: (w: number)
       <div className="flex flex-col items-center mt-8 mb-2">
         <IconDashboard className="h-10 w-10 text-blue-600 mb-2" />
       </div>
-      <SidebarAvatar open={open} />
+      <SidebarAvatar 
+        open={open} 
+        userEmail={currentUser?.email || "user@example.com"}
+        userRole={currentUser?.role || "USER"}
+      />
       <div className="mx-6 mb-4 border-b border-gray-200 dark:border-neutral-700" />
       <nav className="flex flex-col gap-2 p-4">
         {navItems.map(item => (
@@ -223,7 +225,8 @@ export default function Sidebar({ onWidthChange }: { onWidthChange?: (w: number)
                 width: open ? 'auto' : 0,
                 display: open ? 'inline-block' : 'none',
               }}
-              className="text-sm whitespace-pre transition-all duration-200"
+              className="text-sm whitespace-pre transition-all duration-200 font-red-rose"
+              style={{ fontFamily: 'Red Rose, sans-serif' }}
             >
               {item.name}
             </motion.span>

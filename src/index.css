@@ -1,4 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Asul:wght@400;700&family=Farro:wght@300;400;500;700&family=Red+Rose:wght@300;400;500;700&display=swap');
 @import "tailwindcss";
+
+@font-face {
+  font-family: "Audiowide";
+  src: url("/Audiowide-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  --font-audiowide: "Audiowide", sans-serif;
+  --font-asul: "Asul", sans-serif;
+  --font-farro: "Farro", sans-serif;
+  --font-red-rose: "Red Rose", sans-serif;
+}
 
 html {
   overflow-y: scroll;
@@ -26,6 +41,7 @@ html {
 
 body {
   @apply bg-gray-100 text-gray-900;
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .hide-scrollbar {

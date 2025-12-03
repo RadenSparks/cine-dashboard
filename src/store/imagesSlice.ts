@@ -48,13 +48,12 @@ export const uploadImageAsync = createAsyncThunk<Image, { file: File; name?: str
   'images/uploadImage',
   async ({ file, name }, { rejectWithValue }) => {
     try {
-      const headers = getAuthHeaders();
       const form = new FormData();
       form.append('file', file);
       if (name) form.append('name', name);
 
       const res = (await post(`${IMAGES_API}`, form, {
-        headers: { ...headers /* do NOT set Content-Type here */ },
+        // Don't pass custom headers for FormData - let the interceptor handle auth
       })) as unknown as AxiosResponse<ApiResponse<UploadImageResponseDTO>>;
 
       const dto: UploadImageResponseDTO | undefined = res.data?.data;
@@ -278,7 +277,6 @@ export const uploadImageToFolderAsync = createAsyncThunk<Image, { file: File; fo
   'images/uploadImageToFolder',
   async ({ file, folderName }, { rejectWithValue }) => {
     try {
-      const headers = getAuthHeaders();
       const form = new FormData();
       form.append('file', file);
       // Try both 'folder' and 'folderName' to handle backend variations
@@ -289,7 +287,7 @@ export const uploadImageToFolderAsync = createAsyncThunk<Image, { file: File; fo
       console.log('FormData being sent:', { file: file.name, folderName });
 
       const res = (await post(`${IMAGES_API}`, form, {
-        headers: { ...headers /* do NOT set Content-Type here */ },
+        // Don't pass custom headers for FormData - let the interceptor handle auth
       })) as unknown as AxiosResponse<ApiResponse<UploadImageResponseDTO>>;
 
       const dto: UploadImageResponseDTO | undefined = res.data?.data;

@@ -4,6 +4,7 @@ import Footer from './Layout/Footer'
 import { AuroraBackground } from "../components/AuroraBackground"
 import React, { useState, useEffect } from "react"
 import { motion } from "framer-motion";
+import { useLocation } from 'react-router-dom';
 
 type LayoutProps = {
   children: React.ReactNode
@@ -15,6 +16,12 @@ export default function Layout({ children }: LayoutProps) {
     typeof window !== "undefined" && window.innerWidth < 768 ? 0 : 260;
 
   const [sidebarWidth, setSidebarWidth] = useState(getInitialSidebarWidth);
+  const location = useLocation();
+
+  useEffect(() => {
+    // Scroll to top when route changes
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   useEffect(() => {
     // Listen for window resize to update sidebar width

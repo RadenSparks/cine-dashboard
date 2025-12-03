@@ -34,12 +34,12 @@ export default function SessionBoardView({ selectedDate, sessions, movies, rooms
         >
           ← Back to Calendar
         </AppButton>
-        <h3 className="text-xl font-bold text-blue-700 dark:text-blue-200">Sessions for: {selectedDate}</h3>
+        <h3 className="text-xl font-bold text-blue-700 dark:text-blue-200 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>Sessions for: {selectedDate}</h3>
       </div>
       <div className="flex gap-6 overflow-x-auto">
         {["Morning", "Afternoon", "Evening", "Night"].map(slot => (
           <div key={slot} className="bg-white dark:bg-zinc-900 rounded-lg shadow p-4 min-w-[250px] flex-1 border border-blue-100 dark:border-zinc-800">
-            <div className="font-semibold mb-2 text-blue-700 dark:text-blue-200">{slot}</div>
+            <div className="font-semibold mb-2 text-blue-700 dark:text-blue-200 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>{slot}</div>
             <div className="flex flex-col gap-3">
               {sessions
                 .filter(s => typeof s.room_id === "number" && typeof s.movie_id === "number")

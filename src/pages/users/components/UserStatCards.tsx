@@ -48,7 +48,7 @@ function StatCard({
   subtext?: React.ReactNode;
 }) {
   return (
-    <div className={`flex flex-col items-center justify-center rounded-2xl shadow-md border border-blue-100 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/90 px-6 py-5 w-full`}>
+    <div className={`flex flex-col items-center justify-center rounded-2xl shadow-md border border-blue-100 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/90 px-6 py-5 w-full font-red-rose`} style={{ fontFamily: 'Red Rose, sans-serif' }}>
       <div className={`mb-2 flex items-center justify-center w-10 h-10 rounded-full ${color}`}>
         {icon}
       </div>

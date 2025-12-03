@@ -5,6 +5,7 @@ import {
   addGenreAsync,
   updateGenreAsync,
   deleteGenreAsync,
+  restoreGenreAsync,
 } from "../../store/genresSlice";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { genreIconMap } from "../../utils/genreIcons";
@@ -27,6 +28,7 @@ export default function GenresPage() {
   const [editingGenreId, setEditingGenreId] = useState<number | null>(null);
   const [editingGenreName, setEditingGenreName] = useState("");
   const [editingGenreIcon, setEditingGenreIcon] = useState(availableIcons[0].name);
+  const [showDeleted, setShowDeleted] = useState(false);
 
   // Satellite toast ref
   const toastRef = useRef<{ showNotification: (options: Omit<unknown, "id">) => void }>(null);
@@ -86,6 +88,28 @@ export default function GenresPage() {
       toastRef.current?.showNotification({
         title: "Error",
         content: "Failed to delete genre.",
+        accentColor: "#ef4444",
+        position: "bottom-right",
+        longevity: 3000,
+      });
+    }
+  };
+
+  const handleRestoreGenre = async (genre_id: number) => {
+    if (typeof genre_id !== "number") return;
+    try {
+      await dispatch(restoreGenreAsync(genre_id)).unwrap();
+      toastRef.current?.showNotification({
+        title: "Genre Restored",
+        content: `Genre restored successfully.`,
+        accentColor: "#22c55e",
+        position: "bottom-right",
+        longevity: 3000,
+      });
+    } catch {
+      toastRef.current?.showNotification({
+        title: "Error",
+        content: "Failed to restore genre.",
         accentColor: "#ef4444",
         position: "bottom-right",
         longevity: 3000,
@@ -156,12 +180,14 @@ export default function GenresPage() {
   // Update: Use only g.genre_name for filtering, since your Genre type does not have 'name'
   const filteredGenres = useMemo(
     () =>
-      genres.filter(g =>
-        (g.genre_name ?? "")
-          .toLowerCase()
-          .includes(search.toLowerCase())
-      ),
-    [genres, search]
+      genres
+        .filter(g => showDeleted ? g.deleted : !g.deleted)
+        .filter(g =>
+          (g.genre_name ?? "")
+            .toLowerCase()
+            .includes(search.toLowerCase())
+        ),
+    [genres, search, showDeleted]
   );
 
   if (loading) {
@@ -172,9 +198,10 @@ export default function GenresPage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-zinc-900 dark:via-zinc-950 dark:to-blue-950 py-10 hide-scrollbar">
       <SatelliteToast ref={toastRef} />
       <div className="w-full max-w-4xl mx-auto px-4">
-        <h2 className="text-3xl font-extrabold mb-10 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow">
-          🎭 Genre
+        <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
+          🎭 Genres
         </h2>
+        <p className="text-gray-600 dark:text-gray-400 text-center mb-6 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Manage movie genres and organize your catalog</p>
         <AddGenreForm
           newGenreName={newGenreName}
           setNewGenreName={setNewGenreName}
@@ -185,28 +212,47 @@ export default function GenresPage() {
         />
         <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-lg border border-blue-100 dark:border-zinc-800 p-8 mb-10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-            <h3 className="text-xl font-bold text-blue-700 dark:text-blue-200">Genres List</h3>
+            <h3 className="text-xl font-bold text-blue-700 dark:text-blue-200 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
+              {showDeleted ? "Deleted Genres" : "Genres List"}
+            </h3>
             {!stackMode && (
               <input
                 type="text"
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search genres by name"
-                className="border px-4 py-2 rounded-lg w-full md:w-64 text-base focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                className="border px-4 py-2 rounded-lg w-full md:w-64 text-base focus:ring-2 focus:ring-blue-400 focus:outline-none font-farro" style={{ fontFamily: 'Farro, sans-serif' }}
               />
             )}
-            <button
-              className="px-4 py-2 rounded-lg bg-blue-100 text-blue-700 font-semibold text-sm shadow hover:bg-blue-200 transition w-full md:w-auto"
-              onClick={() => setStackMode(!stackMode)}
-            >
-              {stackMode ? "Show Grid View" : "Show Stack Cards"}
-            </button>
+            <div className="flex gap-2">
+              <button
+                className={`px-4 py-2 rounded-lg font-semibold text-sm shadow transition w-full md:w-auto font-red-rose` + (
+                  showDeleted
+                    ? " bg-red-100 text-red-700 hover:bg-red-200"
+                    : " bg-blue-100 text-blue-700 hover:bg-blue-200"
+                )}
+                onClick={() => {
+                  setShowDeleted(!showDeleted);
+                  setSearch("");
+                }}
+                style={{ fontFamily: 'Red Rose, sans-serif' }}
+              >
+                {showDeleted ? "Show Active" : "Show Deleted"}
+              </button>
+              <button
+                className="px-4 py-2 rounded-lg bg-blue-100 text-blue-700 font-semibold text-sm shadow hover:bg-blue-200 transition w-full md:w-auto font-red-rose"
+                onClick={() => setStackMode(!stackMode)}
+                style={{ fontFamily: 'Red Rose, sans-serif' }}
+              >
+                {stackMode ? "Show Grid View" : "Show Stack Cards"}
+              </button>
+            </div>
           </div>
           <hr className="mb-8 border-blue-100 dark:border-zinc-800" />
           {stackMode ? (
             <GenreStack
               genres={genres}
-              onRestore={() => {}} // placeholder
+              onRestore={handleRestoreGenre}
               onDelete={handleDeleteGenre}
             />
           ) : (
@@ -222,7 +268,7 @@ export default function GenresPage() {
               onEdit={handleEditGenre}
               onUpdate={handleUpdateGenre}
               onDelete={handleDeleteGenre}
-              onRestore={() => {}} // placeholder
+              onRestore={handleRestoreGenre}
               onUpdateIcon={handleUpdateGenre}
             />
           )}

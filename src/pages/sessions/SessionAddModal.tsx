@@ -54,12 +54,12 @@ export default function SessionAddModal({
         >
           ×
         </button>
-        <h3 className="text-xl font-bold mb-4 text-blue-700 dark:text-blue-200">Add Session</h3>
-        <div className="flex flex-col gap-3">
-          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
+        <h3 className="text-xl font-bold mb-4 text-blue-700 dark:text-blue-200 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Add Session</h3>
+        <div className="flex flex-col gap-3 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
+          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
             Movie:
             <select
-              className="w-full border rounded px-2 py-1 mt-1 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
+              className="w-full border rounded px-2 py-1 mt-1 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base font-farro" style={{ fontFamily: 'Farro, sans-serif' }}
               value={modalMovieId ?? ""}
               onChange={e => setModalMovieId(Number(e.target.value))}
             >
@@ -69,10 +69,10 @@ export default function SessionAddModal({
               ))}
             </select>
           </label>
-          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
+          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
             Room:
             <select
-              className="w-full border rounded px-2 py-1 mt-1 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
+              className="w-full border rounded px-2 py-1 mt-1 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base font-farro" style={{ fontFamily: 'Farro, sans-serif' }}
               value={modalRoom}
               onChange={e => setModalRoom(e.target.value)}
             >
@@ -81,31 +81,31 @@ export default function SessionAddModal({
               ))}
             </select>
           </label>
-          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
+          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
             Date:
             <input
               type="date"
-              className="w-full border rounded px-2 py-1 mt-1 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
+              className="w-full border rounded px-2 py-1 mt-1 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base font-farro" style={{ fontFamily: 'Farro, sans-serif' }}
               value={selectedDate || modalDate}
               onChange={e => setModalDate(e.target.value)}
               disabled={!!selectedDate}
             />
           </label>
-          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
+          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
             Start Time:
             <input
               type="time"
               step={300} // <-- 300 seconds = 5 minutes
-              className="w-full border rounded px-2 py-1 mt-1 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
+              className="w-full border rounded px-2 py-1 mt-1 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base font-farro" style={{ fontFamily: 'Farro, sans-serif' }}
               value={modalStart}
               onChange={e => setModalStart(e.target.value)}
             />
           </label>
-          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
+          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
             End Time:
             <input
               type="time"
-              className="w-full border rounded px-2 py-1 mt-1 bg-gray-100 dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
+              className="w-full border rounded px-2 py-1 mt-1 bg-gray-100 dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base font-farro" style={{ fontFamily: 'Farro, sans-serif' }}
               value={modalEnd}
               readOnly
               tabIndex={-1}

@@ -5,6 +5,7 @@ import {
   addMovieAsync,
   updateMovieAsync,
   deleteMovieAsync,
+  restoreMovieAsync,
 } from "../../../store/moviesSlice";
 import type { Movie } from "../../../entities/type";
 import type { MovieApiDTO } from "../../../dto/dto";
@@ -122,10 +123,43 @@ export const useMovieCRUD = (options: UseMovieCRUDOptions = {}) => {
     [dispatch, options]
   );
 
+  const handleRestoreMovie = useCallback(
+    async (movieId: number) => {
+      if (isProcessingRef.current) return { success: false, error: "Operation in progress" };
+      isProcessingRef.current = true;
+
+      try {
+        await dispatch(restoreMovieAsync(movieId)).unwrap();
+        options.toastRef?.current?.showNotification({
+          title: "Success",
+          content: "Movie restored successfully.",
+          accentColor: "#22c55e",
+          position: "bottom-right",
+          longevity: 2500,
+        });
+        return { success: true };
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : String(err);
+        options.toastRef?.current?.showNotification({
+          title: "Error",
+          content: msg || "Failed to restore movie.",
+          accentColor: "#ef4444",
+          position: "bottom-right",
+          longevity: 3000,
+        });
+        return { success: false, error: msg };
+      } finally {
+        isProcessingRef.current = false;
+      }
+    },
+    [dispatch, options]
+  );
+
   return {
     addMovie: handleAddMovie,
     updateMovie: handleUpdateMovie,
     deleteMovie: handleDeleteMovie,
+    restoreMovie: handleRestoreMovie,
     isProcessing: isProcessingRef.current,
   };
 };

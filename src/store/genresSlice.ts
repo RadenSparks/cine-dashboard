@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import { type Genre } from '../entities/type';
 import { type GenreApiDTO } from "../dto/dto";
+import { get, post, put, remove } from '../client/axiosCilent';
 
 const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
 const API_URL = `${BASE_API.replace(/\/$/, "")}/genres`;
@@ -11,18 +12,32 @@ function getAuthHeaders(): Record<string, string> {
   return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
 }
 
+// Backend response type - matches MovieResponseDTO structure
+type GenreApiResponse = {
+  id: number;
+  name: string;
+  icon?: string;
+  deleted?: boolean;
+};
+
+type ApiResponse<T> = {
+  status: 'SUCCESS' | 'FAILURE' | 'ERROR';
+  data: T;
+  message?: string;
+};
+
 export const fetchGenres = createAsyncThunk<Genre[]>(
   'genres/fetchGenres',
   async () => {
-    const res = await fetch(API_URL, { headers: { "Content-Type": "application/json", ...getAuthHeaders() } });
-    const data = await res.json();
-    // Map API response to frontend type
-    return Array.isArray(data.data)
-      ? data.data.map((g: GenreApiDTO) => ({
-          genre_id: g.id ?? 0,
-          genre_name: g.name ?? "",
+    const headers = getAuthHeaders();
+    const res = await get<ApiResponse<GenreApiResponse[]>>(API_URL, { headers });
+    const data = res.data.data;
+    return Array.isArray(data)
+      ? data.map((g: GenreApiResponse) => ({
+          genre_id: g.id,
+          genre_name: g.name,
           icon: g.icon,
-          deleted: false,
+          deleted: g.deleted || false,
         }))
       : [];
   }
@@ -31,25 +46,18 @@ export const fetchGenres = createAsyncThunk<Genre[]>(
 export const addGenreAsync = createAsyncThunk<Genre, Genre>(
   'genres/addGenre',
   async (genre) => {
-    const payload: GenreApiDTO = {
+    const payload: Omit<GenreApiDTO, 'id'> = {
       name: genre.genre_name,
       icon: genre.icon,
-      id: genre.genre_id,
     };
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to add genre");
-    // Map API response to frontend type
-    const g = data.data;
+    const headers = getAuthHeaders();
+    const res = await post<ApiResponse<GenreApiResponse>>(API_URL, payload, { headers });
+    const g = res.data.data;
     return {
-      genre_id: g.id ?? 0,
-      genre_name: g.name ?? "",
+      genre_id: g.id,
+      genre_name: g.name,
       icon: g.icon,
-      deleted: false,
+      deleted: g.deleted || false,
     };
   }
 );
@@ -62,39 +70,47 @@ export const updateGenreAsync = createAsyncThunk<Genre, Genre>(
       name: genre.genre_name,
       icon: genre.icon,
     };
-    const res = await fetch(`${API_URL}/${genre.genre_id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-      body: JSON.stringify(payload),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to update genre");
-    // Map API response to frontend type
-    const g = data.data;
+    const headers = getAuthHeaders();
+    const res = await put<ApiResponse<GenreApiResponse>>(`${API_URL}/${genre.genre_id}`, payload, { headers });
+    const g = res.data.data;
     return {
-      genre_id: g.id ?? 0,
-      genre_name: g.name ?? "",
+      genre_id: g.id,
+      genre_name: g.name,
       icon: g.icon,
-      deleted: false,
+      deleted: g.deleted || false,
     };
   }
 );
 
 export const deleteGenreAsync = createAsyncThunk<Genre, number>(
   'genres/deleteGenre',
+  async (genre_id, { getState }) => {
+    const headers = getAuthHeaders();
+    await remove<ApiResponse<Record<string, never>>>(`${API_URL}/${genre_id}`, { headers });
+    
+    // Backend returns success without genre data, so fetch from state
+    const state = getState() as { genres: { items: Genre[] } };
+    const genre = state.genres.items.find(g => g.genre_id === genre_id);
+    
+    if (genre) {
+      return { ...genre, deleted: true };
+    }
+    
+    throw new Error("Genre not found in state");
+  }
+);
+
+export const restoreGenreAsync = createAsyncThunk<Genre, number>(
+  'genres/restoreGenre',
   async (genre_id) => {
-    const res = await fetch(`${API_URL}/${genre_id}`, {
-      method: "DELETE",
-      headers: getAuthHeaders(),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Failed to delete genre");
-    // The backend may not return the updated genre, so we mark it as deleted here.
+    const headers = getAuthHeaders();
+    const res = await put<ApiResponse<GenreApiResponse>>(`${API_URL}/${genre_id}/restore`, {}, { headers });
+    const g = res.data.data;
     return {
-      genre_id,
-      genre_name: data.data?.name ?? "",
-      icon: data.data?.icon,
-      deleted: true,
+      genre_id: g.id,
+      genre_name: g.name,
+      icon: g.icon,
+      deleted: g.deleted || false,
     };
   }
 );
@@ -129,16 +145,48 @@ const genresSlice = createSlice({
         state.loading = false;
         state.error = action.error.message || "Failed to fetch genres";
       })
+      .addCase(addGenreAsync.pending, state => {
+        state.error = null;
+      })
       .addCase(addGenreAsync.fulfilled, (state, action: PayloadAction<Genre>) => {
         state.items.push(action.payload);
+      })
+      .addCase(addGenreAsync.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to add genre";
+      })
+      .addCase(updateGenreAsync.pending, state => {
+        state.error = null;
       })
       .addCase(updateGenreAsync.fulfilled, (state, action: PayloadAction<Genre>) => {
         const idx = state.items.findIndex(g => g.genre_id === action.payload.genre_id);
         if (idx !== -1) state.items[idx] = action.payload;
       })
+      .addCase(updateGenreAsync.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to update genre";
+      })
+      .addCase(deleteGenreAsync.pending, state => {
+        state.error = null;
+      })
       .addCase(deleteGenreAsync.fulfilled, (state, action: PayloadAction<Genre>) => {
         const idx = state.items.findIndex(g => g.genre_id === action.payload.genre_id);
-        if (idx !== -1) state.items[idx].deleted = true;
+        if (idx !== -1) state.items[idx] = action.payload;
+      })
+      .addCase(deleteGenreAsync.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to delete genre";
+      })
+      .addCase(restoreGenreAsync.pending, state => {
+        state.error = null;
+      })
+      .addCase(restoreGenreAsync.fulfilled, (state, action: PayloadAction<Genre>) => {
+        const idx = state.items.findIndex(g => g.genre_id === action.payload.genre_id);
+        if (idx !== -1) {
+          state.items[idx] = action.payload;
+        } else {
+          state.items.push(action.payload);
+        }
+      })
+      .addCase(restoreGenreAsync.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to restore genre";
       });
   },
 });

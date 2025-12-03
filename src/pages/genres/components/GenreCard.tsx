@@ -57,11 +57,11 @@ export default function GenreCard({
             type="text"
             value={editingGenreName}
             onChange={e => setEditingGenreName(e.target.value)}
-            className="border rounded-lg px-2 py-1 text-base mb-2 w-full text-blue-700 dark:text-blue-200"
+            className="border rounded-lg px-2 py-1 text-base mb-2 w-full text-blue-700 dark:text-blue-200 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
             disabled={genre.deleted}
           />
           <select
-            className="border rounded-lg px-2 py-1 text-base bg-white dark:bg-zinc-800 text-blue-700 dark:text-blue-200 mb-2"
+            className="border rounded-lg px-2 py-1 text-base bg-white dark:bg-zinc-800 text-blue-700 dark:text-blue-200 mb-2 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
             value={editingGenreIcon}
             onChange={e => setEditingGenreIcon(e.target.value)}
             disabled={genre.deleted}
@@ -83,7 +83,7 @@ export default function GenreCard({
         </>
       ) : (
         <>
-          <span className="font-bold text-lg mb-2 text-blue-700 dark:text-blue-200">
+          <span className="font-bold text-lg mb-2 text-blue-700 dark:text-blue-200 font-asul" style={{ fontFamily: 'Asul, sans-serif' }}>
             {genre.genre_name}
           </span>
           <div className="flex gap-2 mt-2">
@@ -98,7 +98,6 @@ export default function GenreCard({
               <AppButton
                 color="success"
                 onClick={() => onRestore(genre.genre_id)}
-                disabled
               >
                 Restore
               </AppButton>

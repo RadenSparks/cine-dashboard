@@ -58,10 +58,11 @@ const FolderTree: React.FC<FolderTreeProps> = ({
         return (
           <li key={folder} className="relative group">
             <div
-              className={`flex items-center gap-2 cursor-pointer rounded-lg pr-2 py-2 ${
+              className={`flex items-center gap-2 cursor-pointer rounded-lg pr-2 py-2 font-red-rose
+                ${
                 isSelected ? "bg-blue-50 font-semibold text-blue-700" : "hover:bg-gray-50"
               }`}
-              style={{ minHeight: 40 }}
+              style={{ minHeight: 40, fontFamily: 'Red Rose, sans-serif' }}
               onClick={() => setSelectedPath(thisPath)}
             >
               {hasChildren ? (

@@ -25,36 +25,52 @@ export function LogoutLoader({
   show,
   steps,
   duration = 2000,
+  title = "Logging out...",
   onComplete,
 }: {
   show: boolean;
   steps: Step[];
   duration?: number;
+  title?: string;
   onComplete: () => void;
 }) {
   const [current, setCurrent] = useState(0);
 
   useEffect(() => {
+    // Reset when show changes to false
     if (!show) {
       setCurrent(0);
       return;
     }
-    if (current < steps.length - 1) {
-      const t = setTimeout(() => setCurrent((c) => c + 1), duration);
-      return () => clearTimeout(t);
-    } else {
-      onComplete();
+
+    // Check if we've completed all steps
+    if (current >= steps.length - 1) {
+      // We've reached the final step, call onComplete after animation
+      console.log(`[LogoutLoader] Reached final step (${current} >= ${steps.length - 1}), calling onComplete`);
+      const timer = setTimeout(() => {
+        console.log("[LogoutLoader] Executing onComplete callback");
+        onComplete();
+      }, 300);
+      return () => clearTimeout(timer);
     }
+
+    // Progress to next step
+    console.log(`[LogoutLoader] Progressing to next step: ${current} -> ${current + 1}`);
+    const timer = setTimeout(() => {
+      setCurrent(prev => prev + 1);
+    }, duration);
+
+    return () => clearTimeout(timer);
   }, [show, current, steps.length, duration, onComplete]);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       {show && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-2xl"
+          exit={{ opacity: 0, transition: { duration: 0.5 } }}
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-2xl pointer-events-auto"
         >
           <div className="relative bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl px-10 py-12 min-w-[340px] max-w-xs border border-blue-200 dark:border-blue-900">
             <div className="mb-8 flex flex-col items-center">
@@ -62,7 +78,7 @@ export function LogoutLoader({
                 <circle cx={24} cy={24} r={24} fill="#3B82F6" fillOpacity={0.15} />
                 <path d="M32 24l-8 8m0 0l-8-8m8 8V12" stroke="#3B82F6" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-              <span className="mt-4 text-lg font-semibold text-blue-700 dark:text-blue-300">Logging out...</span>
+              <span className="mt-4 text-lg font-semibold text-blue-700 dark:text-blue-300">{title}</span>
             </div>
             <div className="space-y-4">
               {steps.map((step, idx) => {

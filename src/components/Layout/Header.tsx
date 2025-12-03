@@ -4,6 +4,7 @@ import { IconMenu2, IconX, IconBell, IconCalendar, IconMoon, IconSun, IconLogout
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../../lib/utils";
 import { isAuthenticated } from "../../lib/auth";
+import { useCurrentUser } from "../../lib/useCurrentUser";
 import { LogoutLoader } from "../UI/LogoutLoader"; // Import the loader
 
 const navLinks = [
@@ -17,7 +18,7 @@ const navLinks = [
   { name: "Settings", link: "/settings" },
 ];
 
-const user = {
+const defaultUser = {
   name: "Admin User",
   avatar: "https://randomuser.me/api/portraits/men/32.jpg",
 };
@@ -33,8 +34,15 @@ export default function Header() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [showLogoutLoader, setShowLogoutLoader] = useState(false);
-  const [pendingLogout, setPendingLogout] = useState(false);
   const navigate = useNavigate();
+  const currentUser = useCurrentUser();
+
+  const user = currentUser ? {
+    name: currentUser.email.split('@')[0] || "User",
+    email: currentUser.email,
+    role: currentUser.role,
+    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+  } : defaultUser;
 
   React.useEffect(() => {
     if (darkMode) {
@@ -44,28 +52,35 @@ export default function Header() {
     }
   }, [darkMode]);
 
-  // Logout function with loader
   const handleLogout = () => {
+    console.log("[Header] handleLogout called");
     setUserMenuOpen(false);
     setShowLogoutLoader(true);
-    setPendingLogout(true);
   };
 
-  const handleLogoutComplete = React.useCallback(() => {
-    if (pendingLogout) {
-      localStorage.removeItem("cine-user-details");
-      setPendingLogout(false);
-      navigate("/login");
-      // Don't setShowLogoutLoader(false) here, let navigation happen first
-    }
-  }, [pendingLogout, navigate]);
+  const handleLogoutComplete = () => {
+    console.log("[Header] handleLogoutComplete called");
+    // Clear localStorage immediately when logout animation completes
+    localStorage.removeItem("cine-user-details");
+    localStorage.removeItem("cine-admin-remember");
+    console.log("[Header] Cleared localStorage, closing loader");
+    
+    // Close the loader
+    setShowLogoutLoader(false);
+    
+    // Navigate to login page
+    console.log("[Header] Navigating to /login");
+    navigate("/login");
+  };
 
   // Redirect to login if user is not authenticated
+  // Only check on mount, not on every render
   useEffect(() => {
     if (!isAuthenticated()) {
-      navigate("/login");
+      navigate("/login", { replace: true });
     }
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array - only run on mount
 
   return (
     <>
@@ -90,7 +105,7 @@ export default function Header() {
                 height={30}
                 className="rounded"
               />
-              <span className="font-semibold text-lg text-black dark:text-white whitespace-nowrap">Cine Dashboard</span>
+              <span className="font-semibold text-lg text-black dark:text-white whitespace-nowrap font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Cine Dashboard</span>
             </a>
             <span className="inline-block px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold ml-2 whitespace-nowrap">
               Admin
@@ -98,7 +113,7 @@ export default function Header() {
           </div>
           {/* Center: Welcome Message */}
           <div className="flex-1 flex justify-center items-center min-w-0">
-            <div className="px-4 py-2 rounded-full bg-gradient-to-b from-blue-500 to-blue-700 text-white font-semibold shadow transition duration-200 text-base truncate max-w-full md:max-w-[600px]">
+            <div className="px-4 py-2 rounded-full bg-gradient-to-b from-blue-500 to-blue-700 text-white font-semibold shadow transition duration-200 text-base truncate max-w-full md:max-w-[600px] font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
               Welcome back, <span className="font-bold">{user.name}</span>!
             </div>
           </div>
@@ -133,7 +148,7 @@ export default function Header() {
                     alt={user.name}
                     className="h-8 w-8 rounded-full border-2 border-blue-500 object-cover"
                   />
-                  <span className="font-medium text-sm text-zinc-700 dark:text-zinc-200 hidden md:inline whitespace-nowrap">{user.name}</span>
+                  <span className="font-medium text-sm text-zinc-700 dark:text-zinc-200 hidden md:inline whitespace-nowrap font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>{user.name}</span>
                 </button>
                 <AnimatePresence>
                   {userMenuOpen && (

@@ -31,10 +31,10 @@ export default function RoomTable({
           + Create Room
         </AppButton>
       </div>
-      <div className="w-full overflow-x-auto rounded-lg shadow hide-scrollbar">
+      <div className="w-full overflow-x-auto rounded-lg shadow hide-scrollbar max-h-96">
         <table className="min-w-full w-full text-sm">
-          <thead>
-            <tr className="bg-blue-50 dark:bg-zinc-800">
+          <thead className="sticky top-0 z-10">
+            <tr className="bg-blue-50 dark:bg-zinc-800 font-asul" style={{ fontFamily: 'Asul, sans-serif' }}>
               <th className="p-3 text-left font-semibold">Name</th>
               <th className="p-3 text-center font-semibold">Capacity</th>
               <th className="p-3 text-center font-semibold">Rows</th>
@@ -54,9 +54,10 @@ export default function RoomTable({
               return (
                 <tr
                   key={room.id}
-                  className={`border-t transition hover:bg-blue-50 dark:hover:bg-zinc-800 ${
+                  className={`border-t transition hover:bg-blue-50 dark:hover:bg-zinc-800 font-farro ${
                     isDisabled ? "bg-gray-100 dark:bg-zinc-900 text-gray-400" : ""
                   }`}
+                  style={{ fontFamily: 'Farro, sans-serif' }}
                 >
                   <td className={`p-3 font-bold ${isDisabled ? "text-gray-400" : "text-blue-700 dark:text-blue-200"}`}>{room.roomName}</td>
                   <td className="p-3 text-center">{room.roomRow ? (room.roomRow.charCodeAt(0) - 64) * room.roomColumn : 0}</td>

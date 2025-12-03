@@ -12,7 +12,7 @@ interface MovieTableProps {
   onDetail: (movie: Movie) => void;
 }
 
-const MovieTable = ({ movies, genres, onEdit, onDelete, onDetail }: MovieTableProps) => {
+const MovieTable = ({ movies, genres, onEdit, onDelete, onRestore, onDetail }: MovieTableProps) => {
   function isNowShowing(premiere_date: string): boolean {
     const premiere = new Date(premiere_date);
     const now = new Date();
@@ -22,10 +22,10 @@ const MovieTable = ({ movies, genres, onEdit, onDelete, onDetail }: MovieTablePr
   }
 
   return (
-    <div className="overflow-x-auto rounded-lg shadow w-full hide-scrollbar">
+    <div className="overflow-x-auto rounded-lg shadow w-full hide-scrollbar max-h-screen">
       <table className="min-w-full text-sm">
-        <thead>
-          <tr className="bg-blue-50 dark:bg-zinc-800">
+        <thead className="sticky top-0 z-10">
+          <tr className="bg-blue-50 dark:bg-zinc-800 font-asul" style={{ fontFamily: 'Asul, sans-serif' }}>
             <th className="p-3 text-left font-semibold w-24">Poster</th>
             <th className="p-3 text-left font-semibold w-56">Title</th>
             <th className="p-3 text-left font-semibold w-40">Genre</th>
@@ -41,7 +41,8 @@ const MovieTable = ({ movies, genres, onEdit, onDelete, onDetail }: MovieTablePr
           {movies.map(movie => (
             <tr
               key={movie.id}
-              className={`border-t transition ${movie.deleted ? "opacity-60 bg-gray-100 dark:bg-zinc-800" : "hover:bg-blue-50 dark:hover:bg-zinc-800"}`}
+              className={`border-t transition font-farro ${movie.deleted ? "opacity-60 bg-gray-100 dark:bg-zinc-800" : "hover:bg-blue-50 dark:hover:bg-zinc-800"}`}
+              style={{ fontFamily: 'Farro, sans-serif' }}
             >
               <td className="p-3 w-24">
                 {(() => {
@@ -110,16 +111,24 @@ const MovieTable = ({ movies, genres, onEdit, onDelete, onDetail }: MovieTablePr
                 )}
               </td>
               <td className="p-3 w-32">
-                <div className="flex gap-2">
+                <div className="flex gap-2 flex-wrap">
                   <AppButton color="primary" onClick={() => onDetail(movie)}>
                     Details
                   </AppButton>
-                  <AppButton color="success" onClick={() => onEdit(movie)} disabled={movie.deleted}>
-                    Edit
-                  </AppButton>
-                  <AppButton color="danger" onClick={() => onDelete(movie.id)} disabled={movie.deleted}>
-                    Delete
-                  </AppButton>
+                  {movie.deleted ? (
+                    <AppButton color="success" onClick={() => onRestore(movie.id)}>
+                      Restore
+                    </AppButton>
+                  ) : (
+                    <>
+                      <AppButton color="success" onClick={() => onEdit(movie)}>
+                        Edit
+                      </AppButton>
+                      <AppButton color="danger" onClick={() => onDelete(movie.id)}>
+                        Delete
+                      </AppButton>
+                    </>
+                  )}
                 </div>
               </td>
             </tr>

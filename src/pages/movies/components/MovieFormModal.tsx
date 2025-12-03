@@ -169,7 +169,7 @@ export default function MovieFormModal({
             <div className="flex flex-col md:flex-row gap-8 p-8">
               <div className="md:w-1/3 w-full mb-4 md:mb-0">
                 <div className="bg-white dark:bg-zinc-900 rounded-xl shadow border border-blue-100 dark:border-zinc-800 p-4 flex flex-col items-center w-full box-border">
-                  <div className="text-base font-semibold text-blue-700 dark:text-blue-200 mb-3 text-center tracking-wide">
+                  <div className="text-base font-semibold text-blue-700 dark:text-blue-200 mb-3 text-center tracking-wide font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
                     Poster Preview
                   </div>
                   {(() => {
@@ -197,7 +197,7 @@ export default function MovieFormModal({
                 {/* Gallery Selection Preview */}
                 {galleryImages.length > 0 && (
                   <div className="bg-white dark:bg-zinc-900 rounded-xl shadow border border-green-100 dark:border-green-900/50 p-4 flex flex-col items-center w-full box-border">
-                    <div className="text-sm font-semibold text-green-700 dark:text-green-200 mb-3 text-center tracking-wide flex items-center gap-2">
+                    <div className="text-sm font-semibold text-green-700 dark:text-green-200 mb-3 text-center tracking-wide flex items-center gap-2 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
                       <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                       </svg>
@@ -220,7 +220,8 @@ export default function MovieFormModal({
               </div>
 
               <form
-                className="flex-1 space-y-5"
+                className="flex-1 space-y-5 font-red-rose"
+                style={{ fontFamily: 'Red Rose, sans-serif' }}
                 onSubmit={e => {
                   e.preventDefault();
                   if (formValid) onSubmit();

@@ -110,7 +110,8 @@ const ImagesManager: React.FC = () => {
 
       <div className="bg-white/95 dark:bg-zinc-900/95 rounded-2xl shadow-2xl p-6 border border-blue-100 dark:border-zinc-800">
         <div className="mb-6">
-          <h1 className="text-3xl font-extrabold text-blue-700 dark:text-blue-200 mb-4">🖼️ Image Manager</h1>
+          <h1 className="text-3xl font-extrabold text-blue-700 dark:text-blue-200 mb-2 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>🖼️ Image Manager</h1>
+          <p className="text-gray-600 dark:text-gray-400 mb-4 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Organize and manage movie images with folder structure</p>
           <ImageUploader
             folderPath={folderPath}
             folderTree={folderTree}

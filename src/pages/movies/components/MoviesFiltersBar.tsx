@@ -46,7 +46,7 @@ const MoviesFiltersBar: React.FC<MoviesFiltersBarProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Search */}
         <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
             Search
           </label>
           <input
@@ -55,13 +55,13 @@ const MoviesFiltersBar: React.FC<MoviesFiltersBarProps> = ({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             disabled={loading}
-            className="w-full px-3 py-2 border border-blue-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-zinc-700 text-sm"
+            className="w-full px-3 py-2 border border-blue-300 dark:border-zinc-600 rounded-lg bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 dark:disabled:bg-zinc-700 text-sm font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
           />
         </div>
 
         {/* Genre Filter */}
         <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
             Genre
           </label>
           <Select
@@ -97,7 +97,7 @@ const MoviesFiltersBar: React.FC<MoviesFiltersBarProps> = ({
 
         {/* Duration Filter */}
         <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
             Duration
           </label>
           <Select
@@ -131,7 +131,7 @@ const MoviesFiltersBar: React.FC<MoviesFiltersBarProps> = ({
 
         {/* Now Showing Filter */}
         <div>
-          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
             Status
           </label>
           <Select

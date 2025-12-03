@@ -33,8 +33,8 @@ const AppButtonComponent: React.FC<AppButtonProps> = ({
       disabled={disabled}
       className={`
         ${gradient ? "" : colorMap[color]}
-        text-white font-bold px-4 py-2 rounded-lg shadow transition-all duration-300
-        flex items-center gap-2
+        text-white font-bold px-3 py-1 rounded-lg shadow transition-all duration-300 text-sm
+        flex items-center gap-2 font-red-rose
         ${className}
       `.trim()}
       style={{
@@ -42,6 +42,7 @@ const AppButtonComponent: React.FC<AppButtonProps> = ({
         opacity: disabled ? 0.4 : 1.0,
         cursor: disabled ? "not-allowed" : "pointer",
         pointerEvents: disabled ? "none" : "auto",
+        fontFamily: 'Red Rose, sans-serif',
       }}
       {...props}
     >

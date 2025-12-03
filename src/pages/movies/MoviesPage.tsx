@@ -18,18 +18,20 @@ import { useMovieCRUD } from "./hooks/useMovieCRUD";
 
 // --- Main Page ---
 export default function MoviesPage() {
-  const { items: movies, loading } = useSelector((state: RootState) => state.movies);
+  const { items: movies, loading, pagination } = useSelector((state: RootState) => state.movies);
   const { items: genres, loading: genresLoading } = useSelector((state: RootState) => state.genres);
   const dispatch = useDispatch<AppDispatch>();
   const toastRef = useRef<{ showNotification: (options: Omit<ToastNotification, "id">) => void }>(null);
 
   // Movie CRUD hook
-  const { addMovie, updateMovie, deleteMovie } = useMovieCRUD({
+  const { addMovie, updateMovie, deleteMovie, restoreMovie } = useMovieCRUD({
     toastRef,
   });
 
   const [editing, setEditing] = useState<Movie | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10;
   const [newMovie, setNewMovie] = useState<Movie>({
     id: 0,
     title: "",
@@ -53,11 +55,10 @@ export default function MoviesPage() {
 
   // Fetch movies and genres on mount
   useEffect(() => {
-    dispatch(fetchMovies());
+    dispatch(fetchMovies({ page: currentPage, size: pageSize }));
     dispatch(fetchGenres());
     dispatch(fetchFolderListAsync());
-    // eslint-disable-next-line
-  }, []);
+  }, [currentPage, pageSize, dispatch]);
 
   // --- Filtering Logic ---
   function isNowShowing(premiere_date: string) {
@@ -174,11 +175,15 @@ export default function MoviesPage() {
     await deleteMovie(id);
   };
 
+  const handleRestoreMovie = async (id: number) => {
+    await restoreMovie(id);
+  };
+
   if (loading || genresLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
         <Loading />
-        <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow">
+        <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
           🎬 Movies
         </h2>
       </div>
@@ -188,11 +193,23 @@ export default function MoviesPage() {
   return (
     <>
       <SatelliteToast ref={toastRef} />
-      <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-16 min-h-[400px] hide-scrollbar">
+      <div className="w-full mx-auto px-1 md:px-2 xl:px-4 min-h-[600px] hide-scrollbar">
         <div className="bg-white/95 dark:bg-zinc-900/95 rounded-2xl shadow-2xl p-10 w-full mt-10 border border-blue-100 dark:border-zinc-800 overflow-x-hidden">
-          <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow">
-            🎬 Movies
-          </h2>
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h2 className="text-3xl font-extrabold text-blue-700 dark:text-blue-200 tracking-tight drop-shadow font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
+                🎬 Movies
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400 mt-2 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Browse, manage, and organize your movie catalog</p>
+            </div>
+            <button
+              className="bg-gradient-to-r from-blue-600 to-blue-400 text-white px-4 py-1.5 rounded-lg shadow hover:from-blue-700 hover:to-blue-500 transition font-semibold font-red-rose whitespace-nowrap ml-6 text-sm"
+              style={{ fontFamily: 'Red Rose, sans-serif' }}
+              onClick={() => setShowAdd(true)}
+            >
+              + Add Movie
+            </button>
+          </div>
 
           {/* Filters Bar */}
           <div className="mb-6">
@@ -210,23 +227,18 @@ export default function MoviesPage() {
             />
           </div>
 
-          {/* Add Movie Button */}
-          <div className="mb-6 flex justify-end">
-            <button
-              className="bg-gradient-to-r from-blue-600 to-blue-400 text-white px-6 py-2.5 rounded-lg shadow hover:from-blue-700 hover:to-blue-500 transition font-semibold"
-              onClick={() => setShowAdd(true)}
-            >
-              + Add Movie
-            </button>
-          </div>
-
           {/* Movies Table with Pagination */}
           <MoviesTableContainer
             movies={filteredMovies}
             genres={genres}
             loading={loading}
+            totalPages={pagination.totalPages}
+            currentPage={pagination.currentPage}
+            totalElements={pagination.totalElements}
+            onPageChange={(page) => setCurrentPage(page)}
             onEdit={handleEditMovie}
             onDelete={handleDeleteMovie}
+            onRestore={handleRestoreMovie}
             onViewDetails={setDetailMovie}
           />
         </div>

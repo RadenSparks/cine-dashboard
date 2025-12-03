@@ -1,5 +1,4 @@
 import AppButton from "../../../components/UI/AppButton";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import { type User } from "../../../entities/type";
 import { getTierStyle } from "../userHelper";
 
@@ -9,15 +8,15 @@ interface UserTableProps {
   setSearch: (s: string) => void;
   setEditingUser: (u: User) => void;
   handleToggleActive: (u: User) => void;
-  page: number;
-  setPage: (p: number) => void;
+  currentPage: number;
+  onPageChange?: (page: number) => void;
   totalPages: number;
-  filteredUsers: User[];
+  totalElements: number;
   getTierName: (mileStoneTier?: User["mileStoneTier"]) => string;
   roleStyles: Record<string, string>;
   tierStyles: Record<number, string>;
-  loading?: boolean; // <-- Add this
-  error?: string | null; // <-- Add this
+  loading?: boolean;
+  error?: string | null;
 }
 
 export default function UserTable({
@@ -26,13 +25,19 @@ export default function UserTable({
   setSearch,
   setEditingUser,
   handleToggleActive,
-  page,
-  setPage,
+  currentPage,
+  onPageChange,
   totalPages,
+  totalElements,
   roleStyles,
-  loading, // <-- Add this
-  error, // <-- Add this
+  loading,
+  error,
 }: UserTableProps) {
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 0 && newPage < totalPages && !loading) {
+      onPageChange?.(newPage);
+    }
+  };
 
   return (
     <>
@@ -71,15 +76,15 @@ export default function UserTable({
         </AppButton>
       </div>
       {/* Table */}
-      <div className="rounded-2xl overflow-x-auto border border-blue-100 dark:border-zinc-800 shadow-lg bg-white/80 dark:bg-zinc-900/80 hide-scrollbar">
+      <div className="rounded-2xl overflow-x-auto border border-blue-100 dark:border-zinc-800 shadow-lg bg-white/80 dark:bg-zinc-900/80 hide-scrollbar max-h-96">
         {loading ? (
           <div className="py-10 text-center text-blue-600 font-bold">Loading users...</div>
         ) : error ? (
           <div className="py-10 text-center text-red-600 font-bold">{error}</div>
         ) : (
           <table className="min-w-full table-auto rounded-lg overflow-hidden">
-            <thead>
-              <tr className="bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-200">
+            <thead className="sticky top-0 bg-gray-100 dark:bg-neutral-800 z-10">
+              <tr className="bg-gray-100 dark:bg-neutral-800 text-gray-700 dark:text-gray-200 font-asul" style={{ fontFamily: 'Asul, sans-serif' }}>
                 <th className="p-3 font-semibold text-left">Name</th>
                 <th className="p-3 font-semibold text-left">Email</th>
                 {/* Remove Password column */}
@@ -99,7 +104,7 @@ export default function UserTable({
                 </tr>
               ) : (
                 users.map((user: User) => (
-                  <tr key={user.id} className={`border-t border-gray-100 dark:border-neutral-800`}>
+                  <tr key={user.id} className={`border-t border-gray-100 dark:border-neutral-800 font-farro`} style={{ fontFamily: 'Farro, sans-serif' }}>
                     <td className="p-3">{user.name}</td>
                     <td className="p-3">{user.email}</td>
                     <td className="p-3">
@@ -151,54 +156,52 @@ export default function UserTable({
         )}
       </div>
       <Pagination
-        page={page}
-        setPage={setPage}
+        currentPage={currentPage}
+        onPageChange={handlePageChange}
         totalPages={totalPages}
+        totalElements={totalElements}
+        loading={loading}
       />
     </>
   );
 }
 
 function Pagination({
-  page,
-  setPage,
+  currentPage,
+  onPageChange,
   totalPages,
+  totalElements,
+  loading,
 }: {
-  page: number;
-  setPage: (p: number) => void;
+  currentPage: number;
+  onPageChange: (page: number) => void;
   totalPages: number;
+  totalElements: number;
+  loading?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-center gap-2 mt-6">
-      <button
-        className="p-2 rounded-full bg-gray-100 dark:bg-zinc-800 hover:bg-blue-100 dark:hover:bg-blue-900 transition disabled:opacity-50"
-        onClick={() => setPage(page - 1)}
-        disabled={page === 1}
-        aria-label="Previous page"
-      >
-        <ChevronLeft className="w-5 h-5" />
-      </button>
-      {Array.from({ length: totalPages }, (_, i) => (
+    <div className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700 mt-6">
+      <div className="text-sm text-gray-600 dark:text-gray-400">
+        Page {currentPage + 1} of {totalPages} • {totalElements} total users
+      </div>
+      <div className="flex gap-2">
         <button
-          key={i + 1}
-          className={`px-3 py-1 rounded-full font-semibold text-sm transition ${
-            page === i + 1
-              ? "bg-blue-600 text-white shadow"
-              : "bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-200 hover:bg-blue-100 dark:hover:bg-blue-900"
-          }`}
-          onClick={() => setPage(i + 1)}
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage === 0 || loading}
+          className="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-200 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          type="button"
         >
-          {i + 1}
+          Previous
         </button>
-      ))}
-      <button
-        className="p-2 rounded-full bg-gray-100 dark:bg-zinc-800 hover:bg-blue-100 dark:hover:bg-blue-900 transition disabled:opacity-50"
-        onClick={() => setPage(page + 1)}
-        disabled={page === totalPages}
-        aria-label="Next page"
-      >
-        <ChevronRight className="w-5 h-5" />
-      </button>
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage === totalPages - 1 || loading}
+          className="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-200 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+          type="button"
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 }

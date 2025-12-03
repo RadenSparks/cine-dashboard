@@ -126,11 +126,12 @@ export default function ShowtimePage() {
   // --- UI ---
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loading />
-        <h2 className="text-3xl font-extrabold mb-8 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow">
-          🎬 Sessions
-        </h2>
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-zinc-900 dark:via-zinc-950 dark:to-blue-950 py-10 hide-scrollbar">
+        <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-16">
+          <div className="flex flex-col items-center justify-center min-h-[400px]">
+            <Loading />
+          </div>
+        </div>
       </div>
     );
   }
@@ -138,9 +139,10 @@ export default function ShowtimePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-zinc-900 dark:via-zinc-950 dark:to-blue-950 py-10 hide-scrollbar">
       <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-16">
-        <h2 className="text-3xl font-extrabold mb-10 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow">
+        <h2 className="text-3xl font-extrabold mb-2 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
           🎬 Sessions
         </h2>
+        <p className="text-gray-600 dark:text-gray-400 text-center mb-8 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Schedule movie sessions and manage screening times</p>
         <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-blue-100 dark:border-zinc-800 p-8 mb-10">
           {/* Top controls: Timeline/Calendar toggle and Add Session */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">

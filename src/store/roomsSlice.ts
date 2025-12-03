@@ -1,22 +1,24 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
 import type { Room } from "../entities/type";
 import type { RoomApiDTO, ApiResponse } from "../dto/dto";
-import { getAuthHeaders } from "../lib/auth";
-import { remove } from "../client/axiosCilent";
+import { get, post, put, remove } from "../client/axiosCilent";
 
 const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
 const API_URL = `${BASE_API.replace(/\/$/, "")}/rooms`;
+
+function getAuthHeaders(): Record<string, string> {
+  const userDetails = localStorage.getItem("cine-user-details");
+  const accessToken = userDetails ? JSON.parse(userDetails).accessToken : null;
+  return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+}
 
 // Fetch all rooms
 export const fetchRooms = createAsyncThunk<Room[]>(
   "rooms/fetchRooms",
   async () => {
-    const res = await fetch(API_URL, {
-      method: "GET",
-      headers: getAuthHeaders(),
-    });
-    const data: ApiResponse<Room[]> = await res.json();
-    return Array.isArray(data.data) ? data.data : [];
+    const headers = getAuthHeaders();
+    const res = await get<ApiResponse<Room[]>>(API_URL, { headers });
+    return Array.isArray(res.data.data) ? res.data.data : [];
   }
 );
 
@@ -24,9 +26,9 @@ export const fetchRooms = createAsyncThunk<Room[]>(
 export const fetchRoomById = createAsyncThunk<Room, number>(
   "rooms/fetchRoomById",
   async (roomId) => {
-    const res = await fetch(`${API_URL}/${roomId}`);
-    const data: ApiResponse<Room> = await res.json();
-    return data.data;
+    const headers = getAuthHeaders();
+    const res = await get<ApiResponse<Room>>(`${API_URL}/${roomId}`, { headers });
+    return res.data.data;
   }
 );
 
@@ -34,13 +36,9 @@ export const fetchRoomById = createAsyncThunk<Room, number>(
 export const addRoom = createAsyncThunk<Room, RoomApiDTO>(
   "rooms/addRoom",
   async (room) => {
-    const res = await fetch(API_URL, {
-      method: "POST",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(room),
-    });
-    const data: ApiResponse<Room> = await res.json();
-    return data.data;
+    const headers = getAuthHeaders();
+    const res = await post<ApiResponse<Room>>(API_URL, room, { headers });
+    return res.data.data;
   }
 );
 
@@ -49,24 +47,38 @@ export const updateRoom = createAsyncThunk<Room, RoomApiDTO>(
   "rooms/updateRoom",
   async (room) => {
     if (!room.id) throw new Error("Room id is required for update");
-    const res = await fetch(`${API_URL}/${room.id}`, {
-      method: "PUT",
-      headers: getAuthHeaders(),
-      body: JSON.stringify(room),
-    });
-    const data: ApiResponse<Room> = await res.json();
-    return data.data;
+    const headers = getAuthHeaders();
+    const res = await put<ApiResponse<Room>>(`${API_URL}/${room.id}`, room, { headers });
+    return res.data.data;
   }
 );
 
-// Delete a room
-export const deleteRoom = createAsyncThunk<number, number>(
+// Delete a room (soft delete)
+export const deleteRoom = createAsyncThunk<Room, number>(
   "rooms/deleteRoom",
+  async (id, { getState }) => {
+    const headers = getAuthHeaders();
+    await remove<ApiResponse<Record<string, never>>>(`${API_URL}/${id}`, { headers });
+    
+    // Get room from state and mark as deleted
+    const state = getState() as { rooms: { rooms: Room[] } };
+    const room = state.rooms.rooms.find(r => r.id === id);
+    
+    if (room) {
+      return { ...room, deleted: true };
+    }
+    
+    throw new Error("Room not found in state");
+  }
+);
+
+// Restore a deleted room
+export const restoreRoom = createAsyncThunk<Room, number>(
+  "rooms/restoreRoom",
   async (id) => {
-    // Call DELETE /api/v1/rooms/{roomId}
-    const res = await remove<ApiResponse<{ id: number }>>(`${API_URL}/${id}`);
-    if (res.data.status !== "SUCCESS") throw new Error("Failed to delete room");
-    return res.data.data.id;
+    const headers = getAuthHeaders();
+    const res = await put<ApiResponse<Room>>(`${API_URL}/${id}/restore`, {}, { headers });
+    return res.data.data;
   }
 );
 
@@ -91,28 +103,77 @@ const roomsSlice = createSlice({
     selectRoom(state, action) {
       state.selectedRoomId = action.payload;
     },
-    // Preset logic can be updated similarly if needed
   },
   extraReducers: builder => {
     builder
-      .addCase(fetchRooms.pending, state => { state.loading = true; })
+      .addCase(fetchRooms.pending, state => {
+        state.loading = true;
+        state.error = null;
+      })
       .addCase(fetchRooms.fulfilled, (state, action) => {
         state.loading = false;
         state.rooms = action.payload;
       })
       .addCase(fetchRooms.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || null;
+        state.error = action.error.message || "Failed to fetch rooms";
       })
-      .addCase(updateRoom.fulfilled, (state, action) => {
+      .addCase(fetchRoomById.pending, state => {
+        state.error = null;
+      })
+      .addCase(fetchRoomById.fulfilled, (state, action) => {
         const idx = state.rooms.findIndex(r => r.id === action.payload.id);
-        if (idx !== -1) state.rooms[idx] = action.payload;
+        if (idx !== -1) {
+          state.rooms[idx] = action.payload;
+        } else {
+          state.rooms.push(action.payload);
+        }
+      })
+      .addCase(fetchRoomById.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to fetch room";
+      })
+      .addCase(addRoom.pending, state => {
+        state.error = null;
       })
       .addCase(addRoom.fulfilled, (state, action) => {
         state.rooms.push(action.payload);
       })
-      .addCase(deleteRoom.fulfilled, (state, action) => {
-        state.rooms = state.rooms.filter(r => r.id !== action.payload);
+      .addCase(addRoom.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to add room";
+      })
+      .addCase(updateRoom.pending, state => {
+        state.error = null;
+      })
+      .addCase(updateRoom.fulfilled, (state, action: PayloadAction<Room>) => {
+        const idx = state.rooms.findIndex(r => r.id === action.payload.id);
+        if (idx !== -1) state.rooms[idx] = action.payload;
+      })
+      .addCase(updateRoom.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to update room";
+      })
+      .addCase(deleteRoom.pending, state => {
+        state.error = null;
+      })
+      .addCase(deleteRoom.fulfilled, (state, action: PayloadAction<Room>) => {
+        const idx = state.rooms.findIndex(r => r.id === action.payload.id);
+        if (idx !== -1) state.rooms[idx] = action.payload;
+      })
+      .addCase(deleteRoom.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to delete room";
+      })
+      .addCase(restoreRoom.pending, state => {
+        state.error = null;
+      })
+      .addCase(restoreRoom.fulfilled, (state, action: PayloadAction<Room>) => {
+        const idx = state.rooms.findIndex(r => r.id === action.payload.id);
+        if (idx !== -1) {
+          state.rooms[idx] = action.payload;
+        } else {
+          state.rooms.push(action.payload);
+        }
+      })
+      .addCase(restoreRoom.rejected, (state, action) => {
+        state.error = action.error.message || "Failed to restore room";
       });
   }
 });

@@ -41,8 +41,8 @@ export default function EditRoomModal({
             >
               ×
             </button>
-            <h3 className="text-2xl font-bold mb-6 text-blue-700 dark:text-blue-200 text-center">Edit Room</h3>
-            <div className="flex flex-col gap-4">
+            <h3 className="text-2xl font-bold mb-6 text-blue-700 dark:text-blue-200 text-center font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Edit Room</h3>
+            <div className="flex flex-col gap-4 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
               <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
                 Room Name:
                 <input

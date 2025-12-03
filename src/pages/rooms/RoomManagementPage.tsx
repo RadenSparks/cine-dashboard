@@ -6,6 +6,7 @@ import {
   addRoom,
   updateRoom,
   deleteRoom,
+  restoreRoom,
 } from "../../store/roomsSlice";
 import { updateSeat, fetchSeatsByRoom } from "../../store/seatsSlice";
 import { SatelliteToast, type ToastNotification } from "../../components/UI/SatelliteToast";
@@ -242,7 +243,7 @@ export default function RoomManagementPage() {
   function handleReactivateRoom(id: number) {
     const room = validRooms.find(r => r.id === id);
     if (!room) return;
-    dispatch(updateRoom({ ...room, deleted: false }))
+    dispatch(restoreRoom(id))
       .then(() => {
         dispatch(fetchRooms());
         toastRef.current?.showNotification?.({
@@ -264,9 +265,10 @@ export default function RoomManagementPage() {
         ) : (
           <>
             {/* ...your page content... */}
-            <h2 className="text-3xl font-extrabold mb-10 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow">
+            <h2 className="text-3xl font-extrabold mb-2 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
               🏟️ Room Management
             </h2>
+            <p className="text-gray-600 dark:text-gray-400 text-center mb-8 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Configure theater rooms, seats, and seating layouts</p>
             <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-blue-100 dark:border-zinc-800 p-8 mb-10">
               <RoomTable
                 rooms={validRooms}

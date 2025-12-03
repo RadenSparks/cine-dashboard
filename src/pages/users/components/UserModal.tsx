@@ -53,6 +53,7 @@ export default function UserModal({
     } else {
       setEditingUser(null);
     }
+    // Always clear password field - user must enter new password or leave blank to keep current
     setNewPassword("");
     setPasswordError(null);
   }, [user, tiers]);
@@ -142,7 +143,8 @@ export default function UserModal({
             </div>
             {/* Modal Form */}
             <form
-              className="flex flex-col gap-5 px-8 py-8"
+              className="flex flex-col gap-5 px-8 py-8 font-red-rose"
+              style={{ fontFamily: 'Red Rose, sans-serif' }}
               onSubmit={e => {
                 e.preventDefault();
                 validateAndSave();

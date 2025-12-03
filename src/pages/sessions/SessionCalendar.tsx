@@ -37,7 +37,7 @@ export default function SessionCalendar({
         >
           ←
         </AppButton>
-        <span className="font-semibold text-lg text-blue-700 dark:text-blue-200">
+        <span className="font-semibold text-lg text-blue-700 dark:text-blue-200 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
           {new Date(year, month).toLocaleString("default", {
             month: "long",
             year: "numeric",
@@ -52,7 +52,7 @@ export default function SessionCalendar({
       </div>
       <div className="grid grid-cols-7 gap-2 mb-1">
         {WEEKDAYS.map(day => (
-          <div key={day} className="text-center text-xs font-semibold text-blue-600 dark:text-blue-300">
+          <div key={day} className="text-center text-xs font-semibold text-blue-600 dark:text-blue-300 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
             {day}
           </div>
         ))}

@@ -16,7 +16,7 @@ export default function TierSelector({
         <button
           key={tier.code}
           type="button"
-          className={`transition px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 border-2
+          className={`transition px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-2 border-2 font-red-rose
             ${getTierStyle(tier.code)}
             ${
               value === tier.id
@@ -24,6 +24,7 @@ export default function TierSelector({
                 : "border-transparent opacity-70 hover:opacity-100 hover:scale-105"
             }
           `}
+          style={{ fontFamily: 'Red Rose, sans-serif' }}
           aria-pressed={value === tier.id}
           onClick={() => onChange(tier.id)}
         >

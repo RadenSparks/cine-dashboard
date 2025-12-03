@@ -76,12 +76,12 @@ const GallerySlider = ({ images, renderAction }: GallerySliderProps) => {
           </>
         )}
         {/* Image counter */}
-        <span className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black bg-opacity-60 text-white text-xs px-3 py-1 rounded-full shadow">
+        <span className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black bg-opacity-60 text-white text-xs px-3 py-1 rounded-full shadow font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
           {current + 1} / {images.length}
         </span>
         {/* File size display (if available) */}
         {getSize(images[current]) && (
-          <span className="absolute top-3 right-3 bg-white bg-opacity-80 text-gray-700 text-xs px-2 py-0.5 rounded shadow border border-gray-200">
+          <span className="absolute top-3 right-3 bg-white bg-opacity-80 text-gray-700 text-xs px-2 py-0.5 rounded shadow border border-gray-200 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
             {(getSize(images[current])! / (1024 * 1024)).toFixed(2)} MB
           </span>
         )}
@@ -115,7 +115,7 @@ const GallerySlider = ({ images, renderAction }: GallerySliderProps) => {
         </div>
       )}
       {/* Keyboard navigation hint */}
-      <div className="text-xs text-gray-400 mt-2">
+      <div className="text-xs text-gray-400 mt-2 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
         Use  <span className="font-semibold text-blue-600">←</span> / <span className="font-semibold text-blue-600">→</span> to navigate images
       </div>
     </div>

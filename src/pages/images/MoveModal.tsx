@@ -60,12 +60,13 @@ const FolderTreeSelector: React.FC<{
           return (
             <li key={folder} className="relative group">
               <div
-                className={`flex items-center gap-2 cursor-pointer rounded-lg pr-2 py-2 transition ${
+                className={`flex items-center gap-2 cursor-pointer rounded-lg pr-2 py-2 transition font-red-rose
+                  ${
                   isSelected
                     ? "bg-blue-100 font-semibold text-blue-700"
                     : "hover:bg-gray-100 text-gray-700"
                 }`}
-                style={{ minHeight: 32 }}
+                style={{ minHeight: 32, fontFamily: 'Red Rose, sans-serif' }}
                 onClick={() => setSelectedPath(pathKey === "" ? "" : pathKey)}
               >
                 {hasChildren ? (
@@ -165,10 +166,10 @@ const MoveModal: React.FC<MoveModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
       <div className="bg-white rounded-xl shadow-lg max-w-md w-full p-6 relative max-h-[80vh] flex flex-col">
-        <h3 className="text-lg font-bold mb-4 text-blue-600">Move Images</h3>
+        <h3 className="text-lg font-bold mb-4 text-blue-600 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>Move Images</h3>
         
         <div className="mb-4">
-          <label className="block mb-3 text-sm font-medium text-gray-700">
+          <label className="block mb-3 text-sm font-medium text-gray-700 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
             Select Destination Folder
           </label>
           <div className="border border-gray-200 rounded-lg bg-gray-50 p-3 overflow-y-auto max-h-64">
@@ -183,13 +184,13 @@ const MoveModal: React.FC<MoveModalProps> = ({
           </div>
         </div>
 
-        <div className="text-xs text-gray-600 mb-4">
+        <div className="text-xs text-gray-600 mb-4 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
           Selected: <span className="font-semibold text-gray-900">{moveTargetFolder || "Root"}</span>
         </div>
 
         <div className="flex justify-end gap-2 mt-auto">
           <button
-            className="flex items-center gap-1 bg-gray-200 text-gray-700 px-6 py-2 rounded shadow hover:bg-gray-300 focus:ring-2 focus:ring-gray-400 transition"
+            className="flex items-center gap-1 bg-gray-200 text-gray-700 px-6 py-2 rounded shadow hover:bg-gray-300 focus:ring-2 focus:ring-gray-400 transition font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
             type="button"
             onClick={onClose}
             disabled={disabled}
@@ -197,7 +198,7 @@ const MoveModal: React.FC<MoveModalProps> = ({
             Cancel
           </button>
           <button
-            className="flex items-center gap-1 bg-green-600 text-white px-6 py-2 rounded shadow hover:bg-green-700 focus:ring-2 focus:ring-green-400 disabled:bg-green-300 transition"
+            className="flex items-center gap-1 bg-green-600 text-white px-6 py-2 rounded shadow hover:bg-green-700 focus:ring-2 focus:ring-green-400 disabled:bg-green-300 transition font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
             type="button"
             onClick={onMove}
             disabled={disabled}

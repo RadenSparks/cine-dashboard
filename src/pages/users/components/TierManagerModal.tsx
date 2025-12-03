@@ -14,7 +14,7 @@ export default function TierManagerModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl p-8 w-full max-w-md relative">
         <button
-          className="absolute top-3 right-3 text-lg font-bold text-gray-500 hover:text-red-500"
+          className="absolute top-3 right-3 text-lg font-bold text-gray-500 hover:text-red-500 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
           onClick={onClose}
           aria-label="Close"
         >

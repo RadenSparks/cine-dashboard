@@ -37,10 +37,10 @@ const ImagesGrid: React.FC<ImagesGridProps> = ({
             className="w-full h-40 object-cover rounded-xl cursor-pointer border border-gray-100 hover:border-blue-400 transition"
             onClick={() => item.url && handlePreview(item.url)}
           />
-          <div className="text-xs text-gray-700 mt-4 font-medium break-words line-clamp-2 flex-shrink-0" title={item.name}>{item.name}</div>
+          <div className="text-xs text-gray-700 mt-4 font-medium break-words line-clamp-2 flex-shrink-0 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }} title={item.name}>{item.name}</div>
           {/* --- File size display --- */}
           {typeof item.size === "number" && (
-            <div className="text-xs text-gray-500 mt-1 flex-shrink-0">
+            <div className="text-xs text-gray-500 mt-1 flex-shrink-0 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
               {(item.size / (1024 * 1024)).toFixed(2)} MB
             </div>
           )}
@@ -50,13 +50,13 @@ const ImagesGrid: React.FC<ImagesGridProps> = ({
                 href={item.url || "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1 px-3 py-1 rounded-lg bg-gray-50 text-gray-700 text-xs font-semibold hover:bg-gray-100 hover:text-blue-700 transition"
+                className="flex items-center gap-1 px-3 py-1 rounded-lg bg-gray-50 text-gray-700 text-xs font-semibold hover:bg-gray-100 hover:text-blue-700 transition font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
                 title="View Original Image"
               >
                 View
               </a>
               <button
-                className="flex items-center gap-1 px-3 py-1 rounded-lg bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 hover:text-red-800 transition cursor-pointer"
+                className="flex items-center gap-1 px-3 py-1 rounded-lg bg-red-50 text-red-600 text-xs font-semibold hover:bg-red-100 hover:text-red-800 transition cursor-pointer font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
                 onClick={() => setDeleteTarget(item)}
                 title="Delete"
               >

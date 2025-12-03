@@ -14,12 +14,35 @@ function getAuthHeaders(): Record<string, string> {
   return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
 }
 
+// Pagination type for API response
+type Page<T> = {
+  content: T[];
+  page: {
+    size: number;
+    number: number;
+    totalElement: number;
+    totalPages: number;
+  };
+};
+
 // Thunks
-export const fetchUsers = createAsyncThunk<User[]>(
+export const fetchUsers = createAsyncThunk<
+  { users: User[]; totalPages: number; currentPage: number; totalElements: number },
+  { page?: number; size?: number }
+>(
   "users/fetchUsers",
-  async () => {
-    const res = await get<ApiResponse<{ content: User[] }>>(API_URL, { headers: getAuthHeaders() });
-    return res.data.data?.content ?? [];
+  async ({ page = 0, size = 10 }) => {
+    const headers = getAuthHeaders();
+    const res = await get<ApiResponse<Page<User>>>(
+      `${API_URL}?page=${page}&size=${size}`,
+      { headers }
+    );
+    return {
+      users: res.data.data?.content ?? [],
+      totalPages: res.data.data?.page.totalPages ?? 0,
+      currentPage: res.data.data?.page.number ?? 0,
+      totalElements: res.data.data?.page.totalElement ?? 0,
+    };
   }
 );
 
@@ -67,7 +90,11 @@ export const restoreUser = createAsyncThunk<{ id: number }, number>(
 export const addUser = createAsyncThunk<User, UserApiDTO>(
   "users/addUser",
   async (user) => {
-    const res = await post<ApiResponse<User>>(`${API_URL}`, user, { headers: getAuthHeaders() });
+    const res = await post<ApiResponse<User>>(
+      `${API_URL}`,
+      { ...user, operation: 'CREATE' },  // ✅ Add CREATE operation for backend
+      { headers: getAuthHeaders() }
+    );
     return res.data.data;
   }
 );
@@ -75,7 +102,57 @@ export const addUser = createAsyncThunk<User, UserApiDTO>(
 export const updateUser = createAsyncThunk<User, UserApiDTO>(
   "users/updateUser",
   async (user) => {
-    const res = await post<ApiResponse<User>>(`${API_URL}`, user, { headers: getAuthHeaders() });
+    // Build payload with password handling for UPDATE
+    const basePayload = {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      role: user.role,
+      active: user.active,
+      tierPoint: user.tierPoint,
+      tierCode: user.tierCode,
+      operation: 'UPDATE' as const,
+    };
+    // Only include password if provided (non-empty string)
+    const payload = user.password && user.password.trim() !== ""
+      ? { ...basePayload, password: user.password }
+      : basePayload;
+    const res = await post<ApiResponse<User>>(
+      `${API_URL}`,
+      payload,
+      { headers: getAuthHeaders() }
+    );
+    return res.data.data;
+  }
+);
+
+// Auth verification thunk - POST /api/v1/authenticate/verify
+export const verifyToken = createAsyncThunk<{ valid: boolean }, string>(
+  "users/verifyToken",
+  async (token) => {
+    const BASE_AUTH_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
+    const AUTH_URL = `${BASE_AUTH_API.replace(/\/$/, "")}/authenticate`;
+    const res = await post<ApiResponse<{ valid: boolean }>>(
+      `${AUTH_URL}/verify`,
+      { token },
+      { headers: { "Authorization": `Bearer ${token}` } }
+    );
+    return res.data.data;
+  }
+);
+
+// Auth authorization thunk - POST /api/v1/authenticate/authorize
+export const authorizeUser = createAsyncThunk<{ authorized: boolean }>(
+  "users/authorizeUser",
+  async () => {
+    const BASE_AUTH_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
+    const AUTH_URL = `${BASE_AUTH_API.replace(/\/$/, "")}/authenticate`;
+    const res = await post<ApiResponse<{ authorized: boolean }>>(
+      `${AUTH_URL}/authorize`,
+      {},
+      { headers: getAuthHeaders() }
+    );
     return res.data.data;
   }
 );
@@ -85,6 +162,12 @@ interface UserState {
   selectedUserId: number | null;
   loading: boolean;
   error: string | null;
+  pagination: {
+    currentPage: number;
+    totalPages: number;
+    totalElements: number;
+    pageSize: number;
+  };
 }
 
 const initialState: UserState = {
@@ -92,6 +175,12 @@ const initialState: UserState = {
   selectedUserId: null,
   loading: false,
   error: null,
+  pagination: {
+    currentPage: 0,
+    totalPages: 0,
+    totalElements: 0,
+    pageSize: 10,
+  },
 };
 
 const userSlice = createSlice({
@@ -120,9 +209,12 @@ const userSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchUsers.fulfilled, (state, action: PayloadAction<User[]>) => {
+      .addCase(fetchUsers.fulfilled, (state, action: PayloadAction<{ users: User[]; totalPages: number; currentPage: number; totalElements: number }>) => {
         state.loading = false;
-        state.users = action.payload;
+        state.users = action.payload.users;
+        state.pagination.currentPage = action.payload.currentPage;
+        state.pagination.totalPages = action.payload.totalPages;
+        state.pagination.totalElements = action.payload.totalElements;
       })
       .addCase(fetchUsers.rejected, (state, action) => {
         state.loading = false;
@@ -156,6 +248,26 @@ const userSlice = createSlice({
       .addCase(updateUser.fulfilled, (state, action: PayloadAction<User>) => {
         const idx = state.users.findIndex(u => u.id === action.payload.id);
         if (idx !== -1) state.users[idx] = action.payload;
+      })
+      .addCase(verifyToken.pending, state => {
+        state.loading = true;
+      })
+      .addCase(verifyToken.fulfilled, state => {
+        state.loading = false;
+      })
+      .addCase(verifyToken.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message ?? "Token verification failed";
+      })
+      .addCase(authorizeUser.pending, state => {
+        state.loading = true;
+      })
+      .addCase(authorizeUser.fulfilled, state => {
+        state.loading = false;
+      })
+      .addCase(authorizeUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message ?? "Authorization failed";
       });
   }
 });

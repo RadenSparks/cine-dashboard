@@ -26,10 +26,10 @@ const DeleteImagesModal: React.FC<DeleteImagesModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-sm p-4">
       <div className="bg-white rounded-xl shadow-lg max-w-sm w-full p-8 relative">
-        <h3 className="text-lg font-bold mb-4 text-red-600">
+        <h3 className="text-lg font-bold mb-4 text-red-600 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
           Delete {isSingle ? "Image" : "Images"}
         </h3>
-        <p className="mb-4 text-sm">
+        <p className="mb-4 text-sm font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
           Are you sure you want to delete {targets.length} image{targets.length !== 1 ? "s" : ""}?
           {isSingle && targetImages.length > 0 && (
             <span className="font-semibold block break-words overflow-hidden text-ellipsis mt-2 p-2 bg-gray-50 rounded" title={targetImages[0].name}>
@@ -56,7 +56,7 @@ const DeleteImagesModal: React.FC<DeleteImagesModalProps> = ({
         </p>
         <div className="flex justify-end gap-2">
           <button
-            className="bg-gray-200 px-6 py-2 rounded"
+            className="bg-gray-200 px-6 py-2 rounded font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
             type="button"
             onClick={onCancel}
             disabled={deleting}
@@ -64,7 +64,7 @@ const DeleteImagesModal: React.FC<DeleteImagesModalProps> = ({
             Cancel
           </button>
           <button
-            className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700"
+            className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
             type="button"
             onClick={onDelete}
             disabled={deleting}
