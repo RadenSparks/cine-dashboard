@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { Seat } from "../entities/type";
-import type { SeatApiDTO, ApiResponse } from "../dto/dto";
+import type { ApiResponse } from "../dto/dto";
 import { get, put } from "../client/axiosCilent";
 
 const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
@@ -33,12 +33,17 @@ export const fetchSeatById = createAsyncThunk<Seat, { roomId: number; seatId: nu
 );
 
 // Update a seat - PUT /api/v1/seats/{seatId}
-export const updateSeat = createAsyncThunk<Seat, SeatApiDTO>(
+// Only sends id, seatType, and empty as per UpdateSeatRequestDTO
+export const updateSeat = createAsyncThunk<Seat, { id: number; seatType: 'STANDARD' | 'PREMIUM'; empty: boolean }>(
   "seats/updateSeat",
-  async (seat) => {
-    if (!seat.id) throw new Error("Seat id is required for update");
+  async (updateData) => {
     const headers = getAuthHeaders();
-    const res = await put<ApiResponse<Seat>>(`${API_URL}/${seat.id}`, seat, { headers });
+    const payload = {
+      id: updateData.id,
+      seatType: updateData.seatType,
+      empty: updateData.empty,
+    };
+    const res = await put<ApiResponse<Seat>>(`${API_URL}/${updateData.id}`, payload, { headers });
     return res.data.data;
   }
 );

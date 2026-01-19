@@ -29,13 +29,12 @@ export type RoomPreset = {
 };
 
 export type Room = {
-  id: number;                 // Backend: roomId
+  id: number;
   roomName: string;
-  roomRow: string;
-  roomColumn: number;
-  roomLayout?: string;
-  premiumSeats?: string;
-  emptySeats?: string[];
+  rowSize: number;            // Number of rows in the room layout
+  columnSize: number;         // Number of columns in the room layout
+  capacity: number;           // Total number of seats
+  seats?: Seat[];             // List of seats in the room
   createdAt?: string;
   updatedAt?: string;
   deleted?: boolean;
@@ -94,15 +93,13 @@ export type Session = {
 };
 
 export type Seat = {
-  id: number;                 // Backend: seatId
+  id: number;
   roomId: number;
-  seatCode: string;
-  seatRow: string;
-  seatColumn: number;         // <-- should be number, not string
-  premium: boolean;           // <-- required, not optional
-  empty: boolean;             // <-- required, not optional
-  seatType?: string;
-  status?: string;
+  seatCode: string;           // e.g., "A1"
+  seatRow: string;            // e.g., "A"
+  seatNumber: number;         // Column number (e.g., 1)
+  seatType: 'STANDARD' | 'PREMIUM';  // Matches backend SeatType enum
+  empty: boolean;             // Whether seat is available
   createdAt?: string;
   updatedAt?: string;
   deleted?: boolean;

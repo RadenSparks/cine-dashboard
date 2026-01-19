@@ -104,20 +104,17 @@ export default function RoomConfigModal({
                 <div
                   className="grid gap-2"
                   style={{
-                    gridTemplateRows: `repeat(${room.roomRow ?? ROWS}, 1fr)`,
-                    gridTemplateColumns: `repeat(${room.roomColumn ?? COLS}, 1fr)`,
-                    width: `min(${(room.roomColumn ?? COLS) * 3.2}rem, 100%)`,
+                    gridTemplateRows: `repeat(${room.rowSize ?? ROWS}, 1fr)`,
+                    gridTemplateColumns: `repeat(${room.columnSize ?? COLS}, 1fr)`,
+                    width: `min(${(room.columnSize ?? COLS) * 3.2}rem, 100%)`,
                     maxWidth: "100%",
                     overflow: "visible",
                   }}
                 >
                   {Array.from({
-                    length:
-                      typeof room.roomRow === "string"
-                        ? room.roomRow.charCodeAt(0) - 64
-                        : room.roomRow ?? ROWS,
+                    length: room.rowSize ?? ROWS,
                   }).map((_, rowIdx) =>
-                    Array.from({ length: room.roomColumn ?? COLS }).map((_, colIdx) => {
+                    Array.from({ length: room.columnSize ?? COLS }).map((_, colIdx) => {
                       const id = seatId(rowIdx, colIdx);
                       const isPremium = localPremiumSeats.includes(id);
                       const isEmpty = localEmptySeats.includes(id);

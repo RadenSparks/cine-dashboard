@@ -39,7 +39,7 @@ export default function RoomManagementPage() {
   useEffect(() => {
     if (selectedRoom) {
       const roomSeats = seatsByRoom[selectedRoom.id] || [];
-      setLocalPremiumSeats(roomSeats.filter(s => s.premium && !s.empty).map(s => s.seatCode));
+      setLocalPremiumSeats(roomSeats.filter(s => s.seatType === 'PREMIUM' && !s.empty).map(s => s.seatCode));
       setLocalEmptySeats(roomSeats.filter(s => s.empty).map(s => s.seatCode));
     }
   }, [seatsByRoom, selectedRoom]);
@@ -115,8 +115,8 @@ export default function RoomManagementPage() {
 
   function openEditModal(room: Room) {
     setEditRoomName(room.roomName);
-    setEditRoomRows(room.roomRow ? room.roomRow.charCodeAt(0) - 64 : 8);
-    setEditRoomCols(room.roomColumn);
+    setEditRoomRows(room.rowSize);
+    setEditRoomCols(room.columnSize);
     setSelectedRoomId(room.id);
     setShowEditModal(true);
   }
@@ -126,11 +126,8 @@ export default function RoomManagementPage() {
     try {
       await dispatch(addRoom({
         roomName: newRoomName,
-        roomRow: String.fromCharCode(64 + newRoomRows),
-        roomColumn: newRoomCols,
-        roomLayout: "",
-        premiumSeats: "",
-        emptySeats: [],
+        rowSize: newRoomRows,
+        columnSize: newRoomCols,
       }));
       await dispatch(fetchRooms()); // <-- ensure table updates
       toastRef.current?.showNotification?.({
@@ -161,8 +158,8 @@ export default function RoomManagementPage() {
       await dispatch(updateRoom({
         ...selectedRoom,
         roomName: editRoomName,
-        roomRow: String.fromCharCode(64 + editRoomRows),
-        roomColumn: editRoomCols,
+        rowSize: editRoomRows,
+        columnSize: editRoomCols,
       }));
       await dispatch(fetchRooms()); // <-- ensure table updates
       toastRef.current?.showNotification?.({
@@ -199,16 +196,11 @@ export default function RoomManagementPage() {
         .map(seat => {
           const shouldBePremium = localPremiumSeats.includes(seat.seatCode);
           const shouldBeEmpty = localEmptySeats.includes(seat.seatCode);
-          if ((seat.premium ?? false) !== shouldBePremium || (seat.empty ?? false) !== shouldBeEmpty) {
+          const currentSeatType = seat.seatType === 'PREMIUM' ? true : false;
+          if (currentSeatType !== shouldBePremium || seat.empty !== shouldBeEmpty) {
             return dispatch(updateSeat({
               id: seat.id,
-              roomId: seat.roomId,
-              seatCode: seat.seatCode,
-              seatRow: seat.seatRow,
-              seatColumn: seat.seatColumn,
-              seatType: seat.seatType,
-              status: shouldBeEmpty ? "EMPTY" : seat.status,
-              premium: shouldBePremium,
+              seatType: shouldBePremium ? 'PREMIUM' : 'STANDARD',
               empty: shouldBeEmpty,
             })).unwrap();
           }

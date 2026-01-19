@@ -66,7 +66,7 @@ export default function LoginPage() {
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 via-blue-50 to-gray-200 overflow-hidden">
       {/* Large background image */}
       <img
-        src="https://images8.alphacoders.com/139/1391577.jpg"
+        src="/how-to-train-your-dragon-movie-2025-wallpapers.jpg"
         alt="Cinema background"
         className="absolute inset-0 w-full h-full object-cover z-0 brightness-75"
       />

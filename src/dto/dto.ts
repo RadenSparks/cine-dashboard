@@ -28,26 +28,20 @@ export type GenreApiDTO = {
 };
 
 export type RoomApiDTO = {
-  id?: number;                // Backend: roomId
+  id?: number;
   roomName: string;
-  roomRow: string;            // e.g. "H"
-  roomColumn: number;
-  roomLayout?: string;
-  premiumSeats?: string;      // Comma-separated
-  emptySeats?: string[];      // Array of seat codes
-  deleted?: boolean;
+  rowSize: number;
+  columnSize: number;
 };
 
 export type SeatApiDTO = {
-  id?: number;                // Backend: seatId
-  roomId: number;             // Foreign key to Room
+  id?: number;
+  roomId: number;
   seatCode: string;
   seatRow: string;
-  seatColumn: number;         // <-- should be number, not string
-  premium: boolean;           // <-- required, not optional
-  empty: boolean;             // <-- required, not optional
-  seatType?: string;
-  status?: string;
+  seatNumber: number;
+  seatType: 'STANDARD' | 'PREMIUM';
+  empty: boolean;
   deleted?: boolean;
 };
 

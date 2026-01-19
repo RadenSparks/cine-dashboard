@@ -170,7 +170,6 @@ function Pagination({
   currentPage,
   onPageChange,
   totalPages,
-  totalElements,
   loading,
 }: {
   currentPage: number;
@@ -179,28 +178,55 @@ function Pagination({
   totalElements: number;
   loading?: boolean;
 }) {
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = [];
+    const maxVisible = 5;
+    
+    if (totalPages <= maxVisible) {
+      for (let i = 0; i < totalPages; i++) pages.push(i);
+    } else {
+      pages.push(0);
+      const startPage = Math.max(1, currentPage - 1);
+      const endPage = Math.min(totalPages - 2, currentPage + 1);
+      
+      if (startPage > 1) pages.push('...');
+      for (let i = startPage; i <= endPage; i++) pages.push(i);
+      if (endPage < totalPages - 2) pages.push('...');
+      pages.push(totalPages - 1);
+    }
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
   return (
-    <div className="flex items-center justify-between p-4 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700 mt-6">
-      <div className="text-sm text-gray-600 dark:text-gray-400">
-        Page {currentPage + 1} of {totalPages} • {totalElements} total users
+    <div className="flex flex-col items-center gap-4 p-4 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-700 mt-6">
+
+      <div className="flex gap-1 flex-wrap justify-center">
+        {pageNumbers.map((page, idx) =>
+          page === '...' ? (
+            <span key={`ellipsis-${idx}`} className="px-2 py-1.5 text-gray-400">
+              ...
+            </span>
+          ) : (
+            <button
+              key={page}
+              onClick={() => onPageChange(page as number)}
+              disabled={loading}
+              className={`px-3 py-1.5 rounded-lg text-sm font-semibold transition ${
+                currentPage === page
+                  ? 'bg-blue-600 text-white border border-blue-700'
+                  : 'bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-zinc-700 hover:bg-gray-200 dark:hover:bg-zinc-700'
+              } disabled:opacity-50 disabled:cursor-not-allowed`}
+              type="button"
+            >
+              {(page as number) + 1}
+            </button>
+          )
+        )}
       </div>
-      <div className="flex gap-2">
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 0 || loading}
-          className="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-200 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          type="button"
-        >
-          Previous
-        </button>
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages - 1 || loading}
-          className="px-3 py-1.5 bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-semibold hover:bg-gray-200 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          type="button"
-        >
-          Next
-        </button>
+      <div className="text-xs text-gray-500 dark:text-gray-400">
+        Page {currentPage + 1} of {totalPages}
       </div>
     </div>
   );

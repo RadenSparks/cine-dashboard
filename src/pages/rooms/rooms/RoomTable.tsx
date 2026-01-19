@@ -48,7 +48,7 @@ export default function RoomTable({
           <tbody>
             {rooms.map(room => {
               const roomSeats = seatsByRoom[room.id] || [];
-              const premiumCount = roomSeats.filter(s => s.premium && !s.empty).length;
+              const premiumCount = roomSeats.filter(s => s.seatType === 'PREMIUM' && !s.empty).length;
               const emptyCount = roomSeats.filter(s => s.empty).length;
               const isDisabled = !!room.deleted;
               return (
@@ -60,9 +60,9 @@ export default function RoomTable({
                   style={{ fontFamily: 'Farro, sans-serif' }}
                 >
                   <td className={`p-3 font-bold ${isDisabled ? "text-gray-400" : "text-blue-700 dark:text-blue-200"}`}>{room.roomName}</td>
-                  <td className="p-3 text-center">{room.roomRow ? (room.roomRow.charCodeAt(0) - 64) * room.roomColumn : 0}</td>
-                  <td className="p-3 text-center">{room.roomRow ? room.roomRow.charCodeAt(0) - 64 : 0}</td>
-                  <td className="p-3 text-center">{room.roomColumn}</td>
+                  <td className="p-3 text-center">{room.capacity}</td>
+                  <td className="p-3 text-center">{room.rowSize}</td>
+                  <td className="p-3 text-center">{room.columnSize}</td>
                   <td className="p-3 text-center">{premiumCount}</td>
                   <td className="p-3 text-center">{emptyCount}</td>
                   <td className="p-3 text-center">

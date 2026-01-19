@@ -96,7 +96,7 @@ export default function UserModal({
       phoneNumber: editingUser.phoneNumber ?? "",
       role: editingUser.role ?? "USER",
       active: editingUser.active ?? true,
-      tierPoint: editingUser.tierPoint ?? editingUser.mileStoneTier.requiredPoints,
+      tierPoint: editingUser.tierPoint ?? editingUser.mileStoneTier?.requiredPoints ?? 0,
       tierCode: editingUser.mileStoneTier.code,
       ...(editingUser.id
         ? (newPassword && newPassword.trim() !== "" ? { password: newPassword } : {})
@@ -274,17 +274,17 @@ export default function UserModal({
                   tiers={tiers}
                 />
               </div>
-              {/* Points */}
+              {/* Points - Can be manually edited, but auto-updates when tier changes */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                  Points
+                  Points <span className="text-xs text-gray-500">(Auto-set by tier, can be edited)</span>
                 </label>
                 <input
                   className="border border-blue-200 dark:border-zinc-700 bg-white/70 dark:bg-zinc-800/70 px-4 py-2 rounded-lg w-full focus:ring-2 focus:ring-blue-400 focus:outline-none"
                   type="number"
                   min={0}
                   placeholder="Points"
-                  value={editingUser.tierPoint ?? 0}
+                  value={editingUser.tierPoint ?? editingUser.mileStoneTier?.requiredPoints ?? 0}
                   onChange={e =>
                     setEditingUser({
                       ...editingUser,
