@@ -6,7 +6,7 @@ import {
   fetchFoldersAsync,
   fetchFolderListAsync,
   deleteFolderAsync,
-} from "../../store/imagesSlice";
+} from "../../store/slices";
 import type { Image } from "../../entities/type";
 import Breadcrumbs from "./Breadcrumbs";
 import FolderTree from "./FolderTree";

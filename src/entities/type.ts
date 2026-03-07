@@ -83,12 +83,17 @@ export type Image = {
 };
 
 export type Session = {
-  session_id: number;
-  movie_id: number;
-  room_id: number;
-  session_date: string; // "YYYY-MM-DD"
-  created_at?: string;
-  updated_at?: string;
+  id: number;
+  movieId: number;
+  movieTitle?: string;
+  movieDuration?: number;
+  roomId: number;
+  roomName?: string;
+  startTime: string; // ISO 8601 datetime string
+  endTime: string;   // ISO 8601 datetime string
+  basePrice: number; // Stored as number, backend uses BigDecimal
+  createdAt?: string;
+  updatedAt?: string;
   deleted?: boolean;
 };
 

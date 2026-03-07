@@ -6,11 +6,12 @@ import {
   updateGenreAsync,
   deleteGenreAsync,
   restoreGenreAsync,
-} from "../../store/genresSlice";
+} from "../../store/slices";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { genreIconMap } from "../../utils/genreIcons";
 import Loading from "../../components/UI/Loading";
 import { SatelliteToast } from "../../components/UI/SatelliteToast";
+import ConfirmationModal from "../../components/UI/ConfirmationModal";
 import AddGenreForm from "./components/AddGenreForm";
 import GenreGrid from "./components/GenreGrid";
 import GenreStack from "./components/GenreStack";
@@ -29,6 +30,10 @@ export default function GenresPage() {
   const [editingGenreName, setEditingGenreName] = useState("");
   const [editingGenreIcon, setEditingGenreIcon] = useState(availableIcons[0].name);
   const [showDeleted, setShowDeleted] = useState(false);
+
+  // Confirmation modal state
+  const [confirmDeleteGenreId, setConfirmDeleteGenreId] = useState<number | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Satellite toast ref
   const toastRef = useRef<{ showNotification: (options: Omit<unknown, "id">) => void }>(null);
@@ -75,12 +80,19 @@ export default function GenresPage() {
 
   const handleDeleteGenre = async (genre_id: number) => {
     if (typeof genre_id !== "number") return;
+    // Show confirmation modal
+    setConfirmDeleteGenreId(genre_id);
+  };
+
+  const handleConfirmDeleteGenre = async () => {
+    if (confirmDeleteGenreId === null) return;
+    setIsProcessing(true);
     try {
-      await dispatch(deleteGenreAsync(genre_id)).unwrap();
+      await dispatch(deleteGenreAsync(confirmDeleteGenreId)).unwrap();
       toastRef.current?.showNotification({
         title: "Genre Deleted",
-        content: `Genre deleted.`,
-        accentColor: "#ef4444",
+        content: `Genre deleted. Use 'Show Deleted' to restore it.`,
+        accentColor: "#22c55e",
         position: "bottom-right",
         longevity: 3000,
       });
@@ -92,6 +104,9 @@ export default function GenresPage() {
         position: "bottom-right",
         longevity: 3000,
       });
+    } finally {
+      setIsProcessing(false);
+      setConfirmDeleteGenreId(null);
     }
   };
 
@@ -274,6 +289,17 @@ export default function GenresPage() {
           )}
         </div>
       </div>
+
+      <ConfirmationModal
+        isOpen={confirmDeleteGenreId !== null}
+        title="Delete Genre"
+        message="This genre will be deleted. This action cannot be undone."
+        actionLabel="Delete"
+        isDangerous={true}
+        isLoading={isProcessing}
+        onConfirm={handleConfirmDeleteGenre}
+        onCancel={() => setConfirmDeleteGenreId(null)}
+      />
     </div>
   );
 }

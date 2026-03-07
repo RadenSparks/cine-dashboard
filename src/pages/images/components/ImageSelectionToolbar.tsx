@@ -6,7 +6,7 @@ import {
   moveImagesToFolderAsync,
   fetchFoldersAsync,
   fetchFolderListAsync,
-} from "../../../store/imagesSlice";
+} from "../../../store/slices";
 import type { Image } from "../../../entities/type";
 import type { FolderTreeNode } from "../../../types/folderTree";
 import MoveModal from "../MoveModal";

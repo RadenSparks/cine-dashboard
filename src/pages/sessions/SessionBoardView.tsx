@@ -6,15 +6,18 @@ interface Props {
   sessions: Session[];
   movies: Movie[];
   rooms: string[];
+  showDeletedSessions: boolean;
   onBack: () => void;
+  onEditSession: (session: Session) => void;
+  onDeleteSession: (sessionId: number) => void;
+  onRestoreSession: (sessionId: number) => void;
 }
 
-// Helper: mock start/end time if not present (for demo)
-function getSessionTime(session: Session, idx: number): { start: string; end: string } {
-  const baseHour = 9 + (idx % 8) * 2;
-  const start = `${String(baseHour).padStart(2, "0")}:00`;
-  const end = `${String(baseHour + 2).padStart(2, "0")}:00`;
-  return { start, end };
+// Helper: extract start/end time from ISO datetime string
+function getSessionTime(session: Session): { start: string; end: string } {
+  const startTime = session.startTime.split('T')[1]?.slice(0, 5) || "09:00";
+  const endTime = session.endTime.split('T')[1]?.slice(0, 5) || "11:00";
+  return { start: startTime, end: endTime };
 }
 
 type DisplaySession = Session & {
@@ -24,7 +27,7 @@ type DisplaySession = Session & {
   room: string;
 };
 
-export default function SessionBoardView({ selectedDate, sessions, movies, rooms, onBack }: Props) {
+export default function SessionBoardView({ selectedDate, sessions, movies, rooms, showDeletedSessions, onBack, onEditSession, onDeleteSession, onRestoreSession }: Props) {
   return (
     <div>
       <div className="flex items-center mb-4">
@@ -42,35 +45,62 @@ export default function SessionBoardView({ selectedDate, sessions, movies, rooms
             <div className="font-semibold mb-2 text-blue-700 dark:text-blue-200 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>{slot}</div>
             <div className="flex flex-col gap-3">
               {sessions
-                .filter(s => typeof s.room_id === "number" && typeof s.movie_id === "number")
-                .map((s, idx): DisplaySession => {
-                  const { start, end } = getSessionTime(s, idx);
+                .filter((s: Session) => (showDeletedSessions || !s.deleted) && typeof s.roomId === "number" && typeof s.movieId === "number")
+                .map((s: Session): DisplaySession => {
+                  const { start, end } = getSessionTime(s);
                   return {
                     ...s,
                     start,
                     end,
-                    movie: movies.find(m => m.id === s.movie_id)?.title || "Unknown",
+                    movie: movies.find(m => m.id === s.movieId)?.title || "Unknown",
                     room:
-                      typeof s.room_id === "number" && rooms[s.room_id - 1]
-                        ? rooms[s.room_id - 1]
-                        : `Room ${s.room_id ?? "?"}`,
+                      typeof s.roomId === "number" && rooms[s.roomId - 1]
+                        ? rooms[s.roomId - 1]
+                        : `Room ${s.roomId ?? "?"}`,
                   };
                 })
                 .filter(
-                  s =>
-                    s.session_date === selectedDate &&
+                  (s: DisplaySession) => {
+                    const sessionDate = s.startTime.split('T')[0]; // Extract date from ISO datetime
+                    return sessionDate === selectedDate &&
                     (slot === "Morning"
                       ? s.start < "12:00"
                       : slot === "Afternoon"
                       ? s.start >= "12:00" && s.start < "17:00"
                       : slot === "Evening"
                       ? s.start >= "17:00" && s.start < "21:00"
-                      : s.start >= "21:00")
+                      : s.start >= "21:00");
+                  }
                 )
-                .map((s) => (
-                  <div key={s.session_id} className="bg-blue-50 dark:bg-zinc-800 rounded shadow p-3 flex flex-col items-center border border-blue-100 dark:border-zinc-700">
-                    <div className="font-bold text-blue-700 dark:text-blue-200">{s.movie}</div>
-                    <div className="text-xs text-blue-600 dark:text-blue-300">{s.start} • {s.room}</div>
+                .map((s: DisplaySession) => (
+                  <div key={s.id} className={`rounded shadow p-3 flex flex-col items-center border transition ${s.deleted ? 'bg-gray-100 dark:bg-zinc-700 border-gray-300 dark:border-zinc-600 opacity-60' : 'bg-blue-50 dark:bg-zinc-800 border-blue-100 dark:border-zinc-700 hover:shadow-md'}`}>
+                    <div className={`font-bold ${s.deleted ? 'text-gray-500 dark:text-gray-400' : 'text-blue-700 dark:text-blue-200'}`}>{s.movie}</div>
+                    <div className={`text-xs ${s.deleted ? 'text-gray-500 dark:text-gray-400' : 'text-blue-600 dark:text-blue-300'}`}>{s.start} • {s.room}</div>
+                    <div className="flex gap-2 mt-2">
+                      {s.deleted ? (
+                        <button
+                          onClick={() => onRestoreSession(s.id)}
+                          className="px-2 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded transition"
+                        >
+                          Restore
+                        </button>
+                      ) : (
+                        <>
+                          <button
+                            onClick={() => onEditSession(s)}
+                            className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => onDeleteSession(s.id)}
+                            className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition"
+                          >
+                            Delete
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 ))}
             </div>

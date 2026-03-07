@@ -1,15 +1,15 @@
 import { useState, useRef, useMemo, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../store/store";
+import ConfirmationModal from "../../components/UI/ConfirmationModal";
 import {
   fetchUsers,
-  addUser,        // <-- use addUser instead of registerUser
+  addUser,
   updateUser,
   deactivateUser,
   restoreUser,
-
-} from "../../store/userSlice";
-import { fetchMilestoneTiers } from "../../store/milestoneTierSlice";
+  fetchMilestoneTiers,
+} from "../../store/slices";
 import { type User, type Tier } from "../../entities/type";
 import { User2Icon } from "lucide-react";
 import { SatelliteToast, type ToastNotification } from "../../components/UI/SatelliteToast";
@@ -31,6 +31,8 @@ export default function UserPage() {
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 10;
+  const [confirmAction, setConfirmAction] = useState<{ type: "deactivate"; userId: number; userName: string } | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const toastRef = useRef<{ showNotification: (options: Omit<ToastNotification, "id">) => void }>(null);
 
 
@@ -143,36 +145,61 @@ export default function UserPage() {
   };
 
   // Toggle active/deactivated status (API soft delete)
-  const handleToggleActive = async (user: User) => {
+  const handleToggleActive = (user: User) => {
+    if (user.active) {
+      // Show confirmation for deactivation
+      setConfirmAction({ type: "deactivate", userId: user.id, userName: user.name });
+    } else {
+      // Restore without confirmation
+      performRestoreUser(user);
+    }
+  };
+
+  const performRestoreUser = async (user: User) => {
     try {
-      if (user.active) {
-        await dispatch(deactivateUser(user.id)).unwrap();
-        toastRef.current?.showNotification({
-          title: "User Deactivated",
-          content: `User "${user.name}" is now deactivated.`,
-          accentColor: "#ef4444",
-          position: "bottom-right",
-          longevity: 2500,
-        });
-      } else {
-        // Restore user
-        await dispatch(restoreUser(user.id)).unwrap();
-        toastRef.current?.showNotification({
-          title: "User Restored",
-          content: `User "${user.name}" is now active.`,
-          accentColor: "#22c55e",
-          position: "bottom-right",
-          longevity: 2500,
-        });
-      }
+      await dispatch(restoreUser(user.id)).unwrap();
+      toastRef.current?.showNotification({
+        title: "User Restored",
+        content: `User "${user.name}" is now active.`,
+        accentColor: "#22c55e",
+        position: "bottom-right",
+        longevity: 2500,
+      });
     } catch {
       toastRef.current?.showNotification({
         title: "Error",
-        content: "Failed to update user status.",
+        content: "Failed to restore user.",
         accentColor: "#ef4444",
         position: "bottom-right",
         longevity: 2500,
       });
+    }
+  };
+
+  const handleConfirmDeactivateUser = async () => {
+    if (confirmAction?.type !== "deactivate") return;
+
+    setIsProcessing(true);
+    try {
+      await dispatch(deactivateUser(confirmAction.userId)).unwrap();
+      toastRef.current?.showNotification({
+        title: "User Deactivated",
+        content: `User "${confirmAction.userName}" is now deactivated.`,
+        accentColor: "#ef4444",
+        position: "bottom-right",
+        longevity: 2500,
+      });
+    } catch {
+      toastRef.current?.showNotification({
+        title: "Error",
+        content: "Failed to deactivate user.",
+        accentColor: "#ef4444",
+        position: "bottom-right",
+        longevity: 2500,
+      });
+    } finally {
+      setIsProcessing(false);
+      setConfirmAction(null);
     }
   };
 
@@ -249,6 +276,18 @@ export default function UserPage() {
         onClose={() => setEditingUser(null)}
         onSave={handleSaveUser}
         tiers={tiersToUse}
+      />
+
+      <ConfirmationModal
+        isOpen={confirmAction !== null}
+        title="Deactivate User"
+        message={`Are you sure you want to deactivate user "${confirmAction?.userName}"? They will no longer be able to access the system.`}
+        actionLabel="Deactivate"
+        cancelLabel="Cancel"
+        isDangerous={true}
+        isLoading={isProcessing}
+        onConfirm={handleConfirmDeactivateUser}
+        onCancel={() => setConfirmAction(null)}
       />
     </>
   );

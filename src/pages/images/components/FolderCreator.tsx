@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../../store/store";
-import { createFolderAsync } from "../../../store/imagesSlice";
+import { createFolderAsync } from "../../../store/slices";
 import type { ToastNotification } from "../../../components/UI/SatelliteToast";
 
 interface FolderCreatorProps {

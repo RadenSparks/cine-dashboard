@@ -1,12 +1,13 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useAppDispatch, useAppSelector, type RootState } from "../../store/store";
 import { fetchRooms } from "../../store/slices";
-import type { Movie } from "../../entities/type";
+import type { Movie, Session } from "../../entities/type";
 import AppButton from "../../components/UI/AppButton";
 
-interface SessionAddModalProps {
+interface SessionEditModalProps {
   show: boolean;
   onClose: () => void;
+  session: Session | null;
   modalMovieId: number | null;
   setModalMovieId: (id: number | null) => void;
   modalRoom: number | null;
@@ -16,14 +17,14 @@ interface SessionAddModalProps {
   modalStart: string;
   setModalStart: (time: string) => void;
   modalEnd: string;
-  selectedDate: string | null;
   basePrice: number;
-  onAdd: () => void;
+  onUpdate: () => void;
 }
 
-export default function SessionAddModal({
+export default function SessionEditModal({
   show,
   onClose,
+  session,
   modalMovieId,
   setModalMovieId,
   modalRoom,
@@ -33,25 +34,24 @@ export default function SessionAddModal({
   modalStart,
   setModalStart,
   modalEnd,
-  selectedDate,
   basePrice,
-  onAdd,
-}: SessionAddModalProps) {
-  // Redux state - MOVE ALL HOOKS BEFORE ANY CONDITIONAL
+  onUpdate,
+}: SessionEditModalProps) {
+  // Redux state
   const dispatch = useAppDispatch();
-  const { items: allMovies, loading: moviesLoading } = useAppSelector((state: RootState) => state.movies);
-  const { rooms: allRooms, loading: roomsLoading } = useAppSelector((state: RootState) => state.rooms);
+  const { items: allMovies } = useAppSelector((state: RootState) => state.movies);
+  const { rooms: allRooms } = useAppSelector((state: RootState) => state.rooms);
   const { items: allGenresData } = useAppSelector((state: RootState) => state.genres);
 
-  // Use ref to track if fetch has already been initiated (prevent double fetches)
+  // Use ref to track if fetch has already been initiated
   const fetchInitiatedRef = useRef(false);
-  
+
   // Local search and filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenreFilter, setSelectedGenreFilter] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<"title" | "duration" | "rating">("title");
 
-  // Get genres from Redux store - maps genre_id to genre_name
+  // Get genres from Redux store
   const allGenres = useMemo(() => {
     return allGenresData.map((genre) => ({
       id: genre.genre_id,
@@ -59,21 +59,17 @@ export default function SessionAddModal({
     }));
   }, [allGenresData]);
 
-  // Filter and sort movies - apply search and genre filters
+  // Filter and sort movies
   const filteredMovies = useMemo(() => {
     return allMovies
       .filter((m: Movie) => {
-        // Apply search filter
-        const matchesSearch = !searchQuery || 
-                            m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                            m.description?.toLowerCase().includes(searchQuery.toLowerCase());
-        
-        // Apply genre filter
+        const matchesSearch = !searchQuery ||
+          m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          m.description?.toLowerCase().includes(searchQuery.toLowerCase());
+
         const matchesGenre = !selectedGenreFilter || m.genre_ids?.includes(selectedGenreFilter);
-        
-        // Don't filter out deleted movies for selection, but can filter them later if needed
         const notDeleted = !m.deleted;
-        
+
         return matchesSearch && matchesGenre && notDeleted;
       })
       .sort((a: Movie, b: Movie) => {
@@ -84,19 +80,17 @@ export default function SessionAddModal({
       });
   }, [allMovies, searchQuery, selectedGenreFilter, sortBy]);
 
-  // Fetch data on mount only - use ref to prevent double fetches
+  // Fetch rooms on mount
   useEffect(() => {
-    // Only fetch if we haven't already initiated a fetch
     if (fetchInitiatedRef.current) return;
-    
-    // Only fetch rooms if missing; movies should come from SessionPage
+
     if (allRooms.length === 0) {
       fetchInitiatedRef.current = true;
       dispatch(fetchRooms()).catch((err: unknown) => console.error("Failed to fetch rooms:", err));
     }
-  }, [dispatch, allRooms.length]); // Include dispatch and allRooms.length in deps
+  }, [dispatch, allRooms.length]);
 
-  if (!show) return null;
+  if (!show || !session) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
@@ -107,10 +101,10 @@ export default function SessionAddModal({
         >
           ×
         </button>
-        <h3 className="text-xl font-bold mb-6 text-blue-700 dark:text-blue-200 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Add Session</h3>
+        <h3 className="text-xl font-bold mb-6 text-blue-700 dark:text-blue-200 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Edit Session</h3>
 
         <div className="flex flex-col gap-5 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
-          
+
           {/* Movie Selection with Search and Filters */}
           <div className="border-b pb-5 border-blue-100 dark:border-zinc-700">
             <label className="text-sm font-semibold text-blue-700 dark:text-blue-200 block mb-3">
@@ -152,9 +146,7 @@ export default function SessionAddModal({
 
             {/* Movie List */}
             <div className="border rounded-lg max-h-[300px] overflow-y-auto bg-blue-50 dark:bg-zinc-800 border-blue-200 dark:border-zinc-700">
-              {moviesLoading ? (
-                <div className="p-4 text-center text-gray-500">Loading movies...</div>
-              ) : filteredMovies.length === 0 ? (
+              {filteredMovies.length === 0 ? (
                 <div className="p-4 text-center text-gray-500">No movies found</div>
               ) : (
                 filteredMovies.map(m => (
@@ -179,27 +171,27 @@ export default function SessionAddModal({
           <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
             Room:
             <select
-              className="w-full border rounded px-2 py-2 mt-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
               value={modalRoom ? String(modalRoom) : ""}
-              onChange={e => setModalRoom(e.target.value ? Number(e.target.value) : null)}
-              disabled={roomsLoading}
+              onChange={(e) => setModalRoom(e.target.value ? Number(e.target.value) : null)}
+              className="w-full border rounded px-2 py-2 mt-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
             >
-              <option value="">Select a room</option>
-              {allRooms.map(r => (
-                <option key={r.id} value={String(r.id)}>{r.roomName}</option>
+              <option value="">Select a room...</option>
+              {allRooms.map((room) => (
+                <option key={room.id} value={room.id}>
+                  {room.roomName} ({room.capacity} seats)
+                </option>
               ))}
             </select>
           </label>
 
-          {/* Date */}
+          {/* Date Selection */}
           <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
             Date:
             <input
               type="date"
               className="w-full border rounded px-2 py-2 mt-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
-              value={selectedDate || modalDate}
+              value={modalDate}
               onChange={e => setModalDate(e.target.value)}
-              disabled={!!selectedDate}
             />
           </label>
 
@@ -227,7 +219,7 @@ export default function SessionAddModal({
             />
           </label>
 
-          {/* Base Price (Auto-filled from movie rating) */}
+          {/* Base Price (Auto-filled from movie) */}
           <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
             Base Price:
             <input
@@ -241,13 +233,13 @@ export default function SessionAddModal({
             />
           </label>
 
-          {/* Add Button */}
+          {/* Update Button */}
           <AppButton
             className="mt-4 bg-gradient-to-r from-blue-600 to-blue-400 text-white"
-            onClick={onAdd}
-            disabled={!modalMovieId || !modalRoom || !(selectedDate || modalDate) || !modalStart}
+            onClick={onUpdate}
+            disabled={!modalMovieId || !modalRoom || !modalDate || !modalStart}
           >
-            Add Session
+            Update Session
           </AppButton>
         </div>
       </div>

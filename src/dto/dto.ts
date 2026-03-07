@@ -107,3 +107,47 @@ export type MoveImagesRequestDTO = {
   imageIds: number[];
   targetFolderName: string;
 };
+
+// Session DTOs - aligned with backend API structure
+export type CreateSessionRequestDTO = {
+  movieId: number;
+  roomId: number;
+  startTime: string;  // ISO 8601 datetime string (backend: LocalDateTime)
+  endTime: string;    // ISO 8601 datetime string (backend: LocalDateTime)
+  basePrice: number;  // Frontend number (backend: BigDecimal)
+};
+
+export type UpdateSessionRequestDTO = {
+  id: number;
+  movieId?: number;
+  roomId?: number;
+  startTime?: string;  // ISO 8601 datetime string (backend: LocalDateTime)
+  endTime?: string;    // ISO 8601 datetime string (backend: LocalDateTime)
+  basePrice?: number;  // Frontend number (backend: BigDecimal)
+};
+
+export type SessionApiDTO = {
+  id: number;
+  movieId: number;
+  movieTitle?: string;
+  movieDuration?: number;
+  roomId: number;
+  roomName?: string;
+  startTime: string;   // ISO 8601 datetime string (backend: LocalDateTime)
+  endTime: string;     // ISO 8601 datetime string (backend: LocalDateTime)
+  basePrice: number;   // Frontend number (backend: BigDecimal)
+  createdAt?: string;  // ISO 8601 datetime string
+  updatedAt?: string;  // ISO 8601 datetime string
+  deleted?: boolean;
+};
+
+export type DeleteSessionRequestDTO = {
+  id: number;
+};
+
+export type GetSessionsFilterDTO = {
+  roomId?: number;
+  movieId?: number;
+  fromDate?: string;        // ISO 8601 "2025-09-22"
+  toDate?: string;          // ISO 8601 "2025-09-30"
+};

@@ -1,18 +1,19 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../store/store";
+import ConfirmationModal from "../../components/UI/ConfirmationModal";
 import {
   fetchMovies,
-} from "../../store/moviesSlice";
-import { fetchGenres } from "../../store/genresSlice";
-import { fetchFolderListAsync } from "../../store/imagesSlice";
+  fetchGenres,
+  fetchFolderListAsync,
+} from "../../store/slices";
+import type { Movie } from "../../entities/type";
 import MovieFormModal from "./components/MovieFormModal";
 import MovieDetailsModal from "./components/MovieDetailsModal";
 import MoviesFiltersBar from "./components/MoviesFiltersBar";
 import MoviesTableContainer from "./components/MoviesTableContainer";
 import Loading from "../../components/UI/Loading";
 import { SatelliteToast, type ToastNotification } from "../../components/UI/SatelliteToast";
-import { type Movie } from "../../entities/type";
 import { type MovieApiDTO } from "../../dto/dto";
 import { useMovieCRUD } from "./hooks/useMovieCRUD";
 
@@ -46,6 +47,8 @@ export default function MoviesPage() {
     teaser: "",
   });
   const [detailMovie, setDetailMovie] = useState<Movie | null>(null);
+  const [confirmDeleteMovieId, setConfirmDeleteMovieId] = useState<number | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // --- Search & Filter State ---
   const [search, setSearch] = useState("");
@@ -171,8 +174,20 @@ export default function MoviesPage() {
     }
   };
 
-  const handleDeleteMovie = async (id: number) => {
-    await deleteMovie(id);
+  const handleDeleteMovie = (id: number) => {
+    setConfirmDeleteMovieId(id);
+  };
+
+  const handleConfirmDeleteMovie = async () => {
+    if (confirmDeleteMovieId === null) return;
+
+    setIsProcessing(true);
+    try {
+      await deleteMovie(confirmDeleteMovieId);
+    } finally {
+      setIsProcessing(false);
+      setConfirmDeleteMovieId(null);
+    }
   };
 
   const handleRestoreMovie = async (id: number) => {
@@ -232,9 +247,9 @@ export default function MoviesPage() {
             movies={filteredMovies}
             genres={genres}
             loading={loading}
-            totalPages={pagination.totalPages}
-            currentPage={pagination.currentPage}
-            totalElements={pagination.totalElements}
+            totalPages={pagination?.totalPages || 0}
+            currentPage={pagination?.currentPage || 0}
+            totalElements={pagination?.totalElements || 0}
             onPageChange={(page) => setCurrentPage(page)}
             onEdit={handleEditMovie}
             onDelete={handleDeleteMovie}
@@ -269,6 +284,17 @@ export default function MoviesPage() {
         movie={detailMovie}
         genres={genres}
         onClose={() => setDetailMovie(null)}
+      />
+
+      <ConfirmationModal
+        isOpen={confirmDeleteMovieId !== null}
+        title="Delete Movie"
+        message="This movie will be deleted. This action cannot be undone."
+        actionLabel="Delete"
+        isDangerous={true}
+        isLoading={isProcessing}
+        onConfirm={handleConfirmDeleteMovie}
+        onCancel={() => setConfirmDeleteMovieId(null)}
       />
     </>
   );

@@ -6,7 +6,7 @@ import AppButton from "../../../components/UI/AppButton";
 import { type Genre } from "../../../entities/type";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../../../store/store";
-import { fetchFoldersAsync, fetchFolderListAsync } from "../../../store/imagesSlice";
+import { fetchFoldersAsync, fetchFolderListAsync } from "../../../store/slices";
 import { buildFolderTree } from "../../../utils/folderTreeUtils";
 import type { FolderTreeNode } from "../../../types/folderTree";
 

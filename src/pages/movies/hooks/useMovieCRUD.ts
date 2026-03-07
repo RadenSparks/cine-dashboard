@@ -6,7 +6,7 @@ import {
   updateMovieAsync,
   deleteMovieAsync,
   restoreMovieAsync,
-} from "../../../store/moviesSlice";
+} from "../../../store/slices";
 import type { Movie } from "../../../entities/type";
 import type { MovieApiDTO } from "../../../dto/dto";
 import type { ToastNotification } from "../../../components/UI/SatelliteToast";

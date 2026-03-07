@@ -5,7 +5,7 @@ import {
   uploadImageToFolderAsync,
   fetchFoldersAsync,
   fetchFolderListAsync,
-} from "../../../store/imagesSlice";
+} from "../../../store/slices";
 import type { FolderTreeNode } from "../../../types/folderTree";
 import { getCurrentNode } from "../../../utils/folderTreeUtils";
 import type { ToastNotification } from "../../../components/UI/SatelliteToast";

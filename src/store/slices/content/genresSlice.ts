@@ -1,18 +1,11 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { type Genre } from '../entities/type';
-import { type GenreApiDTO } from "../dto/dto";
-import { get, post, put, remove } from '../client/axiosCilent';
+import { type Genre } from '../../../entities/type';
+import { type GenreApiDTO } from '../../../dto/dto';
+import { get, post, put, remove } from '../../../client/axiosCilent';
+import { API_ENDPOINTS, getAuthHeaders } from '../../utils/apiConfig';
+import { type SimpleListSliceState } from '../../utils/sliceHelpers';
 
-const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
-const API_URL = `${BASE_API.replace(/\/$/, "")}/genres`;
-
-function getAuthHeaders(): Record<string, string> {
-  const userDetails = localStorage.getItem("cine-user-details");
-  const accessToken = userDetails ? JSON.parse(userDetails).accessToken : null;
-  return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-}
-
-// Backend response type - matches MovieResponseDTO structure
+// Backend response type
 type GenreApiResponse = {
   id: number;
   name: string;
@@ -30,7 +23,7 @@ export const fetchGenres = createAsyncThunk<Genre[]>(
   'genres/fetchGenres',
   async () => {
     const headers = getAuthHeaders();
-    const res = await get<ApiResponse<GenreApiResponse[]>>(API_URL, { headers });
+    const res = await get<ApiResponse<GenreApiResponse[]>>(API_ENDPOINTS.GENRES, { headers });
     const data = res.data.data;
     return Array.isArray(data)
       ? data.map((g: GenreApiResponse) => ({
@@ -51,7 +44,7 @@ export const addGenreAsync = createAsyncThunk<Genre, Genre>(
       icon: genre.icon,
     };
     const headers = getAuthHeaders();
-    const res = await post<ApiResponse<GenreApiResponse>>(API_URL, payload, { headers });
+    const res = await post<ApiResponse<GenreApiResponse>>(API_ENDPOINTS.GENRES, payload, { headers });
     const g = res.data.data;
     return {
       genre_id: g.id,
@@ -71,7 +64,7 @@ export const updateGenreAsync = createAsyncThunk<Genre, Genre>(
       icon: genre.icon,
     };
     const headers = getAuthHeaders();
-    const res = await put<ApiResponse<GenreApiResponse>>(`${API_URL}/${genre.genre_id}`, payload, { headers });
+    const res = await put<ApiResponse<GenreApiResponse>>(`${API_ENDPOINTS.GENRES}/${genre.genre_id}`, payload, { headers });
     const g = res.data.data;
     return {
       genre_id: g.id,
@@ -86,9 +79,8 @@ export const deleteGenreAsync = createAsyncThunk<Genre, number>(
   'genres/deleteGenre',
   async (genre_id, { getState }) => {
     const headers = getAuthHeaders();
-    await remove<ApiResponse<Record<string, never>>>(`${API_URL}/${genre_id}`, { headers });
+    await remove<ApiResponse<Record<string, never>>>(`${API_ENDPOINTS.GENRES}/${genre_id}`, { headers });
     
-    // Backend returns success without genre data, so fetch from state
     const state = getState() as { genres: { items: Genre[] } };
     const genre = state.genres.items.find(g => g.genre_id === genre_id);
     
@@ -104,7 +96,7 @@ export const restoreGenreAsync = createAsyncThunk<Genre, number>(
   'genres/restoreGenre',
   async (genre_id) => {
     const headers = getAuthHeaders();
-    const res = await put<ApiResponse<GenreApiResponse>>(`${API_URL}/${genre_id}/restore`, {}, { headers });
+    const res = await put<ApiResponse<GenreApiResponse>>(`${API_ENDPOINTS.GENRES}/${genre_id}/restore`, {}, { headers });
     const g = res.data.data;
     return {
       genre_id: g.id,
@@ -115,11 +107,7 @@ export const restoreGenreAsync = createAsyncThunk<Genre, number>(
   }
 );
 
-interface GenresState {
-  items: Genre[];
-  loading: boolean;
-  error: string | null;
-}
+type GenresState = SimpleListSliceState<Genre>;
 
 const initialState: GenresState = {
   items: [],
@@ -158,7 +146,7 @@ const genresSlice = createSlice({
         state.error = null;
       })
       .addCase(updateGenreAsync.fulfilled, (state, action: PayloadAction<Genre>) => {
-        const idx = state.items.findIndex(g => g.genre_id === action.payload.genre_id);
+        const idx = state.items.findIndex((g: Genre) => g.genre_id === action.payload.genre_id);
         if (idx !== -1) state.items[idx] = action.payload;
       })
       .addCase(updateGenreAsync.rejected, (state, action) => {
@@ -168,7 +156,7 @@ const genresSlice = createSlice({
         state.error = null;
       })
       .addCase(deleteGenreAsync.fulfilled, (state, action: PayloadAction<Genre>) => {
-        const idx = state.items.findIndex(g => g.genre_id === action.payload.genre_id);
+        const idx = state.items.findIndex((g: Genre) => g.genre_id === action.payload.genre_id);
         if (idx !== -1) state.items[idx] = action.payload;
       })
       .addCase(deleteGenreAsync.rejected, (state, action) => {
@@ -178,7 +166,7 @@ const genresSlice = createSlice({
         state.error = null;
       })
       .addCase(restoreGenreAsync.fulfilled, (state, action: PayloadAction<Genre>) => {
-        const idx = state.items.findIndex(g => g.genre_id === action.payload.genre_id);
+        const idx = state.items.findIndex((g: Genre) => g.genre_id === action.payload.genre_id);
         if (idx !== -1) {
           state.items[idx] = action.payload;
         } else {

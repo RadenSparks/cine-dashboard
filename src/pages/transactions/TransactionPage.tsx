@@ -1,7 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { type RootState, type AppDispatch } from "../../store/store";
-import { DollarSignIcon, TrendingUpIcon, CheckCircleIcon, ClockIcon } from "lucide-react";
+import { DollarSignIcon, CheckCircleIcon, ClockIcon } from "lucide-react";
 import Loading from "../../components/UI/Loading";
 import { SatelliteToast, type ToastNotification } from "../../components/UI/SatelliteToast";
 import BlurCircle from "../../components/UI/BlurCircle";
@@ -87,33 +85,6 @@ const MOCK_TRANSACTIONS: Transaction[] = [
 ];
 
 // Stat card component
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  subtext,
-  color,
-}: {
-  icon: typeof DollarSignIcon;
-  label: string;
-  value: string | number;
-  subtext?: string;
-  color: string;
-}) {
-  return (
-    <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-md border border-blue-100 dark:border-zinc-700 p-6 flex items-start gap-4">
-      <div className={`p-3 rounded-lg ${color}`}>
-        <Icon className="w-6 h-6 text-white" />
-      </div>
-      <div className="flex-1">
-        <p className="text-sm text-gray-600 dark:text-gray-400 font-medium">{label}</p>
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{value}</h3>
-        {subtext && <p className="text-xs text-gray-500 dark:text-gray-500 mt-2">{subtext}</p>}
-      </div>
-    </div>
-  );
-}
-
 // Transaction status badge
 function StatusBadge({ status }: { status: Transaction["status"] }) {
   const statusStyles: Record<Transaction["status"], string> = {
@@ -176,7 +147,6 @@ function TransactionRow({ transaction }: { transaction: Transaction }) {
 }
 
 export default function TransactionPage() {
-  const dispatch = useDispatch<AppDispatch>();
   const toastRef = useRef<{ showNotification: (options: Omit<ToastNotification, "id">) => void }>(null);
 
   // Mock loading and transactions state

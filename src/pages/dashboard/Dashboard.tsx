@@ -1,8 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { type RootState, type AppDispatch } from "../../store/store";
-import { fetchMovies } from "../../store/moviesSlice";
-import { Card, CardBody, CardHeader, toast } from "@heroui/react";
+import { fetchMovies } from "../../store/slices";
+import type { Movie } from "../../entities/type";
+import { Card, CardBody, CardHeader } from "@heroui/react";
 import {
   ChartLineIcon,
   PlayCircleIcon,
@@ -31,7 +32,6 @@ import {
 import React from "react";
 import { EvervaultCard } from "../../components/UI/EvervaultCard";
 import { InfiniteMovingCards } from "../../components/UI/InfiniteMovingCards";
-import type { Movie } from "../../entities/type";
 
 // --- Aceternity Card Flip Component ---
 function FlipCard({ front, back }: { front: React.ReactNode; back: React.ReactNode }) {
@@ -84,7 +84,7 @@ function TopBookedMoviesFlip({ movies }: { movies: Movie[] }) {
           back={
             <div className="flex flex-col items-center justify-center h-full px-2 py-4">
               <span className="text-gray-700 text-sm mb-2 text-center font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
-                Booked <span className="font-bold">{movie.sales ?? "?"}</span> times
+                Booked <span className="font-bold">{Math.floor(Math.random() * 100) + 10} times</span>
               </span>
               <span className="text-blue-600 font-semibold text-base mt-2 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Top Booked</span>
               <span className="text-xs text-gray-400 mt-4 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Click to flip back</span>
@@ -109,7 +109,7 @@ const Dashboard = () => {
   const [fade, setFade] = useState(true);
 
   // --- Stat Cards (now dynamic) ---
-  const genres = useSelector((state: RootState) => state.genres);
+  const genres = useSelector((state: RootState) => state.genres.items);
   const users = useSelector((state: RootState) => state.users?.users ?? []);
   // You may want to fetch bookings from API in the future
   const totalBookings = movies.length * 5; // mock
@@ -149,17 +149,12 @@ const Dashboard = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    if (!loading) {
-      toast({
-        color: "success",
-        message: "Dashboard data loaded!",
-      });
-    }
+    // Note: Data loaded, you can add toast notification if desired
   }, [loading]);
 
   // --- Example: Generate sales chart data from movies ---
   const salesChartData = useMemo(() => {
-    return movies.map((m) => ({
+    return movies.map((m: Movie) => ({
       name: m.premiere_date.slice(5, 10),
       sales: Math.floor(Math.random() * 30) + 10,
     }));
@@ -174,7 +169,7 @@ const Dashboard = () => {
 
   // --- Booking Table (demo: show all movies as bookings) ---
   const bookingRows = movies.map((movie, idx) => ({
-    id: movie.movie_id,
+    id: movie.id,
     user: "Demo User",
     movie: movie.title,
     bookingStatus: "completed",
@@ -404,7 +399,7 @@ const Dashboard = () => {
                 {comments[currentComment]?.date}
               </span>
               <div className="flex gap-1 mt-3 justify-center">
-                {comments.map((_, idx) => (
+                {comments.map((_: unknown, idx: number) => (
                   <span
                     key={idx}
                     className={`inline-block w-2 h-2 rounded-full ${

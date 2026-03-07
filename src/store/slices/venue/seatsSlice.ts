@@ -1,39 +1,32 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import type { Seat } from "../entities/type";
-import type { ApiResponse } from "../dto/dto";
-import { get, put } from "../client/axiosCilent";
+import { type Seat } from "../../../entities/type";
+import { get, put } from "../../../client/axiosCilent";
+import { API_ENDPOINTS, getAuthHeaders } from '../../utils/apiConfig';
 
-const BASE_API = import.meta.env.VITE_API_URL || "http://localhost:17000/api/v1";
-const API_URL = `${BASE_API.replace(/\/$/, "")}/seats`;
+type ApiResponseWrapper<T> = {
+  data: T;
+  message: string;
+  status: 'SUCCESS' | 'ERROR' | 'FAILURE';
+};
 
-function getAuthHeaders(): Record<string, string> {
-  const userDetails = localStorage.getItem("cine-user-details");
-  const accessToken = userDetails ? JSON.parse(userDetails).accessToken : null;
-  return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-}
-
-// Fetch all seats for a room - GET /api/v1/seats/rooms/{roomId}
 export const fetchSeatsByRoom = createAsyncThunk<Seat[], number>(
   "seats/fetchSeatsByRoom",
   async (roomId) => {
     const headers = getAuthHeaders();
-    const res = await get<ApiResponse<Seat[]>>(`${API_URL}/rooms/${roomId}`, { headers });
+    const res = await get<ApiResponseWrapper<Seat[]>>(`${API_ENDPOINTS.SEATS}/rooms/${roomId}`, { headers });
     return Array.isArray(res.data.data) ? res.data.data : [];
   }
 );
 
-// Fetch a single seat by room and seat id - GET /api/v1/seats/{seatId}/rooms/{roomId}
 export const fetchSeatById = createAsyncThunk<Seat, { roomId: number; seatId: number }>(
   "seats/fetchSeatById",
   async ({ roomId, seatId }) => {
     const headers = getAuthHeaders();
-    const res = await get<ApiResponse<Seat>>(`${API_URL}/${seatId}/rooms/${roomId}`, { headers });
+    const res = await get<ApiResponseWrapper<Seat>>(`${API_ENDPOINTS.SEATS}/${seatId}/rooms/${roomId}`, { headers });
     return res.data.data;
   }
 );
 
-// Update a seat - PUT /api/v1/seats/{seatId}
-// Only sends id, seatType, and empty as per UpdateSeatRequestDTO
 export const updateSeat = createAsyncThunk<Seat, { id: number; seatType: 'STANDARD' | 'PREMIUM'; empty: boolean }>(
   "seats/updateSeat",
   async (updateData) => {
@@ -43,7 +36,7 @@ export const updateSeat = createAsyncThunk<Seat, { id: number; seatType: 'STANDA
       seatType: updateData.seatType,
       empty: updateData.empty,
     };
-    const res = await put<ApiResponse<Seat>>(`${API_URL}/${updateData.id}`, payload, { headers });
+    const res = await put<ApiResponseWrapper<Seat>>(`${API_ENDPOINTS.SEATS}/${updateData.id}`, payload, { headers });
     return res.data.data;
   }
 );
@@ -85,7 +78,7 @@ const seatsSlice = createSlice({
         const seat = action.payload;
         const { roomId } = action.meta.arg;
         const roomSeats = state.seatsByRoom[roomId] || [];
-        const idx = roomSeats.findIndex(s => s.id === seat.id);
+        const idx = roomSeats.findIndex((s: Seat) => s.id === seat.id);
         if (idx !== -1) {
           roomSeats[idx] = seat;
         } else {
@@ -101,10 +94,9 @@ const seatsSlice = createSlice({
       })
       .addCase(updateSeat.fulfilled, (state, action) => {
         const seat = action.payload;
-        // Update seat in all rooms (it might be in any room)
-        Object.keys(state.seatsByRoom).forEach(roomId => {
+        Object.keys(state.seatsByRoom).forEach((roomId: string) => {
           const roomSeats = state.seatsByRoom[parseInt(roomId)];
-          const idx = roomSeats.findIndex(s => s.id === seat.id);
+          const idx = roomSeats.findIndex((s: Seat) => s.id === seat.id);
           if (idx !== -1) roomSeats[idx] = seat;
         });
       })

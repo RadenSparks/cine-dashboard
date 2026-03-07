@@ -36,25 +36,33 @@ export default function SessionTimeline({
   weekDates,
   rooms,
   sessions,
+  showDeletedSessions,
+  onEditSession,
+  onDeleteSession,
+  onRestoreSession,
 }: {
   weekLabel?: string;
   weekDates: WeekDate[];
   rooms: string[];
   sessions: Session[];
+  showDeletedSessions?: boolean;
+  onEditSession?: (session: Session) => void;
+  onDeleteSession?: (sessionId: number) => void;
+  onRestoreSession?: (sessionId: number) => void;
 }) {
   // Helper: get sessions for a day
   function getSessionsForDay(date: string): DisplaySession[] {
     return sessions
-      .filter(s => s.session_date === date)
-      .map((s, idx) => {
-        const baseHour = 9 + (idx % 8) * 2;
-        const start = `${String(baseHour).padStart(2, "0")}:00`;
-        const end = `${String(baseHour + 2).padStart(2, "0")}:00`;
+      .filter(s => (showDeletedSessions || !s.deleted) && s.startTime.split('T')[0] === date)
+      .map((s) => {
+        // Extract actual time from ISO datetime string
+        const startTime = s.startTime.split('T')[1]?.slice(0, 5) || "09:00";
+        const endTime = s.endTime.split('T')[1]?.slice(0, 5) || "11:00";
         return {
           ...s,
-          start,
-          end,
-          room: rooms[s.room_id - 1] || `Room ${s.room_id}`,
+          start: startTime,
+          end: endTime,
+          room: rooms[s.roomId - 1] || `Room ${s.roomId}`,
         };
       });
   }
@@ -235,39 +243,64 @@ export default function SessionTimeline({
                       const endMins = Math.min(timeToMinutes(s.end), DAY_END);
                       const left = ((startMins - DAY_START) / 60) * CELL_WIDTH;
                       const width = Math.max(((endMins - startMins) / 60) * CELL_WIDTH, 36);
-                      const colorClass = ROOM_COLORS[rooms.indexOf(s.room) % ROOM_COLORS.length];
+                      // Use roomId for consistent color assignment, with fallback to prevent white background
+                      const colorIndex = (s.roomId - 1) % ROOM_COLORS.length;
+                      const colorClass = ROOM_COLORS[Math.max(0, colorIndex)];
                       const duration = timeToMinutes(s.end) - timeToMinutes(s.start);
 
                       const tooltipContent = (
-                        <>
-                          <div>
-                            <div className="font-bold text-lg mb-2 text-white">{s.room}</div>
-                            <div className="text-xs text-gray-200 mb-1">Room: <span className="font-semibold">{s.room}</span></div>
-                            <div className="text-xs text-gray-200 mb-1">Time: <span className="font-mono">{s.start}–{s.end}</span></div>
-                            <div className="text-xs text-gray-200">Duration: <span className="font-mono">{duration} min</span></div>
+                        <div>
+                          <div className={`font-bold text-lg mb-2 ${s.deleted ? 'text-gray-300' : 'text-white'}`}>{s.movieTitle || "Unknown Movie"}</div>
+                          <div className={`text-xs ${s.deleted ? 'text-gray-400' : 'text-gray-200'} mb-1`}>Room: <span className="font-semibold">{s.room}</span></div>
+                          <div className={`text-xs ${s.deleted ? 'text-gray-400' : 'text-gray-200'} mb-1`}>Time: <span className="font-mono">{s.start}–{s.end}</span></div>
+                          <div className={`text-xs ${s.deleted ? 'text-gray-400' : 'text-gray-200'} mb-3`}>Duration: <span className="font-mono">{duration} min</span></div>
+                          <div className="flex gap-2">
+                            {s.deleted ? (
+                              <button
+                                onClick={() => onRestoreSession?.(s.id)}
+                                className="px-2 py-1 text-xs bg-green-500 hover:bg-green-600 text-white rounded transition"
+                              >
+                                Restore
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => onEditSession?.(s)}
+                                  className="px-2 py-1 text-xs bg-blue-500 hover:bg-blue-600 text-white rounded transition"
+                                >
+                                  Edit Session
+                                </button>
+                                <button
+                                  onClick={() => onDeleteSession?.(s.id)}
+                                  className="px-2 py-1 text-xs bg-red-500 hover:bg-red-600 text-white rounded transition"
+                                >
+                                  Delete
+                                </button>
+                              </>
+                            )}
                           </div>
-                        </>
+                        </div>
                       );
 
                       return (
                         <SessionTooltip content={tooltipContent} key={`${s.room}-${s.start}-${s.end}-${day.date}-${idx}`}>
                           <div
-                            className={`absolute ${colorClass} rounded-xl text-white px-2 py-1 shadow-lg flex items-center justify-center border-2 border-white
-                              transition-transform duration-150
-                              hover:z-50 hover:scale-105 hover:ring-4 hover:ring-blue-300`}
+                            className={`absolute rounded-lg text-white px-3 py-2 shadow-2xl flex flex-col items-start justify-center border-2 transition-transform duration-150 overflow-hidden
+                              ${s.deleted ? 'bg-gray-500 border-gray-400 hover:bg-gray-600' : `${colorClass} border-yellow-300 hover:z-50 hover:scale-110 hover:ring-4 hover:ring-yellow-400 hover:shadow-2xl`}`}
                             style={{
                               top: 8 + s.stack * (STRIP_HEIGHT + STRIP_MARGIN),
                               left,
                               width,
                               height: STRIP_HEIGHT,
-                              minWidth: 36,
-                              zIndex: 2,
-                              boxShadow: "0 2px 8px rgba(30,64,175,0.12)",
+                              minWidth: 120,
+                              zIndex: s.deleted ? 1 : 2,
+                              boxShadow: s.deleted ? "0 2px 8px rgba(0,0,0,0.2)" : "0 4px 12px rgba(0,0,0,0.3), inset 0 1px 2px rgba(255,255,255,0.2)",
                               cursor: "pointer",
-                              opacity: 0.97,
+                              opacity: s.deleted ? 0.7 : 1,
                             }}
                           >
-                            <span className="font-mono text-xs">{s.room}</span>
+                            <span className="font-bold text-sm leading-tight truncate w-full">{s.movieTitle || "Session"}</span>
+                            <span className={`font-mono text-xs mt-0.5 ${s.deleted ? 'text-gray-200' : 'text-gray-100'}`}>{s.start}–{s.end}</span>
                           </div>
                         </SessionTooltip>
                       );

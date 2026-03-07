@@ -39,6 +39,22 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Response interceptor to handle 401 errors (expired token)
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      // Token is expired or invalid
+      localStorage.removeItem("cine-user-details");
+      localStorage.removeItem("cine-admin-remember");
+      
+      // Reload page to trigger ProtectedRoute to redirect to login
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
+
 export default apiClient;
 
 export const get = async <T>(

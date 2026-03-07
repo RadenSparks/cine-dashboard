@@ -7,8 +7,9 @@ import {
   updateRoom,
   deleteRoom,
   restoreRoom,
-} from "../../store/roomsSlice";
-import { updateSeat, fetchSeatsByRoom } from "../../store/seatsSlice";
+  updateSeat,
+  fetchSeatsByRoom,
+} from "../../store/slices";
 import { SatelliteToast, type ToastNotification } from "../../components/UI/SatelliteToast";
 import Loading from "../../components/UI/Loading";
 import RoomTable from "./rooms/RoomTable";

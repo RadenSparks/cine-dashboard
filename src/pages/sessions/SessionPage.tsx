@@ -1,29 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useAppDispatch, useAppSelector, type RootState } from "../../store/store";
+import { fetchSessions, addSessionAsync, updateSession, deleteSessionAsync, restoreSession, fetchMovies, fetchGenres } from "../../store/slices";
+import type { CreateSessionRequestDTO, UpdateSessionRequestDTO } from "../../dto/dto";
+import type { Session } from "../../entities/type";
+import type { ToastNotification } from "../../components/UI/SatelliteToast";
 import AppButton from "../../components/UI/AppButton";
+import { SatelliteToast } from "../../components/UI/SatelliteToast";
+import ConfirmationModal from "../../components/UI/ConfirmationModal";
 import SessionTimeline from "./SessionTimeline";
 import Loading from "../../components/UI/Loading";
 import SessionAddModal from "./SessionAddModal";
+import SessionEditModal from "./SessionEditModal";
 import SessionBoardView from "./SessionBoardView";
 import SessionCalendar from "./SessionCalendar";
-
-// Mock data for movies and rooms
-const movies = [
-  { id: 1, title: "Movie A", duration: 120, premiere_date: "2025-01-01", genre_ids: [1, 2] },
-  { id: 2, title: "Movie B", duration: 90, premiere_date: "2025-02-01", genre_ids: [2, 3] },
-  { id: 3, title: "Movie C", duration: 150, premiere_date: "2025-03-01", genre_ids: [1, 4] },
-  { id: 4, title: "Movie D", duration: 120, premiere_date: "2025-04-01", genre_ids: [3, 5] },
-  { id: 5, title: "Movie E", duration: 90, premiere_date: "2025-05-01", genre_ids: [2, 5] },
-];
-const rooms = ["Room 1", "Room 2", "Room 3"];
-
-// Mock data for sessions
-const mockSessions = [
-  { session_id: 1, movie_id: 1, room_id: 1, session_date: "2025-09-22" },
-  { session_id: 2, movie_id: 2, room_id: 2, session_date: "2025-09-23" },
-  { session_id: 3, movie_id: 3, room_id: 1, session_date: "2025-09-24" },
-  { session_id: 4, movie_id: 4, room_id: 3, session_date: "2025-09-22" },
-  { session_id: 5, movie_id: 5, room_id: 2, session_date: "2025-09-25" },
-];
 
 function getCurrentWeekDates(today = new Date()) {
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -41,57 +30,303 @@ function getCurrentWeekDates(today = new Date()) {
 
 function addMinutesToTime(time: string, mins: number) {
   const [h, m] = time.split(":").map(Number);
-  const date = new Date(0, 0, 0, h, m + mins);
-  return date.toTimeString().slice(0, 5);
+  const totalMinutes = h * 60 + m + mins;
+  const newHours = Math.floor(totalMinutes / 60) % 24;
+  const newMins = totalMinutes % 60;
+  return `${String(newHours).padStart(2, "0")}:${String(newMins).padStart(2, "0")}`;
 }
 
 export default function ShowtimePage() {
-  // --- State ---
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [showTimeline, setShowTimeline] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
+  // Redux state
+  const dispatch = useAppDispatch();
+  const { items: allMovies, loading: moviesLoading } = useAppSelector((state: RootState) => state.movies);
+  const { items: sessions, loading: sessionsLoading } = useAppSelector((state: RootState) => state.sessions);
+
+  // Toast ref
+  const toastRef = useRef<{ showNotification: (options: Omit<ToastNotification, "id">) => void } | null>(null);
+
+  // Use ref to track if fetch has already been initiated
+  const fetchInitiatedRef = useRef(false);
 
   // --- Page loading state ---
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 800); // Simulate loading
-    return () => clearTimeout(timer);
-  }, []);
+    // Only fetch if we haven't already initiated a fetch
+    if (fetchInitiatedRef.current) return;
+    
+    setLoading(true);
+    fetchInitiatedRef.current = true;
+    Promise.all([
+      dispatch(fetchMovies({ page: 0, size: 100 })),
+      dispatch(fetchGenres()),
+      dispatch(fetchSessions())
+    ]).finally(() => setLoading(false));
+  }, [dispatch]); // Empty array: run only once on mount
 
-  // Sessions for the week (mock data)
-  const weekDates = getCurrentWeekDates();
-  const [sessions, setSessions] = useState(mockSessions);
+  // --- UI State ---
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [showTimeline, setShowTimeline] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingSession, setEditingSession] = useState<Session | null>(null);
+  const [showDeletedSessions, setShowDeletedSessions] = useState(false);
+
+  // --- Confirmation Modal State ---
+  const [confirmAction, setConfirmAction] = useState<{ type: "delete" | "restore"; sessionId: number } | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // --- Modal State ---
+  const weekDates = getCurrentWeekDates();
   const [modalMovieId, setModalMovieId] = useState<number | null>(null);
-  const [modalRoom, setModalRoom] = useState<string>(rooms[0]);
+  const [modalRoom, setModalRoom] = useState<number | null>(null);
   const [modalDate, setModalDate] = useState(weekDates[0].date);
   const [modalStart, setModalStart] = useState("10:00");
 
-  // Calculate end time
-  const selectedMovie = movies.find(m => m.id === modalMovieId);
+  // Calculate end time and auto-fill base price based on selected movie duration and price
+  const selectedMovie = allMovies.find(m => m.id === modalMovieId);
   const modalEnd = selectedMovie ? addMinutesToTime(modalStart, selectedMovie.duration) : "";
+  const basePrice = selectedMovie?.rating ? Math.round(selectedMovie.rating * 10) : 100;
+
+  // Helper to calculate end date (handles midnight wraparound)
+  function getEndDateTime(date: string, startTime: string, endTime: string): string {
+    const [startH, startM] = startTime.split(":").map(Number);
+    const [endH, endM] = endTime.split(":").map(Number);
+    const startTotalMins = startH * 60 + startM;
+    const endTotalMins = endH * 60 + endM;
+    
+    // If end time is earlier than start time (in minutes), it means it's the next day
+    if (endTotalMins < startTotalMins) {
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+      return nextDate.toISOString().slice(0, 10);
+    }
+    return date;
+  }
 
   // --- Add Session Handler ---
-  function handleAddSession() {
+  async function handleAddSession() {
     const sessionDate = selectedDate || modalDate;
-    if (!modalMovieId || !modalRoom || !sessionDate || !modalStart) return;
-    const movie = movies.find(m => m.id === modalMovieId);
-    const room_id = rooms.findIndex(r => r === modalRoom) + 1;
-    setSessions(prev => [
-      ...prev,
-      {
-        session_id: prev.length + 1,
-        movie_id: movie?.id ?? 0,
-        room_id,
-        session_date: sessionDate,
-      },
-    ]);
-    setShowAddModal(false);
-    setModalMovieId(null);
-    setModalRoom(rooms[0]);
-    setModalDate(weekDates[0].date);
-    setModalStart("10:00");
+    if (!modalMovieId || !modalRoom || !sessionDate || !modalStart || !modalEnd || basePrice <= 0) {
+      toastRef.current?.showNotification({ 
+        title: "Error", 
+        content: "Please fill in all required fields", 
+        position: "bottom-right",
+        accentColor: "#ef4444",
+        longevity: 3000,
+      });
+      return;
+    }
+
+    // Build ISO datetime strings with correct date for end time (handles midnight wraparound)
+    const startDateTime = `${sessionDate}T${modalStart}:00`;
+    const endDate = getEndDateTime(sessionDate, modalStart, modalEnd);
+    const endDateTime = `${endDate}T${modalEnd}:00`;
+
+    const createRequest: CreateSessionRequestDTO = {
+      movieId: modalMovieId,
+      roomId: modalRoom,
+      startTime: startDateTime,
+      endTime: endDateTime,
+      basePrice,
+    };
+
+    console.log("Adding session with payload:", createRequest);
+
+    try {
+      await dispatch(addSessionAsync(createRequest)).unwrap();
+      
+      // Show success toast
+      toastRef.current?.showNotification({ 
+        title: "Success", 
+        content: "Session added successfully!", 
+        position: "bottom-right", 
+        accentColor: "#22c55e",
+        longevity: 3500,
+      });
+      
+      // Refetch sessions to update the UI
+      dispatch(fetchSessions());
+      
+      // Reset modal
+      setShowAddModal(false);
+      setModalMovieId(null);
+      setModalRoom(null);
+      setModalDate(weekDates[0].date);
+      setModalStart("10:00");
+    } catch (error) {
+      console.error("Failed to add session:", error);
+      const msg = error instanceof Error ? error.message : "Failed to add session. Please try again.";
+      toastRef.current?.showNotification({ 
+        title: "Error", 
+        content: msg, 
+        position: "bottom-right", 
+        accentColor: "#ef4444",
+        longevity: 3000,
+      });
+    }
+  }
+
+  // --- Update Session Handler ---
+  async function handleUpdateSession() {
+    if (!editingSession || !modalMovieId || !modalRoom || !modalDate || !modalStart) {
+      toastRef.current?.showNotification({ 
+        title: "Error", 
+        content: "Please fill in all required fields", 
+        position: "bottom-right",
+        accentColor: "#ef4444",
+        longevity: 3000,
+      });
+      return;
+    }
+
+    // Build ISO datetime strings with correct date for end time (handles midnight wraparound)
+    const startDateTime = `${modalDate}T${modalStart}:00`;
+    const endDate = getEndDateTime(modalDate, modalStart, modalEnd);
+    const endDateTime = `${endDate}T${modalEnd}:00`;
+
+    const updateRequest: UpdateSessionRequestDTO = {
+      id: editingSession.id,
+      movieId: modalMovieId,
+      roomId: modalRoom,
+      startTime: startDateTime,
+      endTime: endDateTime,
+      basePrice,
+    };
+
+    console.log("Updating session with payload:", updateRequest);
+
+    try {
+      await dispatch(updateSession(updateRequest)).unwrap();
+      
+      // Show success toast
+      toastRef.current?.showNotification({ 
+        title: "Success", 
+        content: "Session updated successfully!", 
+        position: "bottom-right", 
+        accentColor: "#22c55e",
+        longevity: 3500,
+      });
+      
+      // Refetch sessions to update the UI
+      dispatch(fetchSessions());
+      
+      // Reset modal
+      setShowEditModal(false);
+      setEditingSession(null);
+      setModalMovieId(null);
+      setModalRoom(null);
+      setModalDate(weekDates[0].date);
+      setModalStart("10:00");
+    } catch (error) {
+      console.error("Failed to update session:", error);
+      const msg = error instanceof Error ? error.message : "Failed to update session. Please try again.";
+      toastRef.current?.showNotification({ 
+        title: "Error", 
+        content: msg, 
+        position: "bottom-right", 
+        accentColor: "#ef4444",
+        longevity: 3000,
+      });
+    }
+  }
+
+  // --- Open Edit Modal ---
+  function openEditModal(session: Session) {
+    setEditingSession(session);
+    setModalMovieId(session.movieId);
+    setModalRoom(session.roomId);
+    setModalDate(session.startTime.split('T')[0]);
+    setModalStart(session.startTime.split('T')[1].slice(0, 5));
+    setShowEditModal(true);
+  }
+
+  // --- Delete Session Handler ---
+  async function handleDeleteSession(sessionId: number) {
+    // Show confirmation modal
+    setConfirmAction({ type: "delete", sessionId });
+  }
+
+  // --- Restore Session Handler ---
+  async function handleRestoreSession(sessionId: number) {
+    // Show confirmation modal
+    setConfirmAction({ type: "restore", sessionId });
+  }
+
+  // --- Handle Confirmation ---
+  async function handleConfirmAction() {
+    if (!confirmAction) return;
+
+    setIsProcessing(true);
+    try {
+      if (confirmAction.type === "delete") {
+        // Show processing toast
+        toastRef.current?.showNotification({
+          title: "Processing",
+          content: "Deleting session...",
+          position: "bottom-right",
+          accentColor: "#3b82f6",
+          longevity: 2000,
+        });
+
+        console.log("Deleting session:", confirmAction.sessionId);
+        await dispatch(deleteSessionAsync(confirmAction.sessionId)).unwrap();
+
+        // Refetch sessions to update the UI
+        await dispatch(fetchSessions()).unwrap();
+
+        // Show success toast
+        setTimeout(() => {
+          toastRef.current?.showNotification({
+            title: "Deleted Successfully",
+            content: "Session has been deleted. Use 'Show Deleted' to restore it.",
+            position: "bottom-right",
+            accentColor: "#22c55e",
+            longevity: 4000,
+          });
+        }, 300);
+      } else if (confirmAction.type === "restore") {
+        // Show processing toast
+        toastRef.current?.showNotification({
+          title: "Restoring",
+          content: "Session is being restored...",
+          position: "bottom-right",
+          accentColor: "#3b82f6",
+          longevity: 2000,
+        });
+
+        console.log("Restoring session:", confirmAction.sessionId);
+        await dispatch(restoreSession(confirmAction.sessionId)).unwrap();
+
+        // Refetch sessions to update the UI
+        await dispatch(fetchSessions()).unwrap();
+
+        // Show success toast
+        setTimeout(() => {
+          toastRef.current?.showNotification({
+            title: "Restored Successfully",
+            content: "Session has been restored and is now available.",
+            position: "bottom-right",
+            accentColor: "#22c55e",
+            longevity: 4000,
+          });
+        }, 300);
+      }
+    } catch (error) {
+      console.error("Failed to confirm action:", error);
+      const msg = error instanceof Error ? error.message : "Action failed. Please try again.";
+      setTimeout(() => {
+        toastRef.current?.showNotification({
+          title: "Action Failed",
+          content: msg,
+          position: "bottom-right",
+          accentColor: "#ef4444",
+          longevity: 3500,
+        });
+      }, 300);
+    } finally {
+      setIsProcessing(false);
+      setConfirmAction(null);
+    }
   }
 
   // Calendar state for month navigation
@@ -112,6 +347,7 @@ export default function ShowtimePage() {
       return { year: newYear, month: newMonth };
     });
   }
+
   function goToNextMonth() {
     setCalendarMonth(prev => {
       const newMonth = prev.month === 11 ? 0 : prev.month + 1;
@@ -119,12 +355,13 @@ export default function ShowtimePage() {
       return { year: newYear, month: newMonth };
     });
   }
+
   function formatDate(day: number) {
     return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
   }
 
   // --- UI ---
-  if (loading) {
+  if (loading || moviesLoading || sessionsLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-zinc-900 dark:via-zinc-950 dark:to-blue-950 py-10 hide-scrollbar">
         <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-16">
@@ -146,7 +383,7 @@ export default function ShowtimePage() {
         <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-blue-100 dark:border-zinc-800 p-8 mb-10">
           {/* Top controls: Timeline/Calendar toggle and Add Session */}
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-            <div>
+            <div className="flex gap-4">
               {!selectedDate && (
                 <AppButton
                   onClick={() => setShowTimeline(t => !t)}
@@ -155,6 +392,12 @@ export default function ShowtimePage() {
                   {showTimeline ? "Show Calendar View" : "Show Timeline View"}
                 </AppButton>
               )}
+              <AppButton
+                onClick={() => setShowDeletedSessions(t => !t)}
+                className={showDeletedSessions ? "bg-gradient-to-r from-orange-600 to-orange-400 text-white" : "text-gray-700 border-gray-300"}
+              >
+                {showDeletedSessions ? "Hide Deleted Sessions" : "Show Deleted Sessions"}
+              </AppButton>
             </div>
             <div>
               {selectedDate && !showAddModal && (
@@ -171,9 +414,13 @@ export default function ShowtimePage() {
           {/* Add Session Modal */}
           <SessionAddModal
             show={showAddModal}
-            onClose={() => setShowAddModal(false)}
-            movies={movies}
-            rooms={rooms}
+            onClose={() => {
+              setShowAddModal(false);
+              setModalMovieId(null);
+              setModalRoom(null);
+              setModalDate(weekDates[0].date);
+              setModalStart("10:00");
+            }}
             modalMovieId={modalMovieId}
             setModalMovieId={setModalMovieId}
             modalRoom={modalRoom}
@@ -184,10 +431,36 @@ export default function ShowtimePage() {
             setModalStart={setModalStart}
             modalEnd={modalEnd}
             selectedDate={selectedDate}
+            basePrice={basePrice}
             onAdd={() => {
               setModalDate(selectedDate || modalDate);
               handleAddSession();
             }}
+          />
+
+          {/* Edit Session Modal */}
+          <SessionEditModal
+            show={showEditModal}
+            onClose={() => {
+              setShowEditModal(false);
+              setEditingSession(null);
+              setModalMovieId(null);
+              setModalRoom(null);
+              setModalDate(weekDates[0].date);
+              setModalStart("10:00");
+            }}
+            session={editingSession}
+            modalMovieId={modalMovieId}
+            setModalMovieId={setModalMovieId}
+            modalRoom={modalRoom}
+            setModalRoom={setModalRoom}
+            modalDate={modalDate}
+            setModalDate={setModalDate}
+            modalStart={modalStart}
+            setModalStart={setModalStart}
+            modalEnd={modalEnd}
+            basePrice={basePrice}
+            onUpdate={handleUpdateSession}
           />
 
           {/* --- 1. Calendar View --- */}
@@ -200,6 +473,7 @@ export default function ShowtimePage() {
               firstDayOfWeek={firstDayOfWeek}
               WEEKDAYS={WEEKDAYS}
               sessions={sessions}
+              showDeletedSessions={showDeletedSessions}
               formatDate={formatDate}
               goToPrevMonth={goToPrevMonth}
               goToNextMonth={goToNextMonth}
@@ -213,8 +487,12 @@ export default function ShowtimePage() {
               <SessionTimeline
                 weekLabel="This Week"
                 weekDates={weekDates}
-                rooms={rooms}
+                rooms={[]}
                 sessions={sessions}
+                showDeletedSessions={showDeletedSessions}
+                onEditSession={openEditModal}
+                onDeleteSession={handleDeleteSession}
+                onRestoreSession={handleRestoreSession}
               />
             </div>
           )}
@@ -224,13 +502,32 @@ export default function ShowtimePage() {
             <SessionBoardView
               selectedDate={selectedDate}
               sessions={sessions}
-              movies={movies}
-              rooms={rooms}
+              movies={allMovies}
+              rooms={[]}
+              showDeletedSessions={showDeletedSessions}
               onBack={() => setSelectedDate(null)}
+              onEditSession={openEditModal}
+              onDeleteSession={handleDeleteSession}
+              onRestoreSession={handleRestoreSession}
             />
           )}
         </div>
       </div>
+      <SatelliteToast ref={toastRef} />
+      <ConfirmationModal
+        isOpen={confirmAction !== null}
+        title={confirmAction?.type === "delete" ? "Delete Session" : "Restore Session"}
+        message={
+          confirmAction?.type === "delete"
+            ? "This session will be soft deleted and can be restored later. Are you sure you want to proceed?"
+            : "This session will be restored and become available again. Are you sure?"
+        }
+        actionLabel={confirmAction?.type === "delete" ? "Delete" : "Restore"}
+        isDangerous={confirmAction?.type === "delete"}
+        isLoading={isProcessing}
+        onConfirm={handleConfirmAction}
+        onCancel={() => setConfirmAction(null)}
+      />
     </div>
   );
 }

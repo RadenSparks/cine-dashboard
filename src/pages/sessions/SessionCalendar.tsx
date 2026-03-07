@@ -9,6 +9,7 @@ interface Props {
   firstDayOfWeek: number;
   WEEKDAYS: string[];
   sessions: Session[];
+  showDeletedSessions: boolean;
   formatDate: (day: number) => string;
   goToPrevMonth: () => void;
   goToNextMonth: () => void;
@@ -23,6 +24,7 @@ export default function SessionCalendar({
   firstDayOfWeek,
   WEEKDAYS,
   sessions,
+  showDeletedSessions,
   formatDate,
   goToPrevMonth,
   goToNextMonth,
@@ -78,8 +80,8 @@ export default function SessionCalendar({
               <span className="text-lg font-bold text-blue-700 dark:text-blue-200">{i + 1}</span>
               <span className="text-xs text-blue-600 dark:text-blue-300">{dateStr}</span>
               <span className="text-xs text-blue-600 dark:text-blue-300 mt-1">
-                {sessions.filter(s => s.session_date === dateStr).length > 0
-                  ? `${sessions.filter(s => s.session_date === dateStr).length} sessions`
+                {sessions.filter(s => (showDeletedSessions || !s.deleted) && s.startTime.split('T')[0] === dateStr).length > 0
+                  ? `${sessions.filter(s => (showDeletedSessions || !s.deleted) && s.startTime.split('T')[0] === dateStr).length} sessions`
                   : ""}
               </span>
             </button>

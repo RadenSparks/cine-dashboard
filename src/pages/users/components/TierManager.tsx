@@ -5,7 +5,7 @@ import {
   createMilestoneTier,
   updateMilestoneTier,
   deleteMilestoneTier,
-} from "../../../store/milestoneTierSlice";
+} from "../../../store/slices";
 import { type Tier } from "../../../entities/type";
 import { type MileStoneTierApiDTO } from "../../../dto/dto";
 import { getTierStyle } from "../userHelper";

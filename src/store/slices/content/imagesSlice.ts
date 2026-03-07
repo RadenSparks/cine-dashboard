@@ -1,22 +1,18 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import type { AxiosResponse } from 'axios';
-import { type Image } from '../entities/type';
-import { type RetrieveImageDTO, type UploadImageResponseDTO, type ImageFolderDTO, type ApiResponse } from '../dto/dto';
-import apiClient, { get, post, remove } from '../client/axiosCilent';
-import { normalizeImageUrl } from '../utils/imageUrl';
-import type { RootState } from './store';
-import { getAuthHeaders } from '../lib/auth';
+import { type Image } from '../../../entities/type';
+import { type RetrieveImageDTO, type UploadImageResponseDTO, type ImageFolderDTO, type ApiResponse } from '../../../dto/dto';
+import apiClient, { get, post, remove } from '../../../client/axiosCilent';
+import { normalizeImageUrl } from '../../../utils/imageUrl';
+import { getAuthHeaders, API_ENDPOINTS, BASE_API_URL } from '../../utils/apiConfig';
+import type { RootState } from '../../store';
 
-const BASE_API = import.meta.env.VITE_API_URL || 'http://localhost:17000/api/v1';
-const BASE_API_NO_SLASH = BASE_API.replace(/\/$/, '');
-const IMAGES_API = `${BASE_API_NO_SLASH}/images`;
+const IMAGES_API = API_ENDPOINTS.IMAGES;
+const FOLDERS_API = `${BASE_API_URL}/folders`;
 
-// function getAuthHeaders(): Record<string, string> {
-//   const userDetails = localStorage.getItem('cine-user-details');
-//   const accessToken = userDetails ? JSON.parse(userDetails).accessToken : null;
-//   return accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
-// }
-
+/**
+ * Maps RetrieveImageDTO from API to frontend Image type
+ */
 function mapRetrieveDtoToImage(dto: RetrieveImageDTO): Image {
   const rawUrl = dto.url ?? `${IMAGES_API}/${dto.id}`;
   const cleaned = rawUrl.replace(/\/raw$/, "");
@@ -34,9 +30,6 @@ export const fetchImages = createAsyncThunk<Image[], void>(
   'images/fetchImages',
   async (_, { rejectWithValue }) => {
     try {
-      // Note: Backend API doesn't support paginated GET endpoint.
-      // Individual images are retrieved via GET /api/v1/images/{id}
-      // For now, returning empty array - UI should fetch images by folder
       return [];
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch images');
@@ -52,9 +45,7 @@ export const uploadImageAsync = createAsyncThunk<Image, { file: File; name?: str
       form.append('file', file);
       if (name) form.append('name', name);
 
-      const res = (await post(`${IMAGES_API}`, form, {
-        // Don't pass custom headers for FormData - let the interceptor handle auth
-      })) as unknown as AxiosResponse<ApiResponse<UploadImageResponseDTO>>;
+      const res = (await post(`${IMAGES_API}`, form)) as unknown as AxiosResponse<ApiResponse<UploadImageResponseDTO>>;
 
       const dto: UploadImageResponseDTO | undefined = res.data?.data;
       const id = dto?.id;
@@ -81,7 +72,7 @@ export const fetchImageRawAsync = createAsyncThunk<
   try {
     const state = getState();
     const existing = state.images.items.find(i => i.id === id);
-    const headers: Record<string, string> = { /* auth headers if needed */ };
+    const headers: Record<string, string> = {};
 
     if (existing?.eTag) headers["If-None-Match"] = existing.eTag;
 
@@ -90,17 +81,14 @@ export const fetchImageRawAsync = createAsyncThunk<
     const res = await apiClient.get(resourceUrl, {
       responseType: "arraybuffer",
       headers,
-      // accept 200..399 and 304 so axios doesn't throw
       validateStatus: status => (status >= 200 && status < 400) || status === 304,
     });
 
     if (res.status === 304) {
-      // server says not modified — use existing blob if available
       if (existing?.blob) {
         return { id, blob: existing.blob, contentType: existing.contentType ?? "application/octet-stream", eTag: existing.eTag };
       }
-      // no cached blob — request again without If-None-Match
-      const retry = await apiClient.get(`/api/v1/images/${id}`, { responseType: "arraybuffer", headers: { /* auth */ } });
+      const retry = await apiClient.get(`${IMAGES_API}/${id}`, { responseType: "arraybuffer", headers: {} });
       const blobRetry = new Blob([retry.data], { type: retry.headers["content-type"] });
       return { id, blob: blobRetry, contentType: retry.headers["content-type"], eTag: retry.headers["etag"] };
     }
@@ -118,15 +106,12 @@ export const deleteImageAsync = createAsyncThunk<number, number>(
     try {
       const headers = getAuthHeaders();
       const res = (await remove(`${IMAGES_API}/${id}`, { headers })) as unknown as AxiosResponse<ApiResponse<{ id: number }>>;
-      const returned = res.data?.data?.id ?? id;
-      return returned;
+      return res.data?.data?.id ?? id;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to delete image');
     }
   }
 );
-
-const FOLDERS_API = `${BASE_API_NO_SLASH}/folders`;
 
 export type FolderWithImages = {
   id: number;
@@ -141,25 +126,21 @@ export type FolderWithImages = {
   }>;
 };
 
-// Fetch all folders with their images
 export const fetchFoldersAsync = createAsyncThunk<Image[], void>(
   'images/fetchFolders',
   async (_, { rejectWithValue }) => {
     try {
       const headers = getAuthHeaders();
       const res = (await get(`${FOLDERS_API}`, { headers })) as unknown as AxiosResponse<
-        ApiResponse<{
-          content: FolderWithImages[];
-        }>
+        ApiResponse<{ content: FolderWithImages[] }>
       >;
-      
-      // Flatten folder structure: extract all images and add folder name
+
       const folders = res.data?.data?.content ?? [];
       const allImages: Image[] = [];
-      
-      folders.forEach(folder => {
+
+      folders.forEach((folder: FolderWithImages) => {
         if (Array.isArray(folder.images)) {
-          folder.images.forEach(img => {
+          folder.images.forEach((img: RetrieveImageDTO) => {
             const cleaned = img.url.replace(/\/raw$/, "");
             allImages.push({
               id: img.id,
@@ -172,10 +153,8 @@ export const fetchFoldersAsync = createAsyncThunk<Image[], void>(
           });
         }
       });
-      
-      // Sort images by ID to ensure consistent ordering across refreshes
-      allImages.sort((a, b) => a.id - b.id);
-      
+
+      allImages.sort((a: Image, b: Image) => a.id - b.id);
       return allImages;
     } catch (error) {
       return rejectWithValue(error instanceof Error ? error.message : 'Failed to fetch folders');
@@ -183,16 +162,13 @@ export const fetchFoldersAsync = createAsyncThunk<Image[], void>(
   }
 );
 
-// Fetch folder list (for tree display) - returns empty folders too
 export const fetchFolderListAsync = createAsyncThunk<FolderWithImages[], void>(
   'images/fetchFolderList',
   async (_, { rejectWithValue }) => {
     try {
       const headers = getAuthHeaders();
       const res = (await get(`${FOLDERS_API}`, { headers })) as unknown as AxiosResponse<
-        ApiResponse<{
-          content: FolderWithImages[];
-        }>
+        ApiResponse<{ content: FolderWithImages[] }>
       >;
       return res.data?.data?.content ?? [];
     } catch (error) {
@@ -201,7 +177,6 @@ export const fetchFolderListAsync = createAsyncThunk<FolderWithImages[], void>(
   }
 );
 
-// Create a new folder
 export const createFolderAsync = createAsyncThunk<ImageFolderDTO, string>(
   'images/createFolder',
   async (folderName, { rejectWithValue }) => {
@@ -217,7 +192,6 @@ export const createFolderAsync = createAsyncThunk<ImageFolderDTO, string>(
   }
 );
 
-// Delete a folder
 export const deleteFolderAsync = createAsyncThunk<number, { folderId: number; deleteItems: boolean }>(
   'images/deleteFolder',
   async ({ folderId, deleteItems }, { rejectWithValue }) => {
@@ -233,7 +207,6 @@ export const deleteFolderAsync = createAsyncThunk<number, { folderId: number; de
   }
 );
 
-// Move images to a folder
 export const moveImagesToFolderAsync = createAsyncThunk<
   Image[],
   { imageIds: number[]; targetFolderName: string }
@@ -242,28 +215,23 @@ export const moveImagesToFolderAsync = createAsyncThunk<
   async ({ imageIds, targetFolderName }, { rejectWithValue }) => {
     try {
       const headers = getAuthHeaders();
-      
-      // Try the move endpoint with different variations
       let res;
       const payload = { imageIds, targetFolderName };
-      
+
       try {
-        // First try: POST to /move
         res = (await post(`${IMAGES_API}/move`, payload, { headers })) as unknown as AxiosResponse<
           ApiResponse<RetrieveImageDTO[]>
         >;
       } catch (err1) {
         try {
-          // Second try: POST to /move-to-folder
           res = (await post(`${IMAGES_API}/move-to-folder`, payload, { headers })) as unknown as AxiosResponse<
             ApiResponse<RetrieveImageDTO[]>
           >;
         } catch {
-          // If both fail, throw the first error
           throw err1;
         }
       }
-      
+
       const dtos: RetrieveImageDTO[] = Array.isArray(res.data?.data) ? res.data.data : [];
       return dtos.map(mapRetrieveDtoToImage);
     } catch (error) {
@@ -272,23 +240,18 @@ export const moveImagesToFolderAsync = createAsyncThunk<
   }
 );
 
-// Upload image with folder support
 export const uploadImageToFolderAsync = createAsyncThunk<Image, { file: File; folderName?: string }>(
   'images/uploadImageToFolder',
   async ({ file, folderName }, { rejectWithValue }) => {
     try {
       const form = new FormData();
       form.append('file', file);
-      // Try both 'folder' and 'folderName' to handle backend variations
       if (folderName && folderName !== 'root') {
         form.append('folder', folderName);
         form.append('folderName', folderName);
       }
-      console.log('FormData being sent:', { file: file.name, folderName });
 
-      const res = (await post(`${IMAGES_API}`, form, {
-        // Don't pass custom headers for FormData - let the interceptor handle auth
-      })) as unknown as AxiosResponse<ApiResponse<UploadImageResponseDTO>>;
+      const res = (await post(`${IMAGES_API}`, form)) as unknown as AxiosResponse<ApiResponse<UploadImageResponseDTO>>;
 
       const dto: UploadImageResponseDTO | undefined = res.data?.data;
       const id = dto?.id;
@@ -352,7 +315,7 @@ const imagesSlice = createSlice({
       .addCase(uploadImageAsync.fulfilled, (s, action: PayloadAction<Image>) => {
         s.items.push(action.payload);
       })
-      .addCase(fetchImageRawAsync.fulfilled, (s, action) => {
+      .addCase(fetchImageRawAsync.fulfilled, (s, action: PayloadAction<{ id: number; blob: Blob; contentType: string; eTag?: string }>) => {
         const { id, blob, contentType, eTag } = action.payload;
         const idx = s.items.findIndex((it) => it.id === id);
         if (idx !== -1) {
@@ -371,20 +334,18 @@ const imagesSlice = createSlice({
       })
       .addCase(deleteImageAsync.fulfilled, (s, action: PayloadAction<number>) => {
         const id = action.payload;
-        const idx = s.items.findIndex((it) => it.id === id);
+        const idx = s.items.findIndex((it: Image) => it.id === id);
         if (idx !== -1) s.items.splice(idx, 1);
       })
       .addCase(deleteImageAsync.rejected, (s, action) => {
         s.error = action.error.message ?? 'Failed to delete image';
       })
-      // Folder operations
       .addCase(fetchFoldersAsync.pending, (s) => {
         s.folderLoading = true;
         s.loading = true;
         s.error = null;
       })
       .addCase(fetchFoldersAsync.fulfilled, (s, action: PayloadAction<Image[]>) => {
-        // Store the flattened images from folders
         s.items = action.payload;
         s.folderLoading = false;
         s.loading = false;
@@ -406,11 +367,10 @@ const imagesSlice = createSlice({
         s.error = action.payload as string ?? 'Failed to fetch folder list';
       })
       .addCase(createFolderAsync.fulfilled, (s, action: PayloadAction<ImageFolderDTO>) => {
-        if (!s.folders.find(f => f.id === action.payload.id)) {
+        if (!s.folders.find((f: ImageFolderDTO) => f.id === action.payload.id)) {
           s.folders.push(action.payload);
         }
-        // Also add to folderList to update the tree immediately
-        if (!s.folderList.find(f => f.id === action.payload.id)) {
+        if (!s.folderList.find((f: FolderWithImages) => f.id === action.payload.id)) {
           s.folderList.push({
             ...action.payload,
             images: [],
@@ -418,18 +378,16 @@ const imagesSlice = createSlice({
         }
       })
       .addCase(deleteFolderAsync.fulfilled, (s, action: PayloadAction<number>) => {
-        s.folders = s.folders.filter(f => f.id !== action.payload);
-        // Also update folderList to reflect the deletion
-        s.folderList = s.folderList.filter(f => f.id !== action.payload);
+        s.folders = s.folders.filter((f: ImageFolderDTO) => f.id !== action.payload);
+        s.folderList = s.folderList.filter((f: FolderWithImages) => f.id !== action.payload);
       })
       .addCase(moveImagesToFolderAsync.pending, (s) => {
         s.loading = true;
         s.error = null;
       })
       .addCase(moveImagesToFolderAsync.fulfilled, (s, action: PayloadAction<Image[]>) => {
-        // Update moved images with new folder info
-        action.payload.forEach(movedImg => {
-          const idx = s.items.findIndex(img => img.id === movedImg.id);
+        action.payload.forEach((movedImg: Image) => {
+          const idx = s.items.findIndex((img: Image) => img.id === movedImg.id);
           if (idx !== -1) {
             s.items[idx] = movedImg;
           }
