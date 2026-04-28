@@ -52,7 +52,7 @@ const FolderCreator: React.FC<FolderCreatorProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-2 p-3 bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg border border-emerald-100 shadow-sm">
+    <div className="flex flex-col gap-2 p-3 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 rounded-lg border border-emerald-100 dark:border-emerald-900/60 shadow-sm">
       <input
         type="text"
         placeholder="New folder name..."
@@ -60,12 +60,12 @@ const FolderCreator: React.FC<FolderCreatorProps> = ({
         onChange={(e) => setNewFolderName(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
         disabled={creating || disabled}
-        className="w-full px-3 py-2 text-sm border border-emerald-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-gray-100"
+        className="w-full px-3 py-2 text-sm border border-emerald-300 dark:border-emerald-800 rounded-md bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:focus:ring-emerald-400 disabled:bg-gray-100 dark:disabled:bg-slate-700"
       />
       <button
         onClick={handleCreateFolder}
         disabled={!newFolderName.trim() || creating || disabled}
-        className="w-full px-3 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-md hover:bg-emerald-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
+        className="w-full px-3 py-2 bg-emerald-600 dark:bg-emerald-700 text-white text-sm font-semibold rounded-md hover:bg-emerald-700 dark:hover:bg-emerald-600 disabled:bg-gray-400 dark:disabled:bg-slate-600 disabled:cursor-not-allowed transition"
         type="button"
       >
         {creating ? "Creating..." : "Create"}

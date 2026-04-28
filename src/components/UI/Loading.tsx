@@ -1,31 +1,22 @@
 import { motion } from "framer-motion";
 
 const SvgLoader = () => (
-  <motion.svg
-    xmlns="http://www.w3.org/2000/svg"
-    width="64"
-    height="64"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.5"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className="h-20 w-20 stroke-neutral-500 dark:stroke-neutral-100"
-  >
-    <motion.path stroke="none" d="M0 0h24v24H0z" fill="none" />
-    <motion.path
-      initial={{ pathLength: 0, fill: "#fefefe" }}
-      animate={{ pathLength: 1, fill: "#ffe066" }}
-      transition={{
-        duration: 0.8,
-        ease: "easeInOut",
-        repeat: Infinity,
-        repeatType: "reverse",
-      }}
-      d="M13 3l0 7l6 0l-8 11l0 -7l-6 0l8 -11"
-    />
-  </motion.svg>
+  <div className="dashboard-panel flex items-center gap-4 rounded-[28px] px-6 py-5">
+    <motion.div
+      className="relative flex h-14 w-14 items-center justify-center rounded-[20px] border border-sky-200 bg-[linear-gradient(135deg,#0f172a_0%,#2563eb_60%,#3b82f6_100%)] text-white shadow-[0_16px_36px_-22px_rgba(37,99,235,0.78)]"
+      animate={{ rotate: 360 }}
+      transition={{ duration: 1.4, repeat: Infinity, ease: "linear" }}
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M5 5h14v14H5z" />
+        <path d="M9 9h6v6H9z" />
+      </svg>
+    </motion.div>
+    <div>
+      <div className="text-sm font-semibold uppercase tracking-[0.16em] text-slate-500 dark:text-slate-300">Loading workspace</div>
+      <div className="text-sm text-slate-700 dark:text-slate-200">Preparing the latest dashboard view.</div>
+    </div>
+  </div>
 );
 
 interface LoadingProps {
@@ -33,10 +24,7 @@ interface LoadingProps {
 }
 
 const Loading = ({ fullscreen = true }: LoadingProps) => {
-  const containerClass = fullscreen 
-    ? "flex justify-center items-center h-[100vh]"
-    : "flex justify-center items-center";
-
+  const containerClass = fullscreen ? "flex min-h-[100vh] items-center justify-center" : "flex items-center justify-center";
   return (
     <div className={containerClass}>
       <SvgLoader />

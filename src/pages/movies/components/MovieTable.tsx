@@ -1,7 +1,7 @@
-import { type Movie } from "../../../entities/type";
+import { type Genre, type Movie } from "../../../entities/type";
 import { getGenreIcon } from "../../../utils/genreIcons";
 import AppButton from "../../../components/UI/AppButton";
-import { type Genre } from "../../../entities/type";
+import { StatusPill } from "../../../components/UI/DashboardPrimitives";
 
 interface MovieTableProps {
   movies: Movie[];
@@ -12,136 +12,111 @@ interface MovieTableProps {
   onDetail: (movie: Movie) => void;
 }
 
-const MovieTable = ({ movies, genres, onEdit, onDelete, onRestore, onDetail }: MovieTableProps) => {
-  function isNowShowing(premiere_date: string): boolean {
-    const premiere = new Date(premiere_date);
-    const now = new Date();
-    const oneMonthLater = new Date(premiere);
-    oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
-    return premiere <= now && now <= oneMonthLater;
-  }
+function getReleaseState(premiereDate: string) {
+  const premiere = new Date(premiereDate);
+  const now = new Date();
+  const oneMonthLater = new Date(premiere);
+  oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+  if (premiere <= now && now <= oneMonthLater) return "Now showing";
+  if (new Date(premiereDate) > new Date()) return "Coming soon";
+  return "Ended";
+}
 
+export default function MovieTable({ movies, genres, onEdit, onDelete, onRestore, onDetail }: MovieTableProps) {
   return (
-    <div className="overflow-x-auto rounded-lg shadow w-full hide-scrollbar max-h-screen">
-      <table className="min-w-full text-sm">
+    <div className="overflow-x-auto">
+      <table className="dashboard-table min-w-[980px]">
         <thead className="sticky top-0 z-10">
-          <tr className="bg-blue-50 dark:bg-zinc-800 font-asul" style={{ fontFamily: 'Asul, sans-serif' }}>
-            <th className="p-3 text-left font-semibold w-24">Poster</th>
-            <th className="p-3 text-left font-semibold w-56">Title</th>
-            <th className="p-3 text-left font-semibold w-40">Genre</th>
-            <th className="p-3 text-left font-semibold w-24">Duration</th>
-            <th className="p-3 text-left font-semibold w-20">Year</th>
-            <th className="p-3 text-left font-semibold w-20">Rating</th>
-            <th className="p-3 text-center font-semibold w-32">Now Showing</th>
-            <th className="p-3 text-left font-semibold w-24">Status</th>
-            <th className="p-3 text-left font-semibold w-32">Actions</th>
+          <tr>
+            <th>Poster</th>
+            <th>Title</th>
+            <th>Genres</th>
+            <th>Duration</th>
+            <th>Year</th>
+            <th>Rating</th>
+            <th>Release</th>
+            <th>Status</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {movies.map(movie => (
-            <tr
-              key={movie.id}
-              className={`border-t transition font-farro ${movie.deleted ? "opacity-60 bg-gray-100 dark:bg-zinc-800" : "hover:bg-blue-50 dark:hover:bg-zinc-800"}`}
-              style={{ fontFamily: 'Farro, sans-serif' }}
-            >
-              <td className="p-3 w-24">
-                {(() => {
-                  const posterSrc = movie.poster ?? movie.images?.[0]?.url;
-                  return posterSrc ? (
-                    <img src={posterSrc} alt={movie.title} className="w-12 h-16 object-cover rounded shadow" />
+          {movies.map((movie) => {
+            const releaseState = getReleaseState(movie.premiere_date);
+            return (
+              <tr key={movie.id} className={movie.deleted ? "opacity-65" : ""}>
+                <td>
+                  {movie.poster ?? movie.images?.[0]?.url ? (
+                    <img
+                      src={movie.poster ?? movie.images?.[0]?.url}
+                      alt={movie.title}
+                      className="h-16 w-12 rounded-xl object-cover shadow-sm"
+                    />
                   ) : (
-                    <span className="text-gray-400">No Image</span>
-                  );
-                })()}
-              </td>
-              <td className="p-3 w-56">{movie.title}</td>
-              <td className="p-3 w-40">
-                <div className="flex flex-col gap-1">
-                  {(Array.isArray(movie.genre_ids) && movie.genre_ids.length > 0
-                    ? movie.genre_ids
-                    : [])
-                    .map(id => genres.find(g => g.genre_id === id))
-                    .filter(Boolean)
-                    .map(genre => (
-                      <span
-                        key={genre!.genre_id}
-                        className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-blue-200 via-blue-100 to-blue-300 dark:from-blue-900 dark:via-blue-800 dark:to-blue-900 text-blue-900 dark:text-blue-100 font-semibold text-xs shadow-sm border border-blue-300 dark:border-blue-800"
-                      >
-                        {getGenreIcon(genre!.icon)}
-                        {genre!.genre_name}
-                      </span>
-                    ))}
-                </div>
-              </td>
-              <td className="p-3 w-24">{movie.duration} min</td>
-              <td className="p-3 w-20">
-                {typeof movie.premiere_date === "string" && movie.premiere_date.length >= 4
-                  ? movie.premiere_date.slice(0, 4)
-                  : <span className="text-gray-400">N/A</span>
-                }
-              </td>
-              <td className="p-3 w-20">
-                {typeof movie.rating === "number"
-                  ? <span className="font-bold text-blue-700 dark:text-blue-200">{movie.rating.toFixed(1)}</span>
-                  : <span className="text-gray-400">N/A</span>
-                }
-              </td>
-              <td className="p-3 w-32 text-center">
-                {!movie.deleted && (
-                  isNowShowing(movie.premiere_date) ? (
-                    <span className="inline-block px-2 py-0.5 rounded bg-blue-500 text-white text-xs font-bold animate-pulse">
-                      Now Showing
-                    </span>
-                  ) : new Date(movie.premiere_date) > new Date() ? (
-                    <span className="inline-block px-2 py-0.5 rounded bg-yellow-400 text-white text-xs font-bold">
-                      Coming Soon
-                    </span>
-                  ) : (
-                    <span className="inline-block px-2 py-0.5 rounded bg-gray-300 text-gray-700 text-xs font-semibold">
-                      Ended
-                    </span>
-                  )
-                )}
-              </td>
-              <td className="p-3 w-24">
-                {movie.deleted ? (
-                  <span className="inline-block px-2 py-0.5 rounded bg-red-100 text-red-700 text-xs font-semibold">Deleted</span>
-                ) : (
-                  <span className="inline-block px-2 py-0.5 rounded bg-green-100 text-green-700 text-xs font-semibold">Active</span>
-                )}
-              </td>
-              <td className="p-3 w-32">
-                <div className="flex gap-2 flex-wrap">
-                  <AppButton color="primary" onClick={() => onDetail(movie)}>
-                    Details
-                  </AppButton>
-                  {movie.deleted ? (
-                    <AppButton color="success" onClick={() => onRestore(movie.id)}>
-                      Restore
-                    </AppButton>
-                  ) : (
-                    <>
-                      <AppButton color="success" onClick={() => onEdit(movie)}>
-                        Edit
-                      </AppButton>
-                      <AppButton color="danger" onClick={() => onDelete(movie.id)}>
-                        Delete
-                      </AppButton>
-                    </>
+                    <div className="flex h-16 w-12 items-center justify-center rounded-xl border border-dashed border-slate-300 text-xs text-slate-400 dark:border-slate-700">
+                      N/A
+                    </div>
                   )}
-                </div>
-              </td>
-            </tr>
-          ))}
+                </td>
+                <td>
+                  <div className="font-semibold text-slate-900 dark:text-white">{movie.title}</div>
+                  <div className="helper-copy max-w-[240px]">{movie.description?.slice(0, 76) || "No description available."}</div>
+                </td>
+                <td>
+                  <div className="flex max-w-[220px] flex-wrap gap-2">
+                    {(Array.isArray(movie.genre_ids) ? movie.genre_ids : [])
+                      .map((id) => genres.find((genre) => genre.genre_id === id))
+                      .filter(Boolean)
+                      .map((genre) => (
+                        <span
+                          key={genre!.genre_id}
+                          className="inline-flex items-center gap-1 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700 dark:border-sky-700/60 dark:bg-sky-500/12 dark:text-sky-100"
+                        >
+                          {getGenreIcon(genre!.icon)}
+                          {genre!.genre_name}
+                        </span>
+                      ))}
+                  </div>
+                </td>
+                <td>{movie.duration} min</td>
+                <td>{movie.premiere_date.slice(0, 4)}</td>
+                <td>{typeof movie.rating === "number" ? movie.rating.toFixed(1) : "N/A"}</td>
+                <td>
+                  <StatusPill tone={releaseState === "Now showing" ? "success" : releaseState === "Coming soon" ? "info" : "neutral"}>{releaseState}</StatusPill>
+                </td>
+                <td>
+                  {movie.deleted ? <StatusPill tone="danger">Deleted</StatusPill> : <StatusPill tone="success">Active</StatusPill>}
+                </td>
+                <td>
+                  <div className="flex flex-wrap gap-2">
+                    <AppButton color="default" variant="soft" size="sm" onClick={() => onDetail(movie)}>
+                      Details
+                    </AppButton>
+                    {movie.deleted ? (
+                      <AppButton color="success" variant="soft" size="sm" onClick={() => onRestore(movie.id)}>
+                        Restore
+                      </AppButton>
+                    ) : (
+                      <>
+                        <AppButton color="primary" variant="soft" size="sm" onClick={() => onEdit(movie)}>
+                          Edit
+                        </AppButton>
+                        <AppButton color="danger" variant="soft" size="sm" onClick={() => onDelete(movie.id)}>
+                          Delete
+                        </AppButton>
+                      </>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
           {movies.length === 0 && (
             <tr>
-              <td colSpan={9} className="p-3 text-center text-gray-400">No movies found.</td>
+              <td colSpan={9} className="py-10 text-center text-slate-400">No movies found.</td>
             </tr>
           )}
         </tbody>
       </table>
     </div>
   );
-};
-
-export default MovieTable;
+}

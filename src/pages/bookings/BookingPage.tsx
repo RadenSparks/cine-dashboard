@@ -1,6 +1,4 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { type RootState, type AppDispatch } from "../../store/store";
 import { CalendarIcon, TicketIcon, CheckCircleIcon, TrendingUpIcon } from "lucide-react";
 import Loading from "../../components/UI/Loading";
 import { SatelliteToast, type ToastNotification } from "../../components/UI/SatelliteToast";
@@ -103,7 +101,7 @@ const MOCK_BOOKINGS: Booking[] = [
 ];
 
 // Stat card component
-function StatCard({
+export function StatCard({
   icon: Icon,
   label,
   value,
@@ -146,7 +144,7 @@ function StatusBadge({ status }: { status: Booking["status"] }) {
 }
 
 // Booking table row
-function BookingRow({ booking }: { booking: Booking }) {
+export function BookingRow({ booking }: { booking: Booking }) {
   return (
     <tr className="hover:bg-blue-50 dark:hover:bg-zinc-800/50 transition border-b border-blue-100 dark:border-zinc-700 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
       <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">
@@ -180,7 +178,6 @@ function BookingRow({ booking }: { booking: Booking }) {
 }
 
 export default function BookingPage() {
-  const dispatch = useDispatch<AppDispatch>();
   const toastRef = useRef<{ showNotification: (options: Omit<ToastNotification, "id">) => void }>(null);
 
   // Mock loading and bookings state
@@ -269,7 +266,7 @@ export default function BookingPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loading />
+        <Loading fullscreen={false} />
       </div>
     );
   }

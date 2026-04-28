@@ -25,7 +25,8 @@ export default function RoomTable({
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl font-bold text-blue-700 dark:text-blue-200">Rooms</h3>
         <AppButton
-          className="bg-gradient-to-r from-green-600 to-green-400 text-white px-4 py-2 rounded shadow hover:scale-105 transition-transform"
+          variant="solid"
+          color="success"
           onClick={onCreate}
         >
           + Create Room
@@ -34,7 +35,7 @@ export default function RoomTable({
       <div className="w-full overflow-x-auto rounded-lg shadow hide-scrollbar max-h-96">
         <table className="min-w-full w-full text-sm">
           <thead className="sticky top-0 z-10">
-            <tr className="bg-blue-50 dark:bg-zinc-800 font-asul" style={{ fontFamily: 'Asul, sans-serif' }}>
+            <tr className="bg-blue-50 dark:bg-zinc-800 font-asul text-slate-900 dark:text-slate-100" style={{ fontFamily: 'Asul, sans-serif' }}>
               <th className="p-3 text-left font-semibold">Name</th>
               <th className="p-3 text-center font-semibold">Capacity</th>
               <th className="p-3 text-center font-semibold">Rows</th>
@@ -77,19 +78,25 @@ export default function RoomTable({
                       {!isDisabled ? (
                         <>
                           <AppButton
-                            className="bg-gradient-to-r from-blue-600 to-blue-400 text-white px-3 py-1 rounded shadow hover:scale-105 transition-transform"
+                            variant="solid"
+                            color="primary"
+                            size="sm"
                             onClick={() => onConfig(room)}
                           >
                             Configure
                           </AppButton>
                           <AppButton
-                            className="bg-gradient-to-r from-yellow-600 to-yellow-400 text-white px-3 py-1 rounded shadow hover:scale-105 transition-transform"
+                            variant="solid"
+                            color="default"
+                            size="sm"
                             onClick={() => onEdit(room)}
                           >
                             Edit
                           </AppButton>
                           <AppButton
-                            className="bg-gradient-to-r from-red-600 to-red-400 text-white px-3 py-1 rounded shadow hover:scale-105 transition-transform"
+                            variant="solid"
+                            color="danger"
+                            size="sm"
                             onClick={() => onDelete(room.id)}
                           >
                             Disable
@@ -97,7 +104,9 @@ export default function RoomTable({
                         </>
                       ) : (
                         <AppButton
-                          className="bg-gradient-to-r from-green-600 to-green-400 text-white px-3 py-1 rounded shadow hover:scale-105 transition-transform"
+                          variant="solid"
+                          color="success"
+                          size="sm"
                           onClick={() => onReactivate(room.id)}
                         >
                           Reactivate

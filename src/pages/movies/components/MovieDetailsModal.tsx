@@ -71,7 +71,7 @@ export default function MovieDetailsModal({
             &times;
           </button>
           {/* Poster Section */}
-          <div className="flex flex-col items-center justify-center w-full md:w-[480px] p-0 bg-gradient-to-br from-blue-50 to-white dark:from-zinc-800 dark:to-zinc-900"
+          <div className="flex flex-col items-center justify-center w-full md:w-[600px] p-0 bg-gradient-to-br from-blue-50 to-white dark:from-zinc-800 dark:to-zinc-900"
                style={{ height: "96vh", minHeight: "96vh" }}>
             <div className="w-full h-full flex justify-center items-center" style={{ height: "100%" }}>
               {(() => {

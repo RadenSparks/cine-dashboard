@@ -32,12 +32,13 @@ export default function SessionBoardView({ selectedDate, sessions, movies, rooms
     <div>
       <div className="flex items-center mb-4">
         <AppButton
+          variant="ghost"
           onClick={onBack}
-          className="mr-4 text-blue-700 dark:text-blue-200 border-blue-300"
+          className="mr-4"
         >
           ← Back to Calendar
         </AppButton>
-        <h3 className="text-xl font-bold text-blue-700 dark:text-blue-200 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>Sessions for: {selectedDate}</h3>
+        <h3 className="text-xl font-bold text-slate-100 dark:text-slate-50 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>Sessions for: {selectedDate}</h3>
       </div>
       <div className="flex gap-6 overflow-x-auto">
         {["Morning", "Afternoon", "Evening", "Night"].map(slot => (

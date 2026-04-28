@@ -14,22 +14,6 @@ export interface ConfirmationModalProps {
   onCancel: () => void;
 }
 
-/**
- * Reusable confirmation modal for confirming destructive actions
- * (delete, restore, etc.)
- *
- * @example
- * const [showConfirm, setShowConfirm] = useState(false);
- * <ConfirmationModal
- *   isOpen={showConfirm}
- *   title="Delete Session"
- *   message="This session will be permanently deleted. This action cannot be undone."
- *   actionLabel="Delete"
- *   isDangerous={true}
- *   onConfirm={() => handleDelete()}
- *   onCancel={() => setShowConfirm(false)}
- * />
- */
 export default function ConfirmationModal({
   isOpen,
   title,
@@ -52,57 +36,44 @@ export default function ConfirmationModal({
   return (
     <AnimatePresence>
       {isOpen && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
-        >
-          <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl p-8 w-full max-w-md relative border border-blue-100 dark:border-zinc-800">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/58 p-4 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, y: 14, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 14, scale: 0.96 }}
+            className="dashboard-panel relative w-full max-w-md rounded-[28px] p-8"
+          >
             <button
-              className="absolute top-3 right-3 text-gray-400 hover:text-blue-700 dark:hover:text-blue-200 text-2xl"
+              className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-500 transition hover:border-slate-300 hover:text-slate-950 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-slate-600 dark:hover:text-white"
               onClick={onCancel}
               aria-label="Close"
               disabled={isLoading}
             >
               ×
             </button>
-            <div className="flex items-center justify-center gap-2 mb-6">
-              {isDangerous && (
-                <AlertTriangleIcon className="w-6 h-6 text-red-600 dark:text-red-400" />
-              )}
-              <h3 className={`text-2xl font-bold text-center ${
-                isDangerous 
-                  ? "text-red-700 dark:text-red-400" 
-                  : "text-gray-800 dark:text-gray-100"
+            <div className="mb-6 flex items-center gap-4">
+              <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] border ${
+                isDangerous
+                  ? "border-red-200 bg-red-50 text-red-600 dark:border-red-700/60 dark:bg-red-500/12 dark:text-red-200"
+                  : "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-700/60 dark:bg-sky-500/12 dark:text-sky-100"
               }`}>
-                {title}
-              </h3>
+                <AlertTriangleIcon className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="page-eyebrow">{isDangerous ? "Confirm destructive action" : "Confirm action"}</div>
+                <h3 className={`mt-3 text-2xl font-bold ${isDangerous ? "text-red-700 dark:text-red-300" : "text-slate-900 dark:text-white"}`}>{title}</h3>
+              </div>
             </div>
-            <p className="mb-6 text-base text-gray-700 dark:text-gray-200 text-center">
-              {message}
-            </p>
-            <div className="flex gap-4 justify-end">
-              <AppButton
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded shadow hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={onCancel}
-                disabled={isLoading}
-              >
+            <p className="mb-6 text-base leading-7 text-slate-700 dark:text-slate-200">{message}</p>
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <AppButton color="default" variant="soft" onClick={onCancel} disabled={isLoading}>
                 {cancelLabel}
               </AppButton>
-              <AppButton
-                className={`px-4 py-2 rounded shadow hover:scale-105 transition-transform disabled:opacity-50 disabled:cursor-not-allowed text-white ${
-                  isDangerous
-                    ? "bg-gradient-to-r from-red-600 to-red-400"
-                    : "bg-gradient-to-r from-blue-600 to-blue-400"
-                }`}
-                onClick={handleConfirm}
-                disabled={isLoading}
-              >
+              <AppButton color={isDangerous ? "danger" : "primary"} onClick={handleConfirm} disabled={isLoading}>
                 {isLoading ? "Processing..." : actionLabel}
               </AppButton>
             </div>
-          </div>
+          </motion.div>
         </motion.div>
       )}
     </AnimatePresence>

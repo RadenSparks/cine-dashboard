@@ -42,10 +42,9 @@ export default function RoomConfigModal({
   loading,
   saving = false,
 }: RoomConfigModalProps) {
-  if (!room) return null;
   return (
     <AnimatePresence>
-      {open && (
+      {open && room && (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -113,7 +112,7 @@ export default function RoomConfigModal({
                 >
                   {Array.from({
                     length: room.rowSize ?? ROWS,
-                  }).map((_, rowIdx) =>
+                  }).flatMap((_, rowIdx) =>
                     Array.from({ length: room.columnSize ?? COLS }).map((_, colIdx) => {
                       const id = seatId(rowIdx, colIdx);
                       const isPremium = localPremiumSeats.includes(id);
@@ -233,7 +232,7 @@ export default function RoomConfigModal({
                         </div>
                       );
                     })
-                  ).flat()}
+                  )}
                 </div>
               </div>
               <div className="flex flex-col items-center w-full mt-6">

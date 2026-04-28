@@ -1,419 +1,235 @@
-import { useEffect, useState, useMemo } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { type RootState, type AppDispatch } from "../../store/store";
-import { fetchMovies } from "../../store/slices";
-import type { Movie } from "../../entities/type";
-import { Card, CardBody, CardHeader } from "@heroui/react";
+import { useEffect, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
-  ChartLineIcon,
-  PlayCircleIcon,
-  StarIcon,
-  User2Icon,
-} from "lucide-react";
-import Loading from "../../components/UI/Loading";
-import Title from "../../components/UI/Title";
-import BlurCircle from "../../components/UI/BlurCircle";
-import formatDateTime from "../../lib/dateCalculate";
-import { useCurrentUser } from "../../lib/useCurrentUser";
-import ProtectedRoute from "../../components/ProtectedRoute";
-import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
   ResponsiveContainer,
-  LineChart,
-  Line,
+  Tooltip,
   XAxis,
   YAxis,
-  Tooltip,
-  CartesianGrid,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
 } from "recharts";
-import React from "react";
-import { EvervaultCard } from "../../components/UI/EvervaultCard";
-import { InfiniteMovingCards } from "../../components/UI/InfiniteMovingCards";
+import { Clapperboard } from "lucide-react";
+import type { AppDispatch, RootState } from "../../store/store";
+import { fetchGenres, fetchMovies, fetchUsers } from "../../store/slices";
+import Loading from "../../components/UI/Loading";
+import ProtectedRoute from "../../components/ProtectedRoute";
+import { useCurrentUser } from "../../lib/useCurrentUser";
+import formatDateTime from "../../lib/dateCalculate";
+import { EmptyState, PageIntro, SectionCard, StatusPill } from "../../components/UI/DashboardPrimitives";
+import { StyledMovieCarousel } from "../../components/UI/StyledMovieCarousel";
+import { MOCK_NOW_SHOWING_MOVIES } from "../../data/mockMovies";
 
-// --- Aceternity Card Flip Component ---
-function FlipCard({ front, back }: { front: React.ReactNode; back: React.ReactNode }) {
-  const [flipped, setFlipped] = useState(false);
-  return (
-    <div
-      className="relative w-40 h-64 perspective cursor-pointer"
-      onClick={() => setFlipped((f) => !f)}
-      tabIndex={0}
-      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && setFlipped((f) => !f)}
-      aria-label="Flip card"
-    >
-      <div
-        className={`absolute inset-0 transition-transform duration-500 [transform-style:preserve-3d] ${
-          flipped ? "[transform:rotateY(180deg)]" : ""
-        }`}
-      >
-        <div className="absolute inset-0 bg-white dark:bg-zinc-900 rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 flex flex-col items-center justify-center [backface-visibility:hidden]">
-          {front}
-        </div>
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-100 via-blue-50 to-white dark:from-blue-900 dark:via-blue-800 dark:to-blue-950 rounded-xl shadow-lg border border-blue-100 dark:border-blue-900 flex flex-col items-center justify-center [transform:rotateY(180deg)] [backface-visibility:hidden]">
-          {back}
-        </div>
-      </div>
-    </div>
-  );
+const chartPalette = ["#2563eb", "#0ea5e9", "#f59e0b", "#16a34a", "#0f172a"];
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat("en-US").format(value);
 }
 
-// --- Top Booked Movies Section ---
-function TopBookedMoviesFlip({ movies }: { movies: Movie[] }) {
-  return (
-    <div className="flex flex-wrap gap-6 justify-center">
-      {movies.map((movie) => (
-        <FlipCard
-          key={movie.title}
-          front={
-            <div className="flex flex-col items-center justify-center h-full px-2 py-4">
-              <img
-                src={movie.poster}
-                alt={movie.title}
-                className="w-24 h-36 object-cover rounded-lg border mb-2 shadow"
-              />
-              <p className="font-semibold text-lg text-blue-700 text-center font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>{movie.title}</p>
-              <div className="flex items-center gap-1 text-yellow-500 mt-1">
-                <StarIcon className="w-4 h-4" />
-                {movie.rating ?? "N/A"}
-              </div>
-            </div>
-          }
-          back={
-            <div className="flex flex-col items-center justify-center h-full px-2 py-4">
-              <span className="text-gray-700 text-sm mb-2 text-center font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
-                Booked <span className="font-bold">{Math.floor(Math.random() * 100) + 10} times</span>
-              </span>
-              <span className="text-blue-600 font-semibold text-base mt-2 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Top Booked</span>
-              <span className="text-xs text-gray-400 mt-4 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Click to flip back</span>
-            </div>
-          }
-        />
-      ))}
-    </div>
-  );
+function getReleaseState(premiereDate: string) {
+  const date = new Date(premiereDate);
+  const now = new Date();
+  const oneMonthLater = new Date(date);
+  oneMonthLater.setMonth(oneMonthLater.getMonth() + 1);
+
+  if (date > now) return "Coming soon";
+  if (now <= oneMonthLater) return "Now showing";
+  return "Completed";
 }
 
-// --- Pie Chart Colors ---
-const pieColors = ["#2563eb", "#f59e42", "#a855f7", "#10b981"];
-
-const Dashboard = () => {
+export default function Dashboard() {
   const dispatch = useDispatch<AppDispatch>();
   const { items: movies, loading } = useSelector((state: RootState) => state.movies);
-  const currentUser = useCurrentUser();
-
-  const [hovered, setHovered] = useState<number | null>(null);
-  const [currentComment, setCurrentComment] = useState(0);
-  const [fade, setFade] = useState(true);
-
-  // --- Stat Cards (now dynamic) ---
   const genres = useSelector((state: RootState) => state.genres.items);
-  const users = useSelector((state: RootState) => state.users?.users ?? []);
-  // You may want to fetch bookings from API in the future
-  const totalBookings = movies.length * 5; // mock
-
-  const dashboardCards = [
-    {
-      title: "Total Movies",
-      value: movies.length,
-      icon: PlayCircleIcon,
-      color: "text-success",
-    },
-    {
-      title: "Total Genres",
-      value: genres.length,
-      icon: StarIcon,
-      color: "text-primary",
-    },
-    {
-      title: "Total Bookings",
-      value: totalBookings,
-      icon: ChartLineIcon,
-      color: "text-warning",
-    },
-    {
-      title: "Total Users",
-      value: users.length,
-      icon: User2Icon,
-      color: "text-danger",
-    },
-  ];
+  const currentUser = useCurrentUser();
 
   useEffect(() => {
     dispatch(fetchMovies({ page: 0, size: 100 }));
-    // You may want to dispatch fetchGenres() and fetchUsers() if not already loaded
-    // dispatch(fetchGenres());
-    // dispatch(fetchUsers());
+    dispatch(fetchGenres());
+    dispatch(fetchUsers({ page: 0, size: 10 }));
   }, [dispatch]);
 
-  useEffect(() => {
-    // Note: Data loaded, you can add toast notification if desired
-  }, [loading]);
+  const monthlyTrend = useMemo(() => {
+    const bucket = new Map<string, number>();
+    movies.forEach((movie) => {
+      const date = new Date(movie.premiere_date);
+      const key = date.toLocaleDateString("en-US", { month: "short" });
+      bucket.set(key, (bucket.get(key) ?? 0) + 1);
+    });
 
-  // --- Example: Generate sales chart data from movies ---
-  const salesChartData = useMemo(() => {
-    return movies.map((m: Movie) => ({
-      name: m.premiere_date.slice(5, 10),
-      sales: Math.floor(Math.random() * 30) + 10,
-    }));
+    return Array.from(bucket.entries()).map(([month, total]) => ({ month, total }));
   }, [movies]);
 
-  // --- Pie Chart Data: Top 4 Booked Movies ---
-  const topBookedMovies = movies.slice(0, 4);
-  const pieChartData = topBookedMovies.map((movie) => ({
-    name: movie.title,
-    value: Math.floor(Math.random() * 100) + 50, // Mock bookings
-  }));
+  const genreBreakdown = useMemo(() => {
+    return genres
+      .map((genre) => ({
+        name: genre.genre_name,
+        total: movies.filter((movie) => movie.genre_ids.includes(genre.genre_id)).length,
+      }))
+      .filter((entry) => entry.total > 0)
+      .slice(0, 5);
+  }, [genres, movies]);
 
-  // --- Booking Table (demo: show all movies as bookings) ---
-  const bookingRows = movies.map((movie, idx) => ({
-    id: movie.id,
-    user: "Demo User",
-    movie: movie.title,
-    bookingStatus: "completed",
-    total_price: 120000 + idx * 10000,
-    booking_date: movie.premiere_date,
-  }));
+  const recentMovies = useMemo(
+    () =>
+      [...movies]
+        .sort((left, right) => new Date(right.premiere_date).getTime() - new Date(left.premiere_date).getTime())
+        .slice(0, 6),
+    [movies],
+  );
 
-  // --- Comments (demo: show movie titles as comments) ---
-  const comments = movies.map((movie) => ({
-    user: "Demo User",
-    comment: movie.description || "No comment",
-    movie: movie.title,
-    date: movie.premiere_date,
-  }));
+  const nowShowingMovies = useMemo(() => {
+    // Try to get now showing movies from the API first
+    const apiNowShowing = movies
+      .filter((movie) => getReleaseState(movie.premiere_date) === "Now showing")
+      .map((movie) => ({
+        id: movie.id,
+        title: movie.title,
+        description: movie.description || "No description available",
+        poster: movie.poster,
+        rating: movie.rating,
+        duration: movie.duration,
+        genre: movie.genre_ids?.length > 0 
+          ? genres.find((g) => g.genre_id === movie.genre_ids[0])?.genre_name || "Cinema"
+          : "Cinema",
+      }));
 
-  // Comment carousel logic
-  useEffect(() => {
-    setCurrentComment(0);
-    if (comments.length <= 1) return;
-    const interval = setInterval(() => {
-      setFade(false);
-      setTimeout(() => {
-        setCurrentComment((prev) => (prev + 1) % comments.length);
-        setFade(true);
-      }, 350);
-    }, 3500);
-    return () => clearInterval(interval);
-  }, [comments.length]);
+    // Use mock data if no API results or use a mix for development
+    return apiNowShowing.length > 0 ? apiNowShowing : MOCK_NOW_SHOWING_MOVIES;
+  }, [movies, genres]);
 
   if (loading) {
-    return <Loading />;
+    return <Loading fullscreen={false} />;
   }
 
   return (
     <ProtectedRoute>
-      <div className="mt-10 hide-scrollbar">
-        <Title 
-          text1={currentUser?.role === "ADMIN" ? "Admin" : "User"} 
-          text2="Dashboard" 
+      <div className="w-full space-y-6">
+        <PageIntro
+          eyebrow="Operations overview"
+          title="Cine dashboard"
+          description="Track catalog health, release activity, customer demand, and daily operations from a calmer workspace built for quick decisions."
+          badge={currentUser?.role || "ADMIN"}
+          icon={Clapperboard}
         />
-        <BlurCircle top="0" left="0" />
 
-        {/* Stat Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-4">
-          {dashboardCards.map((card, index) => (
-            <div
-              key={index}
-              onMouseEnter={() => setHovered(index)}
-              onMouseLeave={() => setHovered(null)}
-              className="w-full h-40 flex items-center justify-center"
-            >
-              <EvervaultCard
-                text={
-                  <span className="flex flex-col items-center justify-center">
-                    <card.icon className={`w-7 h-7 mb-2 ${card.color}`} />
-                    <span className="text-base font-semibold">{card.title}</span>
-                    <span className="text-xl font-bold mt-1">{card.value}</span>
-                  </span>
-                }
-                className={`transition-all duration-300 ${
-                  hovered !== null && hovered !== index ? "blur-sm scale-[0.98]" : ""
-                }`}
-              />
+        <div className="mt-8">
+          <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Now Showing</h3>
+          {nowShowingMovies.length > 0 ? (
+            <StyledMovieCarousel
+              items={nowShowingMovies}
+              direction="left"
+              speed="slow"
+              pauseOnHover={true}
+            />
+          ) : (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-12 text-center dark:border-slate-700 dark:bg-slate-900/50">
+              <p className="text-slate-600 dark:text-slate-300">No movies currently showing. Check back soon!</p>
             </div>
-          ))}
+          )}
         </div>
 
-        {/* Active Shows Reel */}
-        <div>
-          <h3 className="font-bold text-xl text-blue-700 mb-4">
-            Active Shows Reel
-          </h3>
-          <InfiniteMovingCards
-            items={movies.map((movie) => ({
-              quote: movie.title,
-              name: movie.premiere_date,
-              title: "Now Showing",
-              image: movie.poster,
-            }))}
-            direction="left"
-            speed="slow"
-            pauseOnHover={true}
-            className="mb-8"
-          />
-        </div>
-
-        {/* Main Dashboard Sections */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Movie Sales Chart & Pie Chart */}
-          <Card className="col-span-2 bg-white rounded-2xl shadow-lg p-6 border border-blue-100 dark:bg-zinc-900 dark:border-blue-900">
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <ChartLineIcon className="w-6 h-6 text-blue-700" />
-                <h3 className="font-bold text-xl text-blue-700">
-                  Films Sales Overview
-                </h3>
-              </div>
-            </CardHeader>
-            <CardBody>
-              <div className="w-full h-56 mb-8">
+        <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+          <SectionCard title="Release momentum" description="Monthly release count based on premiere dates in the current movie dataset.">
+            {monthlyTrend.length ? (
+              <div className="h-[340px] rounded-[24px] border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-900/72">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={salesChartData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line
-                      type="monotone"
-                      dataKey="sales"
-                      stroke="#2563eb"
-                      strokeWidth={3}
-                      dot={{ r: 4 }}
-                      activeDot={{ r: 6 }}
-                    />
-                  </LineChart>
+                  <AreaChart data={monthlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="dashboardMovieFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#38bdf8" stopOpacity={0.35} />
+                        <stop offset="95%" stopColor="#38bdf8" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="#dbeafe" strokeDasharray="4 4" vertical={false} />
+                    <XAxis dataKey="month" tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} />
+                    <YAxis tickLine={false} axisLine={false} tick={{ fill: "#64748b", fontSize: 12 }} allowDecimals={false} />
+                    <Tooltip contentStyle={{ borderRadius: 18, borderColor: "#cbd5e1" }} />
+                    <Area type="monotone" dataKey="total" stroke="#2563eb" fill="url(#dashboardMovieFill)" strokeWidth={3} name="Movies released" />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
-              {/* Pie Chart for Top Booked Movies */}
-              <div className="w-full flex flex-col items-center">
-                <h4 className="font-bold text-lg text-blue-700 mb-2">Top Booked Movies (Pie)</h4>
-                <ResponsiveContainer width="100%" height={220}>
-                  <PieChart>
-                    <Pie
-                      data={pieChartData}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={80}
-                      label={({ name }) => name}
-                    >
-                      {pieChartData.map((_, idx) => (
-                        <Cell key={`cell-${idx}`} fill={pieColors[idx % pieColors.length]} />
-                      ))}
-                    </Pie>
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            </CardBody>
-          </Card>
+            ) : (
+              <EmptyState title="No release data yet" body="Movie premiere dates will populate this chart once catalog items are loaded." />
+            )}
+          </SectionCard>
 
-          {/* Top Booked Movies - Flipping Cards */}
-          <Card className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100 dark:bg-zinc-900 dark:border-blue-900 flex flex-col items-center min-h-[600px]">
-            <CardHeader>
-              <h3 className="font-bold text-xl text-blue-700 mb-6 text-center">
-                Top Booked Movies
-              </h3>
-            </CardHeader>
-            <CardBody>
-              <TopBookedMoviesFlip movies={topBookedMovies} />
-            </CardBody>
-          </Card>
+          <SectionCard title="Genre balance" description="Top genres represented by the current movie records.">
+            {genreBreakdown.length ? (
+              <div className="grid gap-4 md:grid-cols-[0.56fr_0.44fr] md:items-center">
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Tooltip contentStyle={{ borderRadius: 18, borderColor: "#cbd5e1" }} />
+                      <Pie data={genreBreakdown} dataKey="total" nameKey="name" innerRadius={58} outerRadius={100} paddingAngle={4}>
+                        {genreBreakdown.map((entry, index) => (
+                          <Cell key={entry.name} fill={chartPalette[index % chartPalette.length]} />
+                        ))}
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="space-y-3">
+                  {genreBreakdown.map((entry, index) => (
+                    <div key={entry.name} className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-3 text-sm shadow-[0_14px_30px_-26px_rgba(37,99,235,0.12)] dark:border-slate-700 dark:bg-slate-900/82">
+                      <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+                        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: chartPalette[index % chartPalette.length] }} />
+                        {entry.name}
+                      </div>
+                      <span className="font-semibold text-slate-900 dark:text-white">{formatNumber(entry.total)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <EmptyState title="No genre mix available" body="Once movies and genres overlap, the dashboard will show how the catalog is distributed." />
+            )}
+          </SectionCard>
         </div>
 
-        {/* Booking Table */}
-        <Card className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100 dark:bg-zinc-900 dark:border-blue-900">
-          <CardHeader>
-            <h3 className="font-bold text-xl text-blue-700">
-              Recent Bookings
-            </h3>
-          </CardHeader>
-          <CardBody>
-            <div className="overflow-x-auto hide-scrollbar max-h-96">
-              <table className="min-w-full text-sm">
-                <thead className="sticky top-0 bg-white dark:bg-zinc-900 z-10">
-                  <tr className="text-left border-b font-asul" style={{ fontFamily: 'Asul, sans-serif' }}>
-                    <th className="py-2">Booking ID</th>
-                    <th className="py-2">Customer</th>
-                    <th className="py-2">Movie</th>
-                    <th className="py-2">Status</th>
-                    <th className="py-2">Total</th>
-                    <th className="py-2">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bookingRows.map((order) => (
-                    <tr key={order.id} className="border-b font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
-                      <td className="py-2">{order.id}</td>
-                      <td className="py-2">{order.user}</td>
-                      <td className="py-2">{order.movie}</td>
-                      <td className="py-2">{order.bookingStatus}</td>
-                      <td className="py-2">
-                        {order.total_price.toLocaleString("vi-VN", {
-                          style: "currency",
-                          currency: "VND",
-                        })}
-                      </td>
-                      <td className="py-2">
-                        {formatDateTime(order.booking_date)}
-                      </td>
+        <div className="grid gap-6">
+          <SectionCard title="Recent releases" description="The newest movie records currently available in the dashboard.">
+            {recentMovies.length ? (
+              <div className="overflow-x-auto rounded-[24px] border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900/82">
+                <table className="dashboard-table min-w-[640px]">
+                  <thead>
+                    <tr>
+                      <th>Movie</th>
+                      <th>Premiere</th>
+                      <th>Duration</th>
+                      <th>Rating</th>
+                      <th>Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* Recent Comment Panel */}
-        <Card className="bg-white rounded-2xl shadow-lg p-6 border border-blue-100 dark:bg-zinc-900 dark:border-blue-900">
-          <CardHeader>
-            <h3 className="font-bold text-xl text-blue-700">
-              Recent User Comments
-            </h3>
-          </CardHeader>
-          <CardBody>
-            <div
-              className={`flex flex-col items-center transition-opacity duration-300 ease-in-out max-w-sm text-center mx-auto ${
-                fade ? "opacity-100" : "opacity-0"
-              }`}
-              key={currentComment}
-            >
-              <span className="font-semibold text-gray-800 truncate font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
-                {comments[currentComment]?.user}
-              </span>
-              <span className="text-gray-600 text-sm mb-1 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
-                about{" "}
-                <span className="font-medium">
-                  {comments[currentComment]?.movie}
-                </span>
-              </span>
-              <p className="text-gray-700 text-sm mb-2 max-w-xs font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
-                {comments[currentComment]?.comment}
-              </p>
-              <span className="text-xs text-gray-400 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
-                {comments[currentComment]?.date}
-              </span>
-              <div className="flex gap-1 mt-3 justify-center">
-                {comments.map((_: unknown, idx: number) => (
-                  <span
-                    key={idx}
-                    className={`inline-block w-2 h-2 rounded-full ${
-                      idx === currentComment ? "bg-blue-500" : "bg-gray-300"
-                    }`}
-                  />
-                ))}
+                  </thead>
+                  <tbody>
+                    {recentMovies.map((movie) => {
+                      const state = getReleaseState(movie.premiere_date);
+                      const tone = state === "Now showing" ? "success" : state === "Coming soon" ? "info" : "neutral";
+                      return (
+                        <tr key={movie.id}>
+                          <td>
+                            <div className="font-semibold text-slate-900 dark:text-white">{movie.title}</div>
+                            <div className="helper-copy">{movie.description?.slice(0, 84) || "No summary available."}</div>
+                          </td>
+                          <td>{formatDateTime(movie.premiere_date)}</td>
+                          <td>{movie.duration} min</td>
+                          <td>{movie.rating?.toFixed?.(1) ?? movie.rating ?? "N/A"}</td>
+                          <td><StatusPill tone={tone as "success" | "info" | "neutral"}>{state}</StatusPill></td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            </div>
-          </CardBody>
-        </Card>
+            ) : (
+              <EmptyState title="No releases to show" body="Load movie data to see recent additions and release timing." />
+            )}
+          </SectionCard>
+        </div>
       </div>
     </ProtectedRoute>
   );
-};
-
-export default Dashboard;
+}

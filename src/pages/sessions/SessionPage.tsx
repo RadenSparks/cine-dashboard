@@ -4,15 +4,11 @@ import { fetchSessions, addSessionAsync, updateSession, deleteSessionAsync, rest
 import type { CreateSessionRequestDTO, UpdateSessionRequestDTO } from "../../dto/dto";
 import type { Session } from "../../entities/type";
 import type { ToastNotification } from "../../components/UI/SatelliteToast";
-import AppButton from "../../components/UI/AppButton";
 import { SatelliteToast } from "../../components/UI/SatelliteToast";
-import ConfirmationModal from "../../components/UI/ConfirmationModal";
-import SessionTimeline from "./SessionTimeline";
 import Loading from "../../components/UI/Loading";
-import SessionAddModal from "./SessionAddModal";
-import SessionEditModal from "./SessionEditModal";
-import SessionBoardView from "./SessionBoardView";
-import SessionCalendar from "./SessionCalendar";
+import { SessionPageHeader } from "./modules/SessionPageHeader";
+import { SessionViews } from "./modules/SessionViews";
+import { SessionModals } from "./modules/SessionModals";
 
 function getCurrentWeekDates(today = new Date()) {
   const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -102,6 +98,8 @@ export default function ShowtimePage() {
     }
     return date;
   }
+
+  // --- Calendar state removed: now handled in SessionViews module ---
 
   // --- Add Session Handler ---
   async function handleAddSession() {
@@ -329,204 +327,78 @@ export default function ShowtimePage() {
     }
   }
 
-  // Calendar state for month navigation
-  const [calendarMonth, setCalendarMonth] = useState(() => {
-    const today = new Date();
-    return { year: today.getFullYear(), month: today.getMonth() };
-  });
-  const { year, month } = calendarMonth;
-  const today = new Date();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const firstDayOfWeek = new Date(year, month, 1).getDay();
-  const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  function goToPrevMonth() {
-    setCalendarMonth(prev => {
-      const newMonth = prev.month === 0 ? 11 : prev.month - 1;
-      const newYear = prev.month === 0 ? prev.year - 1 : prev.year;
-      return { year: newYear, month: newMonth };
-    });
-  }
-
-  function goToNextMonth() {
-    setCalendarMonth(prev => {
-      const newMonth = prev.month === 11 ? 0 : prev.month + 1;
-      const newYear = prev.month === 11 ? prev.year + 1 : prev.year;
-      return { year: newYear, month: newMonth };
-    });
-  }
-
-  function formatDate(day: number) {
-    return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-  }
+  // Calendar state for month navigation - MOVED TO SessionViews module
+  // The calendar navigation has been moved to SessionViews for proper modularization
 
   // --- UI ---
   if (loading || moviesLoading || sessionsLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-zinc-900 dark:via-zinc-950 dark:to-blue-950 py-10 hide-scrollbar">
-        <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-16">
-          <div className="flex flex-col items-center justify-center min-h-[400px]">
-            <Loading />
-          </div>
-        </div>
+      <div className="w-full space-y-6">
+        <Loading fullscreen={false} />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-zinc-900 dark:via-zinc-950 dark:to-blue-950 py-10 hide-scrollbar">
-      <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-16">
-        <h2 className="text-3xl font-extrabold mb-2 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
-          🎬 Sessions
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 text-center mb-8 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Schedule movie sessions and manage screening times</p>
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-blue-100 dark:border-zinc-800 p-8 mb-10">
-          {/* Top controls: Timeline/Calendar toggle and Add Session */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-            <div className="flex gap-4">
-              {!selectedDate && (
-                <AppButton
-                  onClick={() => setShowTimeline(t => !t)}
-                  className="text-blue-700 border-blue-300"
-                >
-                  {showTimeline ? "Show Calendar View" : "Show Timeline View"}
-                </AppButton>
-              )}
-              <AppButton
-                onClick={() => setShowDeletedSessions(t => !t)}
-                className={showDeletedSessions ? "bg-gradient-to-r from-orange-600 to-orange-400 text-white" : "text-gray-700 border-gray-300"}
-              >
-                {showDeletedSessions ? "Hide Deleted Sessions" : "Show Deleted Sessions"}
-              </AppButton>
-            </div>
-            <div>
-              {selectedDate && !showAddModal && (
-                <AppButton
-                  onClick={() => setShowAddModal(true)}
-                  className="bg-gradient-to-r from-blue-600 to-blue-400 text-white"
-                >
-                  + Add Session
-                </AppButton>
-              )}
-            </div>
-          </div>
-
-          {/* Add Session Modal */}
-          <SessionAddModal
-            show={showAddModal}
-            onClose={() => {
-              setShowAddModal(false);
-              setModalMovieId(null);
-              setModalRoom(null);
-              setModalDate(weekDates[0].date);
-              setModalStart("10:00");
-            }}
-            modalMovieId={modalMovieId}
-            setModalMovieId={setModalMovieId}
-            modalRoom={modalRoom}
-            setModalRoom={setModalRoom}
-            modalDate={modalDate}
-            setModalDate={setModalDate}
-            modalStart={modalStart}
-            setModalStart={setModalStart}
-            modalEnd={modalEnd}
-            selectedDate={selectedDate}
-            basePrice={basePrice}
-            onAdd={() => {
-              setModalDate(selectedDate || modalDate);
-              handleAddSession();
-            }}
-          />
-
-          {/* Edit Session Modal */}
-          <SessionEditModal
-            show={showEditModal}
-            onClose={() => {
-              setShowEditModal(false);
-              setEditingSession(null);
-              setModalMovieId(null);
-              setModalRoom(null);
-              setModalDate(weekDates[0].date);
-              setModalStart("10:00");
-            }}
-            session={editingSession}
-            modalMovieId={modalMovieId}
-            setModalMovieId={setModalMovieId}
-            modalRoom={modalRoom}
-            setModalRoom={setModalRoom}
-            modalDate={modalDate}
-            setModalDate={setModalDate}
-            modalStart={modalStart}
-            setModalStart={setModalStart}
-            modalEnd={modalEnd}
-            basePrice={basePrice}
-            onUpdate={handleUpdateSession}
-          />
-
-          {/* --- 1. Calendar View --- */}
-          {!showTimeline && !selectedDate && (
-            <SessionCalendar
-              year={year}
-              month={month}
-              today={today}
-              daysInMonth={daysInMonth}
-              firstDayOfWeek={firstDayOfWeek}
-              WEEKDAYS={WEEKDAYS}
-              sessions={sessions}
-              showDeletedSessions={showDeletedSessions}
-              formatDate={formatDate}
-              goToPrevMonth={goToPrevMonth}
-              goToNextMonth={goToNextMonth}
-              onSelectDate={setSelectedDate}
-            />
-          )}
-
-          {/* --- 2. Timeline View (current week only) --- */}
-          {showTimeline && !selectedDate && (
-            <div>
-              <SessionTimeline
-                weekLabel="This Week"
-                weekDates={weekDates}
-                rooms={[]}
-                sessions={sessions}
-                showDeletedSessions={showDeletedSessions}
-                onEditSession={openEditModal}
-                onDeleteSession={handleDeleteSession}
-                onRestoreSession={handleRestoreSession}
-              />
-            </div>
-          )}
-
-          {/* --- 3. Board (Kanban) View for a selected date --- */}
-          {selectedDate && (
-            <SessionBoardView
-              selectedDate={selectedDate}
-              sessions={sessions}
-              movies={allMovies}
-              rooms={[]}
-              showDeletedSessions={showDeletedSessions}
-              onBack={() => setSelectedDate(null)}
-              onEditSession={openEditModal}
-              onDeleteSession={handleDeleteSession}
-              onRestoreSession={handleRestoreSession}
-            />
-          )}
-        </div>
-      </div>
+    <div className="w-full space-y-6">
       <SatelliteToast ref={toastRef} />
-      <ConfirmationModal
-        isOpen={confirmAction !== null}
-        title={confirmAction?.type === "delete" ? "Delete Session" : "Restore Session"}
-        message={
-          confirmAction?.type === "delete"
-            ? "This session will be soft deleted and can be restored later. Are you sure you want to proceed?"
-            : "This session will be restored and become available again. Are you sure?"
-        }
-        actionLabel={confirmAction?.type === "delete" ? "Delete" : "Restore"}
-        isDangerous={confirmAction?.type === "delete"}
-        isLoading={isProcessing}
-        onConfirm={handleConfirmAction}
-        onCancel={() => setConfirmAction(null)}
+
+      <SessionPageHeader />
+
+      <SessionViews
+        selectedDate={selectedDate}
+        setSelectedDate={setSelectedDate}
+        showTimeline={showTimeline}
+        setShowTimeline={setShowTimeline}
+        sessions={sessions}
+        allMovies={allMovies}
+        weekDates={weekDates}
+        showDeletedSessions={showDeletedSessions}
+        setShowDeletedSessions={setShowDeletedSessions}
+        onAddSession={() => setShowAddModal(true)}
+        onEditSession={openEditModal}
+        onDeleteSession={handleDeleteSession}
+        onRestoreSession={handleRestoreSession}
+      />
+
+      <SessionModals
+        showAddModal={showAddModal}
+        onAddModalClose={() => {
+          setShowAddModal(false);
+          setModalMovieId(null);
+          setModalRoom(null);
+          setModalDate(weekDates[0].date);
+          setModalStart("10:00");
+        }}
+        allMovies={allMovies}
+        weekDates={weekDates}
+        selectedDate={selectedDate}
+        modalMovieId={modalMovieId}
+        setModalMovieId={setModalMovieId}
+        modalRoom={modalRoom}
+        setModalRoom={setModalRoom}
+        modalDate={modalDate}
+        setModalDate={setModalDate}
+        modalStart={modalStart}
+        setModalStart={setModalStart}
+        basePrice={basePrice}
+        onAddSession={handleAddSession}
+        showEditModal={showEditModal}
+        onEditModalClose={() => {
+          setShowEditModal(false);
+          setEditingSession(null);
+          setModalMovieId(null);
+          setModalRoom(null);
+          setModalDate(weekDates[0].date);
+          setModalStart("10:00");
+        }}
+        editingSession={editingSession}
+        modalEnd={modalEnd}
+        onUpdateSession={handleUpdateSession}
+        confirmAction={confirmAction}
+        isProcessing={isProcessing}
+        onConfirmAction={handleConfirmAction}
+        onCancelAction={() => setConfirmAction(null)}
       />
     </div>
   );

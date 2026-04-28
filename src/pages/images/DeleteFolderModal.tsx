@@ -1,4 +1,5 @@
 import React from "react";
+import AppButton from "../../components/UI/AppButton";
 
 interface DeleteFolderModalProps {
   show: boolean;
@@ -24,14 +25,14 @@ const DeleteFolderModal: React.FC<DeleteFolderModalProps> = ({
           <span className="text-xs text-gray-500">This action cannot be undone.</span>
         </p>
         <div className="flex justify-end gap-2">
-          <button
-            className="bg-gray-200 px-6 py-2 rounded font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
-            type="button"
+          <AppButton
+            color="danger"
+            variant="soft"
             onClick={onCancel}
             disabled={deleting}
           >
             Cancel
-          </button>
+          </AppButton>
           <button
             className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
             type="button"

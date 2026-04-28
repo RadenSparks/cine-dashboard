@@ -5,7 +5,7 @@ import type { Movie } from "../../entities/type";
 import AppButton from "../../components/UI/AppButton";
 
 interface SessionAddModalProps {
-  show: boolean;
+  open: boolean;
   onClose: () => void;
   modalMovieId: number | null;
   setModalMovieId: (id: number | null) => void;
@@ -22,7 +22,7 @@ interface SessionAddModalProps {
 }
 
 export default function SessionAddModal({
-  show,
+  open,
   onClose,
   modalMovieId,
   setModalMovieId,
@@ -96,159 +96,240 @@ export default function SessionAddModal({
     }
   }, [dispatch, allRooms.length]); // Include dispatch and allRooms.length in deps
 
-  if (!show) return null;
+  if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
-      <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto relative border border-blue-100 dark:border-zinc-800" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-y-auto relative border border-blue-100 dark:border-zinc-800" onClick={(e) => e.stopPropagation()}>
         <button
-          className="absolute top-2 right-2 text-gray-400 hover:text-blue-700 dark:hover:text-blue-200 text-2xl"
+          className="absolute top-4 right-4 text-gray-400 hover:text-blue-700 dark:hover:text-blue-200 text-3xl z-10"
           onClick={onClose}
         >
           ×
         </button>
-        <h3 className="text-xl font-bold mb-6 text-blue-700 dark:text-blue-200 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Add Session</h3>
+        <h3 className="text-2xl font-bold text-blue-700 dark:text-blue-200 font-audiowide sticky top-0 bg-white dark:bg-zinc-900 p-6 border-b border-blue-100 dark:border-zinc-800" style={{ fontFamily: 'Audiowide, sans-serif' }}>Add Session</h3>
 
-        <div className="flex flex-col gap-5 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
-          
-          {/* Movie Selection with Search and Filters */}
-          <div className="border-b pb-5 border-blue-100 dark:border-zinc-700">
-            <label className="text-sm font-semibold text-blue-700 dark:text-blue-200 block mb-3">
-              Movie:
-            </label>
+        <div className="p-6 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
-            {/* Search Bar */}
-            <input
-              type="text"
-              placeholder="Search by title or description..."
-              className="w-full border rounded px-3 py-2 mb-3 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-sm"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            {/* Left Column: Movie Selection & Preview */}
+            <div className="lg:col-span-2 space-y-4">
+              <div className="border rounded-lg p-4 bg-slate-700/30 border-slate-700/60 dark:border-slate-700/40">
+                <label className="text-sm font-semibold text-slate-100 dark:text-slate-50 block mb-3">
+                  Movie Selection
+                </label>
+                
+                {/* Search Bar */}
+                <input
+                  type="text"
+                  placeholder="Search by title or description..."
+                  className="w-full border rounded-lg px-3 py-2 mb-3 bg-slate-700/50 dark:bg-slate-800 border-slate-600/60 dark:border-slate-700/60 text-slate-100 focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
 
-            {/* Genre Filter and Sort Controls */}
-            <div className="flex gap-3 mb-3 flex-wrap">
-              <select
-                className="flex-1 min-w-[120px] border rounded px-2 py-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-sm"
-                value={selectedGenreFilter ?? ""}
-                onChange={(e) => setSelectedGenreFilter(e.target.value ? Number(e.target.value) : null)}
-              >
-                <option value="">All Genres</option>
-                {allGenres.map(g => (
-                  <option key={g.id} value={g.id}>{g.name}</option>
-                ))}
-              </select>
+                {/* Genre Filter and Sort Controls */}
+                <div className="flex gap-3 mb-4 flex-wrap">
+                  <select
+                    className="flex-1 min-w-[140px] border rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    value={selectedGenreFilter ?? ""}
+                    onChange={(e) => setSelectedGenreFilter(e.target.value ? Number(e.target.value) : null)}
+                  >
+                    <option value="">All Genres</option>
+                    {allGenres.map(g => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
 
-              <select
-                className="flex-1 min-w-[120px] border rounded px-2 py-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-sm"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as "title" | "duration" | "rating")}
-              >
-                <option value="title">Sort by Title</option>
-                <option value="duration">Sort by Duration</option>
-                <option value="rating">Sort by Rating</option>
-              </select>
+                  <select
+                    className="flex-1 min-w-[140px] border rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as "title" | "duration" | "rating")}
+                  >
+                    <option value="title">Sort by Title</option>
+                    <option value="duration">Sort by Duration</option>
+                    <option value="rating">Sort by Rating</option>
+                  </select>
+                </div>
+
+                {/* Movie List */}
+                <div className="border rounded-lg max-h-[400px] overflow-y-auto bg-slate-700/50 dark:bg-slate-800 border-slate-600/60 dark:border-slate-700/60 divide-y divide-slate-700/60 dark:divide-slate-700">
+                  {moviesLoading ? (
+                    <div className="p-8 text-center text-gray-500">Loading movies...</div>
+                  ) : filteredMovies.length === 0 ? (
+                    <div className="p-8 text-center text-gray-500">No movies found</div>
+                  ) : (
+                    filteredMovies.map(m => {
+                      const isSelected = modalMovieId === m.id;
+                      return (
+                      <button
+                        key={m.id}
+                        className={`w-full text-left p-4 hover:bg-blue-50 dark:hover:bg-zinc-700 transition border-l-4 ${
+                          isSelected 
+                            ? "border-l-blue-600 bg-blue-50 dark:bg-zinc-700" 
+                            : "border-l-transparent"
+                        }`}
+                        onClick={() => setModalMovieId(m.id)}
+                      >
+                        <div className={`font-semibold ${
+                          isSelected 
+                            ? "text-blue-900 dark:text-slate-50" 
+                            : "text-blue-900 dark:text-slate-100 hover:text-blue-900 dark:hover:text-slate-50"
+                        }`}>{m.title}</div>
+                        <div className={`text-xs ${
+                          isSelected 
+                            ? "text-blue-700 dark:text-slate-300" 
+                            : "text-blue-700 dark:text-slate-300 hover:text-blue-900 dark:hover:text-slate-200"
+                        } mt-1 space-x-2`}>
+                          <span>⏱ {m.duration}m</span>
+                          <span>⭐ {m.rating || "N/A"}</span>
+                        </div>
+                      </button>
+                    );
+                    })
+                  )}
+                </div>
+              </div>
             </div>
 
-            {/* Movie List */}
-            <div className="border rounded-lg max-h-[300px] overflow-y-auto bg-blue-50 dark:bg-zinc-800 border-blue-200 dark:border-zinc-700">
-              {moviesLoading ? (
-                <div className="p-4 text-center text-gray-500">Loading movies...</div>
-              ) : filteredMovies.length === 0 ? (
-                <div className="p-4 text-center text-gray-500">No movies found</div>
-              ) : (
-                filteredMovies.map(m => (
-                  <button
-                    key={m.id}
-                    className={`w-full text-left p-3 border-b border-blue-200 dark:border-zinc-700 hover:bg-blue-100 dark:hover:bg-zinc-700 transition ${
-                      modalMovieId === m.id ? "bg-blue-200 dark:bg-zinc-600" : ""
-                    }`}
-                    onClick={() => setModalMovieId(m.id)}
-                  >
-                    <div className="font-semibold text-blue-700 dark:text-blue-200">{m.title}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                      Duration: {m.duration} min • Rating: {m.rating || "N/A"} ★
+            {/* Right Column: Movie Preview & Selected Movie Info */}
+            <div className="lg:col-span-1 space-y-4">
+              {modalMovieId && allMovies.find(m => m.id === modalMovieId) && (() => {
+                const selectedMovie = allMovies.find(m => m.id === modalMovieId);
+                return (
+                  <div className="border rounded-lg overflow-hidden bg-slate-700/30 border-slate-700/60 dark:border-slate-700/40">
+                    {/* Movie Poster */}
+                    <div className="min-h-[500px] bg-gradient-to-br from-blue-200 to-blue-400 dark:from-zinc-700 dark:to-zinc-800 flex items-center justify-center overflow-hidden">
+                      {selectedMovie?.poster ? (
+                        <img 
+                          src={selectedMovie.poster} 
+                          alt={selectedMovie.title}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="text-center p-4">
+                          <div className="text-4xl mb-2">🎬</div>
+                          <div className="text-sm font-semibold text-slate-100 dark:text-slate-50">No Poster</div>
+                        </div>
+                      )}
                     </div>
-                  </button>
-                ))
+
+                    {/* Movie Details */}
+                    <div className="p-4 space-y-3">
+                      <div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Selected Movie</div>
+                        <div className="font-bold text-blue-900 dark:text-slate-50 line-clamp-2 mt-1">{selectedMovie?.title}</div>
+                      </div>
+                      
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Duration:</span>
+                          <span className="font-semibold text-blue-900 dark:text-slate-50">{selectedMovie?.duration} min</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Rating:</span>
+                          <span className="font-semibold text-blue-900 dark:text-blue-200">⭐ {selectedMovie?.rating || "N/A"}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600 dark:text-gray-400">Base Price:</span>
+                          <span className="font-bold text-green-600 dark:text-green-400">${basePrice}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+              {!modalMovieId && (
+                <div className="border rounded-lg border-dashed border-blue-300 dark:border-zinc-600 p-8 text-center bg-blue-50 dark:bg-zinc-800">
+                  <div className="text-4xl mb-2">🎬</div>
+                  <div className="text-sm text-gray-600 dark:text-gray-400">Select a movie to see preview</div>
+                </div>
               )}
             </div>
           </div>
 
-          {/* Room Selection */}
-          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
-            Room:
-            <select
-              className="w-full border rounded px-2 py-2 mt-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
-              value={modalRoom ? String(modalRoom) : ""}
-              onChange={e => setModalRoom(e.target.value ? Number(e.target.value) : null)}
-              disabled={roomsLoading}
+          {/* Form Fields - Bottom Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-6 border-t border-blue-100 dark:border-zinc-700">
+            
+            {/* Room Selection */}
+            <div>
+              <label className="text-sm font-semibold text-blue-700 dark:text-blue-200 block mb-2">
+                Room *
+              </label>
+              <select
+                className="w-full border rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={modalRoom ? String(modalRoom) : ""}
+                onChange={e => setModalRoom(e.target.value ? Number(e.target.value) : null)}
+                disabled={roomsLoading}
+              >
+                <option value="">Select a room</option>
+                {allRooms.map(r => (
+                  <option key={r.id} value={String(r.id)}>{r.roomName}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Date */}
+            <div>
+              <label className="text-sm font-semibold text-blue-700 dark:text-blue-200 block mb-2">
+                Date *
+              </label>
+              <input
+                type="date"
+                className="w-full border rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={selectedDate || modalDate}
+                onChange={e => setModalDate(e.target.value)}
+                disabled={!!selectedDate}
+              />
+            </div>
+
+            {/* Start Time */}
+            <div>
+              <label className="text-sm font-semibold text-blue-700 dark:text-blue-200 block mb-2">
+                Start Time *
+              </label>
+              <input
+                type="time"
+                step={300}
+                className="w-full border rounded-lg px-3 py-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base focus:outline-none focus:ring-2 focus:ring-blue-400"
+                value={modalStart}
+                onChange={e => setModalStart(e.target.value)}
+              />
+            </div>
+
+            {/* End Time (Auto-calculated) */}
+            <div>
+              <label className="text-sm font-semibold text-blue-700 dark:text-blue-200 block mb-2">
+                End Time (auto)
+              </label>
+              <input
+                type="time"
+                className="w-full border rounded-lg px-3 py-2 bg-gray-100 dark:bg-zinc-700 border-blue-200 dark:border-zinc-600 text-base"
+                value={modalEnd}
+                readOnly
+                tabIndex={-1}
+              />
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3 mt-6 pt-6 border-t border-blue-100 dark:border-zinc-700">
+            <AppButton
+              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-400 text-white"
+              onClick={onAdd}
+              disabled={!modalMovieId || !modalRoom || !(selectedDate || modalDate) || !modalStart}
             >
-              <option value="">Select a room</option>
-              {allRooms.map(r => (
-                <option key={r.id} value={String(r.id)}>{r.roomName}</option>
-              ))}
-            </select>
-          </label>
-
-          {/* Date */}
-          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
-            Date:
-            <input
-              type="date"
-              className="w-full border rounded px-2 py-2 mt-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
-              value={selectedDate || modalDate}
-              onChange={e => setModalDate(e.target.value)}
-              disabled={!!selectedDate}
-            />
-          </label>
-
-          {/* Start Time */}
-          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
-            Start Time:
-            <input
-              type="time"
-              step={300}
-              className="w-full border rounded px-2 py-2 mt-2 bg-white dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
-              value={modalStart}
-              onChange={e => setModalStart(e.target.value)}
-            />
-          </label>
-
-          {/* End Time (Auto-calculated) */}
-          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
-            End Time:
-            <input
-              type="time"
-              className="w-full border rounded px-2 py-2 mt-2 bg-gray-100 dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base"
-              value={modalEnd}
-              readOnly
-              tabIndex={-1}
-            />
-          </label>
-
-          {/* Base Price (Auto-filled from movie rating) */}
-          <label className="text-sm font-semibold text-blue-700 dark:text-blue-200">
-            Base Price:
-            <input
-              type="number"
-              step={0.01}
-              className="w-full border rounded px-2 py-2 mt-2 bg-gray-100 dark:bg-zinc-800 border-blue-200 dark:border-zinc-700 text-base cursor-not-allowed"
-              value={basePrice}
-              readOnly
-              disabled
-              tabIndex={-1}
-            />
-          </label>
-
-          {/* Add Button */}
-          <AppButton
-            className="mt-4 bg-gradient-to-r from-blue-600 to-blue-400 text-white"
-            onClick={onAdd}
-            disabled={!modalMovieId || !modalRoom || !(selectedDate || modalDate) || !modalStart}
-          >
-            Add Session
-          </AppButton>
+              Add Session
+            </AppButton>
+            <AppButton
+              color="danger"
+              variant="soft"
+              onClick={onClose}
+              className="flex-1"
+            >
+              Cancel
+            </AppButton>
+          </div>
         </div>
       </div>
     </div>

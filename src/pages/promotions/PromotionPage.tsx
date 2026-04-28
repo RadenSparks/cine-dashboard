@@ -321,12 +321,13 @@ function PromotionModal({
         </div>
 
         <div className="p-6 border-t border-gray-200 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50 flex justify-end gap-3 sticky bottom-0">
-          <button
+          <AppButton
+            color="danger"
+            variant="soft"
             onClick={onClose}
-            className="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition"
           >
             Cancel
-          </button>
+          </AppButton>
           <AppButton onClick={handleSubmit} className="bg-gradient-to-r from-blue-600 to-blue-400 text-white">
             {promotion ? "Update Promotion" : "Create Promotion"}
           </AppButton>
@@ -511,7 +512,7 @@ export default function PromotionPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loading />
+        <Loading fullscreen={false} />
       </div>
     );
   }

@@ -34,20 +34,20 @@ export default function SessionCalendar({
     <>
       <div className="flex items-center justify-between mb-2">
         <AppButton
+          variant="ghost"
           onClick={goToPrevMonth}
-          className="text-blue-700 border-blue-300"
         >
           ←
         </AppButton>
-        <span className="font-semibold text-lg text-blue-700 dark:text-blue-200 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
+        <span className="font-semibold text-lg text-slate-100 dark:text-slate-50 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}>
           {new Date(year, month).toLocaleString("default", {
             month: "long",
             year: "numeric",
           })}
         </span>
         <AppButton
+          variant="ghost"
           onClick={goToNextMonth}
-          className="text-blue-700 border-blue-300"
         >
           →
         </AppButton>

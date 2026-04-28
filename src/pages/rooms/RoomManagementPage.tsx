@@ -12,23 +12,21 @@ import {
 } from "../../store/slices";
 import { SatelliteToast, type ToastNotification } from "../../components/UI/SatelliteToast";
 import Loading from "../../components/UI/Loading";
-import RoomTable from "./rooms/RoomTable";
-import CreateRoomModal from "./rooms/CreateRoomModal";
-import EditRoomModal from "./rooms/EditRoomModal";
-import DeleteRoomModal from "./rooms/DeleteRoomModal";
-import RoomConfigModal from "./rooms/RoomConfigModal";
 import type { Room, Seat } from "../../entities/type";
+import { RoomPageHeader } from "./modules/RoomPageHeader";
+import { RoomListSection } from "./modules/RoomListSection";
+import { RoomModals } from "./modules/RoomModals";
 
 const ROWS = 8;
 const COLS = 10;
 
 export default function RoomManagementPage() {
   const dispatch = useDispatch<AppDispatch>();
-  const { rooms = [], loading } = useSelector((state: RootState) => state.rooms);
+  const { rooms = [] } = useSelector((state: RootState) => state.rooms);
   const { seatsByRoom } = useSelector((state: RootState) => state.seats);
 
   const validRooms = useMemo(
-    () => Array.isArray(rooms) ? rooms.filter(r => r && typeof r.id === "number") : [],
+    () => Array.isArray(rooms) ? rooms.filter(r => r && typeof r.id === "number" && r.roomName) : [],
     [rooms]
   );
   const [selectedRoomId, setSelectedRoomId] = useState<number | null>(null);
@@ -83,7 +81,11 @@ export default function RoomManagementPage() {
     // When rooms change, fetch seats for all rooms
     if (validRooms.length > 0) {
       validRooms.forEach(room => {
-        dispatch(fetchSeatsByRoom(room.id));
+        // Ensure room.id is always a valid number
+        const roomId = typeof room.id === 'number' ? room.id : null;
+        if (roomId !== null) {
+          dispatch(fetchSeatsByRoom(roomId));
+        }
       });
     }
   }, [dispatch, validRooms, validRooms.length]);
@@ -115,6 +117,10 @@ export default function RoomManagementPage() {
   }
 
   function openEditModal(room: Room) {
+    if (typeof room.id !== 'number') {
+      console.warn('Invalid room ID:', room.id);
+      return;
+    }
     setEditRoomName(room.roomName);
     setEditRoomRows(room.rowSize);
     setEditRoomCols(room.columnSize);
@@ -183,12 +189,19 @@ export default function RoomManagementPage() {
   }
 
   function openConfigModal(room: Room) {
+    if (typeof room.id !== 'number') {
+      console.warn('Invalid room ID:', room.id);
+      return;
+    }
     setSelectedRoomId(room.id);
     setShowConfigModal(true);
   }
 
   async function handleUpdateSeats() {
-    if (!selectedRoom) return;
+    if (!selectedRoom || typeof selectedRoom.id !== 'number') {
+      console.warn('Invalid selected room:', selectedRoom);
+      return;
+    }
     setSaving(true);
     try {
       const res = await dispatch(fetchSeatsByRoom(selectedRoom.id));
@@ -251,76 +264,68 @@ export default function RoomManagementPage() {
 
   // Always render SatelliteToast outside conditional logic!
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-blue-100 dark:from-zinc-900 dark:via-zinc-950 dark:to-blue-950 py-10 hide-scrollbar">
-      <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-16">
-        {initialLoading ? (
-          <Loading />
-        ) : (
-          <>
-            {/* ...your page content... */}
-            <h2 className="text-3xl font-extrabold mb-2 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
-              🏟️ Room Management
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 text-center mb-8 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Configure theater rooms, seats, and seating layouts</p>
-            <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-blue-100 dark:border-zinc-800 p-8 mb-10">
-              <RoomTable
-                rooms={validRooms}
-                seatsByRoom={seatsByRoom}
-                onConfig={openConfigModal}
-                onEdit={openEditModal}
-                onDelete={id => { setRoomToDelete(id); setShowDeleteModal(true); }}
-                onCreate={() => setShowCreateModal(true)}
-                onReactivate={handleReactivateRoom}
-              />
-            </div>
-            <CreateRoomModal
-              open={showCreateModal}
-              onClose={() => setShowCreateModal(false)}
-              roomName={newRoomName}
-              setRoomName={setNewRoomName}
-              roomRows={newRoomRows}
-              setRoomRows={setNewRoomRows}
-              roomCols={newRoomCols}
-              setRoomCols={setNewRoomCols}
-              onCreate={handleCreateRoom}
-            />
-            <EditRoomModal
-              open={showEditModal}
-              onClose={() => setShowEditModal(false)}
-              roomName={editRoomName}
-              setRoomName={setEditRoomName}
-              roomRows={editRoomRows}
-              setRoomRows={setEditRoomRows}
-              roomCols={editRoomCols}
-              setRoomCols={setEditRoomCols}
-              onEdit={handleEditRoom}
-            />
-            <DeleteRoomModal
-              open={showDeleteModal}
-              onClose={() => setShowDeleteModal(false)}
-              onDelete={() => roomToDelete !== null && handleDeleteRoom(roomToDelete)}
-            />
-            <RoomConfigModal
-              open={showConfigModal}
-              onClose={() => setShowConfigModal(false)}
-              room={selectedRoom}
-              filter={filter}
-              setFilter={setFilter}
-              hoveredSeat={hoveredSeat}
-              setHoveredSeat={setHoveredSeat}
-              localPremiumSeats={localPremiumSeats}
-              setLocalPremiumSeats={setLocalPremiumSeats}
-              localEmptySeats={localEmptySeats}
-              setLocalEmptySeats={setLocalEmptySeats}
-              onUpdateSeats={handleUpdateSeats}
-              loading={loading}
-              saving={saving}
-            />
-          </>
-        )}
-        {/* SatelliteToast is always rendered here */}
-        <SatelliteToast ref={toastRef} />
-      </div>
+    <div className="w-full space-y-6">
+      <SatelliteToast ref={toastRef} />
+
+      {initialLoading ? (
+        <Loading fullscreen={false} />
+      ) : (
+        <>
+          <RoomPageHeader />
+
+          <RoomListSection
+            rooms={validRooms}
+            seatsByRoom={seatsByRoom}
+            onConfig={openConfigModal}
+            onEdit={openEditModal}
+            onDelete={(id) => {
+              setRoomToDelete(id);
+              setShowDeleteModal(true);
+            }}
+            onCreate={() => setShowCreateModal(true)}
+            onReactivate={handleReactivateRoom}
+          />
+
+          <RoomModals
+            showCreateModal={showCreateModal}
+            onCreateModalClose={() => setShowCreateModal(false)}
+            roomName={newRoomName}
+            setRoomName={setNewRoomName}
+            roomRows={newRoomRows}
+            setRoomRows={setNewRoomRows}
+            roomCols={newRoomCols}
+            setRoomCols={setNewRoomCols}
+            onCreateRoom={handleCreateRoom}
+            showEditModal={showEditModal}
+            onEditModalClose={() => setShowEditModal(false)}
+            editRoomName={editRoomName}
+            setEditRoomName={setEditRoomName}
+            editRoomRows={editRoomRows}
+            setEditRoomRows={setEditRoomRows}
+            editRoomCols={editRoomCols}
+            setEditRoomCols={setEditRoomCols}
+            onEditRoom={handleEditRoom}
+            showDeleteModal={showDeleteModal}
+            onDeleteModalClose={() => setShowDeleteModal(false)}
+            roomToDelete={roomToDelete}
+            onDeleteRoom={handleDeleteRoom}
+            showConfigModal={showConfigModal}
+            onConfigModalClose={() => setShowConfigModal(false)}
+            hoveredSeat={hoveredSeat}
+            setHoveredSeat={setHoveredSeat}
+            filter={filter}
+            setFilter={setFilter}
+            localPremiumSeats={localPremiumSeats}
+            setLocalPremiumSeats={setLocalPremiumSeats}
+            localEmptySeats={localEmptySeats}
+            setLocalEmptySeats={setLocalEmptySeats}
+            onUpdateSeats={handleUpdateSeats}
+            saving={saving}
+            selectedRoom={selectedRoom}
+            loading={initialLoading}
+          />
+        </>
+      )}
     </div>
   );
 }

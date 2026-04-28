@@ -213,7 +213,7 @@ export default function SessionTimeline({
                       position: "sticky",
                       left: 0,
                       zIndex: 30,
-                      boxShadow: "2px 0 8px -2px #c7d2fe", // subtle shadow for separation
+                      boxShadow: "2px 0 8px -2px #c7d2fe",
                     }}
                     className="sticky left-0 z-30"
                   >

@@ -5,14 +5,13 @@ import {
   LockIcon,
   UserIcon,
   PaletteIcon,
-  MailIcon,
   ShieldIcon,
   LogOut,
 } from "lucide-react";
 import Loading from "../components/UI/Loading";
 import { SatelliteToast, type ToastNotification } from "../components/UI/SatelliteToast";
-import BlurCircle from "../components/UI/BlurCircle";
 import AppButton from "../components/UI/AppButton";
+import { PageIntro, SectionCard } from "../components/UI/DashboardPrimitives";
 
 // Types for settings
 type SettingSection = {
@@ -95,10 +94,10 @@ function SettingsSidebar({
           <button
             key={section.id}
             onClick={() => onSectionChange(section.id)}
-            className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition font-red-rose ${
+            className={`w-full text-left px-4 py-3 rounded-[18px] border flex items-center gap-3 transition font-red-rose ${
               isActive
-                ? "bg-blue-500 text-white shadow-lg"
-                : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                ? "border-sky-400/25 bg-[linear-gradient(90deg,rgba(56,189,248,0.18)_0%,rgba(59,130,246,0.08)_100%)] text-sky-700 shadow-[0_18px_30px_-28px_rgba(56,189,248,0.45)] dark:text-sky-100"
+                : "border-transparent text-gray-700 dark:text-gray-300 hover:border-slate-200 hover:bg-slate-50 dark:hover:border-slate-700 dark:hover:bg-slate-800"
             }`}
             style={{ fontFamily: 'Red Rose, sans-serif' }}
           >
@@ -135,7 +134,7 @@ function AccountSection() {
 
   return (
     <>
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Account Settings</h3>
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Account settings</h3>
       <div className="space-y-6 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
         <div>
           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -225,9 +224,7 @@ function NotificationSection() {
 
   return (
     <>
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
-        Notification Preferences
-      </h3>
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Notification preferences</h3>
       <div className="space-y-4 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
         {[
           {
@@ -311,9 +308,7 @@ function AppearanceSection() {
 
   return (
     <>
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
-        Appearance Settings
-      </h3>
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Appearance settings</h3>
       <div className="space-y-6 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
         {/* Dark Mode Toggle */}
         <div className="flex items-center justify-between p-4 bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700">
@@ -418,9 +413,7 @@ function PrivacySection() {
 
   return (
     <>
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
-        Privacy & Security
-      </h3>
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Privacy & security</h3>
       <div className="space-y-4 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
         {/* Profile Visibility */}
         <div>
@@ -566,7 +559,7 @@ function PasswordSection() {
 
   return (
     <>
-      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Change Password</h3>
+      <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>Change password</h3>
       <div className="space-y-6 max-w-md font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>
         <div>
           <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -636,12 +629,13 @@ function LogoutConfirmModal({
             Are you sure you want to sign out of your account? You'll need to log in again to access your dashboard.
           </p>
           <div className="flex justify-end gap-3">
-            <button
+            <AppButton
+              color="danger"
+              variant="soft"
               onClick={onClose}
-              className="px-4 py-2 border border-gray-300 dark:border-zinc-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-700 transition"
             >
               Cancel
-            </button>
+            </AppButton>
             <button
               onClick={onConfirm}
               className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition flex items-center gap-2"
@@ -685,7 +679,7 @@ export default function SettingPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px]">
-        <Loading />
+        <Loading fullscreen={false} />
       </div>
     );
   }
@@ -693,25 +687,20 @@ export default function SettingPage() {
   return (
     <>
       <SatelliteToast ref={toastRef} />
-      <div className="w-full max-w-screen-2xl mx-auto px-4 md:px-8 xl:px-16 min-h-[400px] hide-scrollbar py-8">
-        <BlurCircle top="0" left="0" />
+      <div className="w-full hide-scrollbar space-y-6">
+        <PageIntro
+          eyebrow="Workspace preferences"
+          title="Settings"
+          description="Manage account details, notifications, appearance, and security preferences without changing the dashboard’s underlying behavior."
+          icon={SettingsIcon}
+        />
 
-        {/* Page Title */}
-        <h2 className="text-3xl font-extrabold mb-2 text-center text-blue-700 dark:text-blue-200 tracking-tight drop-shadow flex items-center justify-center gap-2 font-audiowide" style={{ fontFamily: 'Audiowide, sans-serif' }}>
-          <SettingsIcon className="w-8 h-8" />
-          Settings
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 text-center mb-8 font-farro" style={{ fontFamily: 'Farro, sans-serif' }}>Manage your account, preferences, and security settings</p>
-
-        {/* Main Content Area */}
-        <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl border border-blue-100 dark:border-zinc-800 p-8">
+        <SectionCard title="Preference panels" description="Switch between account, notification, appearance, privacy, and password settings from one consistent workspace shell.">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {/* Settings Sidebar */}
             <div className="md:col-span-1">
               <SettingsSidebar activeSection={activeSection} onSectionChange={setActiveSection} />
             </div>
 
-            {/* Settings Content */}
             <div className="md:col-span-3">
               {activeSection === "account" && <AccountSection />}
               {activeSection === "notifications" && <NotificationSection />}
@@ -721,26 +710,22 @@ export default function SettingPage() {
             </div>
           </div>
 
-          {/* Danger Zone */}
           <div className="mt-12 pt-8 border-t border-gray-200 dark:border-zinc-700">
-            <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-4">Danger Zone</h3>
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900 rounded-lg p-6 flex items-center justify-between">
+            <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-4">Danger zone</h3>
+            <div className="rounded-[24px] border border-red-200 bg-red-50 p-6 dark:border-red-800/70 dark:bg-red-950/30">
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">Logout</p>
                 <p className="text-sm text-gray-600 dark:text-gray-400">Sign out from your account</p>
               </div>
-              <button
-                onClick={() => setShowLogoutConfirm(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition"
-              >
-                <LogOut className="w-4 h-4" />
-                Logout
-              </button>
+              <div className="mt-4">
+                <AppButton color="danger" onClick={() => setShowLogoutConfirm(true)} icon={<LogOut className="w-4 h-4" />}>
+                  Logout
+                </AppButton>
+              </div>
             </div>
           </div>
-        </div>
+        </SectionCard>
 
-        {/* Logout Confirmation Modal */}
         <LogoutConfirmModal
           show={showLogoutConfirm}
           onClose={() => setShowLogoutConfirm(false)}

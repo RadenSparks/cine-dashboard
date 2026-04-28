@@ -35,7 +35,7 @@ const FolderTree: React.FC<FolderTreeProps> = ({
   const mergedChildren: Record<string, FolderTreeNode> = { ...(node.children || {}) };
 
   return (
-    <ul className="pl-2 border-l border-gray-100">
+    <ul className="pl-2 border-l border-gray-100 dark:border-slate-700">
       {Object.keys(mergedChildren)
         .sort((a, b) => {
           // 'root' always comes first
@@ -58,16 +58,16 @@ const FolderTree: React.FC<FolderTreeProps> = ({
         return (
           <li key={folder} className="relative group">
             <div
-              className={`flex items-center gap-2 cursor-pointer rounded-lg pr-2 py-2 font-red-rose
+              className={`flex items-center gap-2 cursor-pointer rounded-lg pr-2 py-2 font-red-rose transition
                 ${
-                isSelected ? "bg-blue-50 font-semibold text-blue-700" : "hover:bg-gray-50"
+                isSelected ? "bg-blue-50 dark:bg-slate-700/60 font-semibold text-blue-700 dark:text-blue-300" : "hover:bg-gray-50 dark:hover:bg-slate-700/40"
               }`}
               style={{ minHeight: 40, fontFamily: 'Red Rose, sans-serif' }}
               onClick={() => setSelectedPath(thisPath)}
             >
               {hasChildren ? (
                 <button
-                  className="ml-1 mr-1 flex items-center justify-center w-7 h-7 rounded hover:bg-blue-50 focus:outline-none transition"
+                  className="ml-1 mr-1 flex items-center justify-center w-7 h-7 rounded hover:bg-blue-50 dark:hover:bg-slate-700/50 focus:outline-none transition"
                   onClick={(e) => {
                     e.stopPropagation();
                     setExpanded({
@@ -80,11 +80,11 @@ const FolderTree: React.FC<FolderTreeProps> = ({
                   type="button"
                 >
                   {isExpanded ? (
-                    <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+                    <svg className="w-4 h-4 text-blue-500 dark:text-blue-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
                     </svg>
                   ) : (
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+                    <svg className="w-4 h-4 text-gray-400 dark:text-slate-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                     </svg>
                   )}
@@ -94,26 +94,26 @@ const FolderTree: React.FC<FolderTreeProps> = ({
               )}
 
               <span className="flex items-center gap-2 truncate ml-1">
-                <svg className="w-5 h-5 text-yellow-500 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                <svg className="w-5 h-5 text-yellow-500 dark:text-yellow-400 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
                   <path d="M2 6a2 2 0 012-2h4l2 2h6a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
                 </svg>
-                <span className="truncate">{displayName}</span>
+                <span className="truncate dark:text-slate-100">{displayName}</span>
               </span>
 
               <span className="ml-auto flex items-center gap-2 text-xs">
                 {folder !== 'root' && childNode.items && childNode.items.length >= 10 && (
-                  <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-xs font-semibold" title="Folder is full">
+                  <span className="px-2 py-0.5 bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300 rounded text-xs font-semibold" title="Folder is full">
                     Full
                   </span>
                 )}
-                <span className="text-gray-400 group-hover:text-blue-400">
+                <span className="text-gray-400 dark:text-slate-500 group-hover:text-blue-400 dark:group-hover:text-blue-300">
                   {folder === 'root' ? (childNode.items?.length ? `${childNode.items.length} images` : "0 images") : (childNode.items?.length ? `${childNode.items.length}/10` : "0/10")}
                 </span>
               </span>
 
               {folder !== 'root' && (
                 <button
-                  className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-6 h-6 rounded hover:bg-red-100 focus:outline-none"
+                  className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center w-6 h-6 rounded hover:bg-red-100 dark:hover:bg-red-950/40 focus:outline-none"
                   onClick={(e) => {
                     e.stopPropagation();
                     const folderId = folderIds[folder] || 0;
@@ -123,7 +123,7 @@ const FolderTree: React.FC<FolderTreeProps> = ({
                   title="Delete folder"
                   type="button"
                 >
-                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
+                  <svg className="w-4 h-4 text-red-500 dark:text-red-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24" aria-hidden>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                   </svg>
                 </button>

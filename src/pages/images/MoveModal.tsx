@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import type { Image } from "../../entities/type";
+import AppButton from "../../components/UI/AppButton";
 
 interface FolderTreeNode {
   children: Record<string, FolderTreeNode>;
@@ -189,14 +190,14 @@ const MoveModal: React.FC<MoveModalProps> = ({
         </div>
 
         <div className="flex justify-end gap-2 mt-auto">
-          <button
-            className="flex items-center gap-1 bg-gray-200 text-gray-700 px-6 py-2 rounded shadow hover:bg-gray-300 focus:ring-2 focus:ring-gray-400 transition font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
-            type="button"
+          <AppButton
+            color="danger"
+            variant="soft"
             onClick={onClose}
             disabled={disabled}
           >
             Cancel
-          </button>
+          </AppButton>
           <button
             className="flex items-center gap-1 bg-green-600 text-white px-6 py-2 rounded shadow hover:bg-green-700 focus:ring-2 focus:ring-green-400 disabled:bg-green-300 transition font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
             type="button"

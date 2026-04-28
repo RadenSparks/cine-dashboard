@@ -48,7 +48,7 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <Loading />
+        <Loading fullscreen={false} />
       </div>
     );
   }

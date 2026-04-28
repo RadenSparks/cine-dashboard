@@ -1,5 +1,6 @@
 import { getGenreIcon } from "../../../utils/genreIcons";
 import AppButton from "../../../components/UI/AppButton";
+import { SectionCard } from "../../../components/UI/DashboardPrimitives";
 
 export default function AddGenreForm({
   newGenreName,
@@ -17,39 +18,31 @@ export default function AddGenreForm({
   onAdd: () => void;
 }) {
   return (
-    <div className="bg-white dark:bg-zinc-900 rounded-2xl shadow-lg border border-blue-100 dark:border-zinc-800 p-8 mb-10">
-      <h3 className="text-xl font-bold mb-6 text-blue-700 dark:text-blue-200 font-asul" style={{ fontFamily: 'Asul, sans-serif' }}>Add New Genre</h3>
-      <div className="flex flex-col sm:flex-row gap-4 items-center">
-        <input
-          type="text"
-          value={newGenreName}
-          onChange={e => setNewGenreName(e.target.value)}
-          placeholder="Add genre"
-          className="border px-4 py-2 rounded-lg w-full text-base focus:ring-2 focus:ring-blue-400 focus:outline-none font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
-        />
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <select
-            className="border rounded-lg px-2 py-2 text-base bg-white dark:bg-zinc-800 text-blue-700 dark:text-blue-200 font-red-rose" style={{ fontFamily: 'Red Rose, sans-serif' }}
-            value={selectedIcon}
-            onChange={e => setSelectedIcon(e.target.value)}
-            aria-label="Select genre icon"
-          >
-            {availableIcons.map(iconObj => (
-              <option key={iconObj.name} value={iconObj.name}>
-                {iconObj.name}
-              </option>
-            ))}
-          </select>
-          <span className="ml-2">{getGenreIcon(selectedIcon)}</span>
+    <SectionCard title="Create genre" description="Add a new genre label and choose the icon used throughout the catalog.">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
+        <div className="flex-1">
+          <label className="field-label">Genre name</label>
+          <input type="text" value={newGenreName} onChange={(event) => setNewGenreName(event.target.value)} placeholder="Add genre" />
         </div>
-        <AppButton
-          color="success"
-          className="w-full sm:w-auto"
-          onClick={onAdd}
-        >
-          Add
+        <div className="w-full sm:w-[220px]">
+          <label className="field-label">Icon</label>
+          <div className="flex items-center gap-3">
+            <select value={selectedIcon} onChange={(event) => setSelectedIcon(event.target.value)} aria-label="Select genre icon">
+              {availableIcons.map((iconObj) => (
+                <option key={iconObj.name} value={iconObj.name}>
+                  {iconObj.name}
+                </option>
+              ))}
+            </select>
+            <span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-sky-700 dark:border-slate-700 dark:bg-slate-800 dark:text-sky-100">
+              {getGenreIcon(selectedIcon)}
+            </span>
+          </div>
+        </div>
+        <AppButton color="success" onClick={onAdd}>
+          Add genre
         </AppButton>
       </div>
-    </div>
+    </SectionCard>
   );
 }

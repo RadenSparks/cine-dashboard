@@ -1,17 +1,13 @@
 import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import type { AppDispatch } from "../../../store/store";
-import {
-  deleteImageAsync,
-  moveImagesToFolderAsync,
-  fetchFoldersAsync,
-  fetchFolderListAsync,
-} from "../../../store/slices";
+import { deleteImageAsync, fetchFolderListAsync, fetchFoldersAsync, moveImagesToFolderAsync } from "../../../store/slices";
 import type { Image } from "../../../entities/type";
 import type { FolderTreeNode } from "../../../types/folderTree";
 import MoveModal from "../MoveModal";
 import DeleteImagesModal from "../DeleteImagesModal";
 import type { ToastNotification } from "../../../components/UI/SatelliteToast";
+import AppButton from "../../../components/UI/AppButton";
 
 interface ImageSelectionToolbarProps {
   selectedImages: number[];
@@ -41,13 +37,7 @@ const ImageSelectionToolbar: React.FC<ImageSelectionToolbarProps> = ({
 
   const handleDeleteClick = () => {
     if (selectedImages.length === 0) {
-      toastRef.current?.showNotification({
-        title: "No images selected",
-        content: "Please select at least one image to delete.",
-        accentColor: "#f59e0b",
-        position: "bottom-right",
-        longevity: 2500,
-      });
+      toastRef.current?.showNotification({ title: "No images selected", content: "Please select at least one image to delete.", accentColor: "#f59e0b", position: "bottom-right", longevity: 2500 });
       return;
     }
     setDeleteTargets(selectedImages);
@@ -62,22 +52,10 @@ const ImageSelectionToolbar: React.FC<ImageSelectionToolbarProps> = ({
       }
       setDeleteTargets([]);
       onSelectionChange?.([]);
-      toastRef.current?.showNotification({
-        title: "Deleted",
-        content: `${deleteTargets.length} image(s) removed.`,
-        accentColor: "#ef4444",
-        position: "bottom-right",
-        longevity: 2000,
-      });
+      toastRef.current?.showNotification({ title: "Deleted", content: `${deleteTargets.length} image(s) removed.`, accentColor: "#ef4444", position: "bottom-right", longevity: 2000 });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      toastRef.current?.showNotification({
-        title: "Delete Failed",
-        content: `${msg || "Failed to delete image(s)."}`,
-        accentColor: "#ef4444",
-        position: "bottom-right",
-        longevity: 3000,
-      });
+      toastRef.current?.showNotification({ title: "Delete failed", content: `${msg || "Failed to delete image(s)."}`, accentColor: "#ef4444", position: "bottom-right", longevity: 3000 });
     } finally {
       setDeleting(false);
     }
@@ -85,13 +63,7 @@ const ImageSelectionToolbar: React.FC<ImageSelectionToolbarProps> = ({
 
   const handleMoveClick = () => {
     if (selectedImages.length === 0) {
-      toastRef.current?.showNotification({
-        title: "No images selected",
-        content: "Please select at least one image to move.",
-        accentColor: "#f59e0b",
-        position: "bottom-right",
-        longevity: 2500,
-      });
+      toastRef.current?.showNotification({ title: "No images selected", content: "Please select at least one image to move.", accentColor: "#f59e0b", position: "bottom-right", longevity: 2500 });
       return;
     }
     setShowMoveModal(true);
@@ -99,37 +71,19 @@ const ImageSelectionToolbar: React.FC<ImageSelectionToolbarProps> = ({
 
   const confirmMove = async () => {
     if (selectedImages.length === 0) return;
-    const targetFolder =
-      moveTargetFolder === null ? "root" : moveTargetFolder || "root";
+    const targetFolder = moveTargetFolder === null ? "root" : moveTargetFolder || "root";
     setMoving(true);
     try {
-      await dispatch(
-        moveImagesToFolderAsync({
-          imageIds: selectedImages,
-          targetFolderName: targetFolder,
-        })
-      ).unwrap();
+      await dispatch(moveImagesToFolderAsync({ imageIds: selectedImages, targetFolderName: targetFolder })).unwrap();
       setShowMoveModal(false);
       setMoveTargetFolder(null);
       onSelectionChange?.([]);
-      toastRef.current?.showNotification({
-        title: "Moved",
-        content: `${selectedImages.length} image(s) moved to ${targetFolder}.`,
-        accentColor: "#22c55e",
-        position: "bottom-right",
-        longevity: 2500,
-      });
+      toastRef.current?.showNotification({ title: "Moved", content: `${selectedImages.length} image(s) moved to ${targetFolder}.`, accentColor: "#22c55e", position: "bottom-right", longevity: 2500 });
       await dispatch(fetchFoldersAsync());
       await dispatch(fetchFolderListAsync());
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      toastRef.current?.showNotification({
-        title: "Move Failed",
-        content: `${msg || "Failed to move images."}`,
-        accentColor: "#ef4444",
-        position: "bottom-right",
-        longevity: 3000,
-      });
+      toastRef.current?.showNotification({ title: "Move failed", content: `${msg || "Failed to move images."}`, accentColor: "#ef4444", position: "bottom-right", longevity: 3000 });
     } finally {
       setMoving(false);
     }
@@ -139,37 +93,18 @@ const ImageSelectionToolbar: React.FC<ImageSelectionToolbarProps> = ({
 
   return (
     <>
-      <div className="flex items-center gap-3 p-4 bg-blue-50 rounded-xl border border-blue-200 shadow-sm">
-        <span className="text-sm font-semibold text-gray-700">
-          {selectedImages.length > 0 ? (
-            <>
-              {selectedImages.length} image{selectedImages.length !== 1 ? "s" : ""} selected
-            </>
-          ) : (
-            "No images selected"
-          )}
+      <div className="flex flex-col gap-3 rounded-[24px] border border-slate-200 bg-white/90 p-4 dark:border-slate-700 dark:bg-slate-900/78 md:flex-row md:items-center">
+        <span className="text-sm font-semibold text-slate-700 dark:text-slate-100">
+          {selectedImages.length > 0 ? `${selectedImages.length} image${selectedImages.length !== 1 ? "s" : ""} selected` : "No images selected"}
         </span>
 
-        <div className="flex gap-2 ml-auto">
-          <button
-            onClick={handleMoveClick}
-            disabled={!hasSelection || disabled || moving}
-            className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg font-semibold hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
-            type="button"
-            title="Move selected images to another folder"
-          >
+        <div className="ml-auto flex gap-2">
+          <AppButton onClick={handleMoveClick} disabled={!hasSelection || disabled || moving} color="primary" variant="soft" size="sm">
             {moving ? "Moving..." : "Move"}
-          </button>
-
-          <button
-            onClick={handleDeleteClick}
-            disabled={!hasSelection || disabled || deleting}
-            className="px-3 py-1.5 bg-red-600 text-white text-sm rounded-lg font-semibold hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition"
-            type="button"
-            title="Delete selected images"
-          >
+          </AppButton>
+          <AppButton onClick={handleDeleteClick} disabled={!hasSelection || disabled || deleting} color="danger" variant="soft" size="sm">
             {deleting ? "Deleting..." : "Delete"}
-          </button>
+          </AppButton>
         </div>
       </div>
 
