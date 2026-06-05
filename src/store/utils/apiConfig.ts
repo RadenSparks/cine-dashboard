@@ -23,7 +23,7 @@ export const API_ENDPOINTS = {
  * Used by all slices for authenticated API calls
  */
 export function getAuthHeaders(): Record<string, string> {
-  const userDetails = localStorage.getItem("cine-user-details");
+  const userDetails = localStorage.getItem("wyvernbox-user-details");
   let accessToken: string | null = null;
   try {
     accessToken = userDetails ? JSON.parse(userDetails).accessToken : null;

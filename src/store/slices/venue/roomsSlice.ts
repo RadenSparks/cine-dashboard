@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
-import { type Room } from "../../../entities/type";
-import { type RoomApiDTO } from "../../../dto/dto";
-import { get, post, put, remove } from "../../../client/axiosCilent";
-import { API_ENDPOINTS, getAuthHeaders } from '../../utils/apiConfig';
+import { type Room } from "@/shared/types/entities";
+import { type RoomApiDTO } from "@/shared/types/dto";
+import { get, post, put, remove } from "@/shared/api/apiClient";
+import { API_ENDPOINTS, getAuthHeaders } from '@/store/utils/apiConfig';
 
 type ApiResponseWrapper<T> = {
   data: T;

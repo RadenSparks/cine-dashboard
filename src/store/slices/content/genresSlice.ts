@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { type Genre } from '../../../entities/type';
-import { type GenreApiDTO } from '../../../dto/dto';
-import { get, post, put, remove } from '../../../client/axiosCilent';
-import { API_ENDPOINTS, getAuthHeaders } from '../../utils/apiConfig';
-import { type SimpleListSliceState } from '../../utils/sliceHelpers';
+import { type Genre } from '@/shared/types/entities';
+import { type GenreApiDTO } from '@/shared/types/dto';
+import { get, post, put, remove } from '@/shared/api/apiClient';
+import { API_ENDPOINTS, getAuthHeaders } from '@/store/utils/apiConfig';
+import { type SimpleListSliceState } from '@/store/utils/sliceHelpers';
 
 // Backend response type
 type GenreApiResponse = {

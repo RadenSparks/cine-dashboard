@@ -1,13 +1,13 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { type Session } from '../../../entities/type';
+import { type Session } from '@/shared/types/entities';
 import {
   type SessionApiDTO,
   type CreateSessionRequestDTO,
   type UpdateSessionRequestDTO,
   type DeleteSessionRequestDTO,
-} from '../../../dto/dto';
-import { get, post, put, remove } from '../../../client/axiosCilent';
-import { API_ENDPOINTS, getAuthHeaders } from '../../utils/apiConfig';
+} from '@/shared/types/dto';
+import { get, post, put, remove } from '@/shared/api/apiClient';
+import { API_ENDPOINTS, getAuthHeaders } from '@/store/utils/apiConfig';
 
 type ApiResponseWrapper<T> = {
   data: T;

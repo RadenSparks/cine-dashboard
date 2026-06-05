@@ -251,16 +251,10 @@ html.dark .dashboard-table tbody tr:hover {
 }
 
 .dashboard-stat-card {
-  @apply rounded-[26px] border px-5 py-5;
-  border-color: rgba(191, 219, 254, 0.7);
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(239, 246, 255, 0.88) 100%);
-  box-shadow: 0 18px 42px -30px rgba(37, 99, 235, 0.16);
+  @apply rounded-3xl border px-6 py-6;
 }
 
 html.dark .dashboard-stat-card {
-  border-color: rgba(51, 65, 85, 0.9);
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.92) 100%);
-  box-shadow: 0 18px 42px -30px rgba(2, 6, 23, 0.9);
 }
 
 .status-pill,
@@ -269,7 +263,7 @@ html.dark .dashboard-stat-card {
 .status-pill-warning,
 .status-pill-danger,
 .status-pill-info {
-  @apply inline-flex rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em];
+  @apply inline-flex rounded-sm border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em];
 }
 
 .status-pill-neutral {
@@ -293,7 +287,7 @@ html.dark .dashboard-stat-card {
 }
 
 .empty-state {
-  @apply rounded-[24px] border border-dashed px-6 py-10 text-center;
+  @apply rounded-lg border border-dashed px-6 py-10 text-center;
   border-color: rgba(148, 163, 184, 0.42);
   background: rgba(248, 250, 252, 0.72);
 }

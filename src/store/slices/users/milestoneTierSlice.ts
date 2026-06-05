@@ -1,8 +1,8 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { type MileStoneTierApiDTO } from "../../../dto/dto";
-import { type ApiResponse } from "../../../entities/type";
+import { type MileStoneTierApiDTO } from "@/shared/types/dto";
+import { type ApiResponse } from "@/shared/types/entities";
 import axios from "axios";
-import { API_ENDPOINTS } from '../../utils/apiConfig';
+import { API_ENDPOINTS } from '@/store/utils/apiConfig';
 
 const MILESTONE_TIERS_API = API_ENDPOINTS.MILESTONE_TIERS;
 

@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
-import { type User } from "../../../entities/type";
-import { get, post, remove } from "../../../client/axiosCilent";
-import { type UserApiDTO } from "../../../dto/dto";
-import { API_ENDPOINTS, getAuthHeaders } from '../../utils/apiConfig';
-import { type Page, type PaginatedThunkResult } from '../../utils/sliceHelpers';
+import { type User } from "@/shared/types/entities";
+import { get, post, remove } from "@/shared/api/apiClient";
+import { type UserApiDTO } from "@/shared/types/dto";
+import { API_ENDPOINTS, getAuthHeaders } from '@/store/utils/apiConfig';
+import { type Page, type PaginatedThunkResult } from '@/store/utils/sliceHelpers';
 
 type ApiResponseWrapper<T> = {
   data: T;

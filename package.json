@@ -1,5 +1,6 @@
 {
-  "name": "cine-dashboard",
+  "name": "wyvernbox-dashboard",
+  "description": "WyvernBox - Cinema Ticket Booking Dashboard",
   "private": true,
   "version": "0.0.0",
   "type": "module",

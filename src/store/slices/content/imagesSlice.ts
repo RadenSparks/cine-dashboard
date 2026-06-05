@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
 import type { AxiosResponse } from 'axios';
-import { type Image } from '../../../entities/type';
-import { type RetrieveImageDTO, type UploadImageResponseDTO, type ImageFolderDTO, type ApiResponse } from '../../../dto/dto';
-import apiClient, { get, post, remove } from '../../../client/axiosCilent';
-import { normalizeImageUrl } from '../../../utils/imageUrl';
-import { getAuthHeaders, API_ENDPOINTS, BASE_API_URL } from '../../utils/apiConfig';
+import { type Image } from '@/shared/types/entities';
+import { type RetrieveImageDTO, type UploadImageResponseDTO, type ImageFolderDTO, type ApiResponse } from '@/shared/types/dto';
+import apiClient, { get, post, remove } from '@/shared/api/apiClient';
+import { normalizeImageUrl } from '@/shared/utils/imageUrl';
+import { getAuthHeaders, API_ENDPOINTS, BASE_API_URL } from '@/store/utils/apiConfig';
 import type { RootState } from '../../store';
 
 const IMAGES_API = API_ENDPOINTS.IMAGES;

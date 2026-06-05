@@ -1,9 +1,9 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from '@reduxjs/toolkit';
-import { type Movie } from '../../../entities/type';
-import { type MovieApiDTO, type RetrieveImageDTO } from '../../../dto/dto';
-import { get, post, put, remove } from '../../../client/axiosCilent';
-import { API_ENDPOINTS, getAuthHeaders, BASE_API_URL } from '../../utils/apiConfig';
-import { type Page, type PaginatedThunkResult, type ListSliceState } from '../../utils/sliceHelpers';
+import { type Movie } from '@/shared/types/entities';
+import { type MovieApiDTO, type RetrieveImageDTO } from '@/shared/types/dto';
+import { get, post, put, remove } from '@/shared/api/apiClient';
+import { API_ENDPOINTS, getAuthHeaders, BASE_API_URL } from '@/store/utils/apiConfig';
+import { type Page, type PaginatedThunkResult, type ListSliceState } from '@/store/utils/sliceHelpers';
 
 // Backend API response type
 type MovieApiResponse = {

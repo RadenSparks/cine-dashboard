@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { type Seat } from "../../../entities/type";
-import { get, put } from "../../../client/axiosCilent";
-import { API_ENDPOINTS, getAuthHeaders } from '../../utils/apiConfig';
+import { type Seat } from "@/shared/types/entities";
+import { get, put } from "@/shared/api/apiClient";
+import { API_ENDPOINTS, getAuthHeaders } from '@/store/utils/apiConfig';
 
 type ApiResponseWrapper<T> = {
   data: T;
